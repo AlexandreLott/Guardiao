@@ -10,7 +10,12 @@
 
 ## 2. Integrantes do grupo
 
-_A preencher pelo grupo_ — nome completo, turma, curso/UC e função (pesquisa, prototipação, IA/automação, ética e privacidade, documentação, apresentação).
+Alexandre Lott de Alcântara Bizarria - 326116123 - alexandre.lott10@gmail.com
+Christian Lorran da Silva Batista - 32622936 - Christianlorransen@gmail.com
+Lucas Pires Franco - 32628258 - lucasfranco21112007@gmail.com
+Luiz Philipe Alves dos Santos - 326212120 - luizphilipecontato@gmail.com
+Rafael Felipe de Paula - 326213249 - rafaeldepaula663@gmail.com.br
+Victor Gabriel Dutra de Abreu - 32624533 - victorestudante922@gmail.com
 
 ## 3. Problema ou oportunidade identificada
 
