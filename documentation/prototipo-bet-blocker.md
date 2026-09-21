@@ -10,7 +10,7 @@ Segue o padrão **Material Design 3** do Google, com paleta **roxo e verde**.
 
 {% tabs %}
 {% tab title="🏠 Início" %}
-![Tela inicial do Bet Blocker, mostrando o status de bloqueio ativo, tempo restante e acesso rápido às demais funções](.gitbook/assets/tela-home-v4.jpg)
+![Tela inicial do Bet Blocker, mostrando o status de bloqueio ativo, tempo restante e acesso rápido às demais funções](https://3183944959-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FeeRz8n3Phws8ArKFzgNl%2Fuploads%2FPilMQfyurHUmGPT9HOeI%2Ftela-home-v4.jpg?alt=media)
 
 **Tela Inicial (bloqueio ativo)**
 
@@ -18,7 +18,7 @@ Tela principal do app. Mostra em destaque que o bloqueio a sites e apps de apost
 {% endtab %}
 
 {% tab title="⏸️ Pausa" %}
-![Tela de pausa temporária do bloqueio, com opções de duração e confirmação](.gitbook/assets/tela-pausa-v6.jpg)
+![Tela de pausa temporária do bloqueio, com opções de duração e confirmação](https://3183944959-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FeeRz8n3Phws8ArKFzgNl%2Fuploads%2FYALuV122zEn03RSsKcj0%2Ftela-pausa-v6.jpg?alt=media)
 
 **Pausa temporária**
 
@@ -26,7 +26,7 @@ Permite ao usuário solicitar uma pausa temporária e consciente no bloqueio, co
 {% endtab %}
 
 {% tab title="💬 Chat de apoio" %}
-![Tela de chat de apoio com mensagens de incentivo e orientação](.gitbook/assets/tela-chat-v6.jpg)
+![Tela de chat de apoio com mensagens de incentivo e orientação](https://3183944959-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FeeRz8n3Phws8ArKFzgNl%2Fuploads%2FYnLPdv3p1QwsgYmigtbN%2Ftela-chat-v6.jpg?alt=media)
 
 **Chat de apoio**
 
@@ -34,7 +34,7 @@ Canal de suporte dentro do app para momentos de vontade de apostar. Oferece mens
 {% endtab %}
 
 {% tab title="📊 Painel semanal" %}
-![Painel semanal com estatísticas de uso, tempo bloqueado e progresso do usuário](.gitbook/assets/tela-panel-v8.jpg)
+![Painel semanal com estatísticas de uso, tempo bloqueado e progresso do usuário](https://3183944959-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FeeRz8n3Phws8ArKFzgNl%2Fuploads%2FlZ8pfEBjk3oRU5UU4Bkr%2Ftela-panel-v8.jpg?alt=media)
 
 **Painel semanal**
 
@@ -50,11 +50,13 @@ Resumo visual do progresso do usuário ao longo da semana: tempo total de bloque
 * **Ícones:** Material Symbols Outlined
 * **Componentes:** cards com elevação e cantos arredondados, navegação inferior, botões seguindo os estados (filled, tonal, outlined) do M3
 
-## Experiência completa (app interativo)
+## Experiência completa (app interativo, embutido aqui)
 
 Além da navegação por abas acima, o protótipo também está publicado como um app interativo standalone — com navegação real entre telas, alternância do bloqueio, fluxo de pausa com confirmação, chat de apoio funcional e painel semanal com troca de semana. Ainda sem integração com bloqueio real; os dados são de exemplo.
 
-[Abrir o app interativo](https://claude.ai/artifact/34Adhbqqy1NSrCyzbkNYrx)
+{% embed url="https://claude.ai/artifact/34Adhbqqy1NSrCyzbkNYrx" %}
+App interativo Bet Blocker
+{% endembed %}
 
 ***
 
