@@ -6,7 +6,7 @@ Segue o padrão **Material Design 3** do Google, com paleta **roxo e verde**.
 
 {% tabs %}
 {% tab title="🏠 Início" %}
-![Tela inicial do Bet Blocker, mostrando o status de bloqueio ativo, tempo restante e acesso rápido às demais funções](.gitbook/assets/tela-home.jpg)
+![Tela inicial do Bet Blocker, mostrando o status de bloqueio ativo, tempo restante e acesso rápido às demais funções](.gitbook/assets/tela-home-v4.jpg)
 
 **Tela Inicial (bloqueio ativo)**
 
@@ -14,7 +14,7 @@ Tela principal do app. Mostra em destaque que o bloqueio a sites e apps de apost
 {% endtab %}
 
 {% tab title="⏸️ Pausa" %}
-![Tela de pausa temporária do bloqueio, com opções de duração e confirmação](.gitbook/assets/tela-pausa.jpg)
+![Tela de pausa temporária do bloqueio, com opções de duração e confirmação](.gitbook/assets/tela-pausa-v6.jpg)
 
 **Pausa temporária**
 
@@ -22,7 +22,7 @@ Permite ao usuário solicitar uma pausa temporária e consciente no bloqueio, co
 {% endtab %}
 
 {% tab title="💬 Chat de apoio" %}
-![Tela de chat de apoio com mensagens de incentivo e orientação](.gitbook/assets/tela-chat.jpg)
+![Tela de chat de apoio com mensagens de incentivo e orientação](.gitbook/assets/tela-chat-v6.jpg)
 
 **Chat de apoio**
 
@@ -30,7 +30,7 @@ Canal de suporte dentro do app para momentos de vontade de apostar. Oferece mens
 {% endtab %}
 
 {% tab title="📊 Painel semanal" %}
-![Painel semanal com estatísticas de uso, tempo bloqueado e progresso do usuário](.gitbook/assets/tela-panel.jpg)
+![Painel semanal com estatísticas de uso, tempo bloqueado e progresso do usuário](.gitbook/assets/tela-panel-v8.jpg)
 
 **Painel semanal**
 
@@ -52,4 +52,4 @@ Além da navegação por abas acima, o protótipo também está publicado como u
 
 ***
 
-Veja também a [Proposta do Projeto](proposta-do-projeto.md) para o contexto completo do Bet Blocker.
+Veja também a Proposta do Projeto para o contexto completo do Bet Blocker.
