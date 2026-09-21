@@ -4,6 +4,10 @@ Protótipo navegável do aplicativo **Bet Blocker**, direto aqui no GitBook — 
 
 Segue o padrão **Material Design 3** do Google, com paleta **roxo e verde**.
 
+{% hint style="success" %}
+**Novo:** agora também dá pra testar o app de verdade — pausar o bloqueio, conversar no chat de apoio e trocar de semana no painel funcionam com dados de exemplo. [Abrir o app interativo →](https://claude.ai/artifact/34Adhbqqy1NSrCyzbkNYrx)
+{% endhint %}
+
 {% tabs %}
 {% tab title="🏠 Início" %}
 ![Tela inicial do Bet Blocker, mostrando o status de bloqueio ativo, tempo restante e acesso rápido às demais funções](.gitbook/assets/tela-home-v4.jpg)
@@ -46,9 +50,11 @@ Resumo visual do progresso do usuário ao longo da semana: tempo total de bloque
 * **Ícones:** Material Symbols Outlined
 * **Componentes:** cards com elevação e cantos arredondados, navegação inferior, botões seguindo os estados (filled, tonal, outlined) do M3
 
-## Experiência completa (opcional)
+## Experiência completa (app interativo)
 
-Além da navegação por abas acima, o protótipo também está publicado como um artefato interativo standalone, com transições e comportamento mais próximos do app real: [abrir experiência completa](https://claude.ai/artifact/E1fRNMyDZdzp9L27dSZFF9).
+Além da navegação por abas acima, o protótipo também está publicado como um app interativo standalone — com navegação real entre telas, alternância do bloqueio, fluxo de pausa com confirmação, chat de apoio funcional e painel semanal com troca de semana. Ainda sem integração com bloqueio real; os dados são de exemplo.
+
+[Abrir o app interativo](https://claude.ai/artifact/34Adhbqqy1NSrCyzbkNYrx)
 
 ***
 
