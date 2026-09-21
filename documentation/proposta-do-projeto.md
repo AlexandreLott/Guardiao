@@ -135,6 +135,19 @@ Ver o [Registro de Uso de IA](registro-de-uso-de-ia.md) para o log detalhado (fe
 
 _Complementem com outras fontes usadas na pesquisa._
 
+
+
+## 16. Divisão de funções
+
+* Christian Lorran da Silva Batista - Pesquisa
+* Rafael Felipe de Paula - Pesquisa
+* Luís Felipe Alves dos Santos - Documentação
+* Victor Gabriel Dutra de Abreu - Documentação
+* Lucas Pires Franco - Desenvolvimento
+* Alexandre Lott de Alcantra Bizarria - Desenvolvimento
+
+
+
 ## Conclusão
 
 _(a preencher ao final do projeto — síntese dos resultados alcançados)_
