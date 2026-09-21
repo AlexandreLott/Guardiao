@@ -10,12 +10,12 @@
 
 ## 2. Integrantes do grupo
 
-Alexandre Lott de Alcântara Bizarria - 326116123 - alexandre.lott10@gmail.com/n
-Christian Lorran da Silva Batista - 32622936 - Christianlorransen@gmail.com/n
-Lucas Pires Franco - 32628258 - lucasfranco21112007@gmail.com/n
-Luiz Philipe Alves dos Santos - 326212120 - luizphilipecontato@gmail.com/n
-Rafael Felipe de Paula - 326213249 - rafaeldepaula663@gmail.com.br/n
-Victor Gabriel Dutra de Abreu - 32624533 - victorestudante922@gmail.com/n
+Alexandre Lott de Alcântara Bizarria - 326116123 - alexandre.lott10@gmail.com
+Christian Lorran da Silva Batista - 32622936 - Christianlorransen@gmail.com
+Lucas Pires Franco - 32628258 - lucasfranco21112007@gmail.com
+Luiz Philipe Alves dos Santos - 326212120 - luizphilipecontato@gmail.com
+Rafael Felipe de Paula - 326213249 - rafaeldepaula663@gmail.com.br
+Victor Gabriel Dutra de Abreu - 32624533 - victorestudante922@gmail.com
 
 ## 3. Problema ou oportunidade identificada
 
