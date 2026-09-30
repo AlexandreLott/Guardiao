@@ -2,11 +2,15 @@
 
 > Rascunho vivo: revisem, ajustem o que quiserem e transcrevam para a ficha oficial (Anexo 4) com nomes, RA e as decisões finais do grupo.
 
+{% hint style="warning" %}
+**Proposta reescrita em 30/09/2026.** O tema original (bloqueio de bets) ficou obsoleto com a proibição federal das apostas online (item 3). Esta versão troca o tema para **controle parental de jogos eletrônicos**, mantendo a mesma estrutura de 15 itens. O grupo ainda precisa validar coletivamente se topa seguir com o novo tema (ver "Próximos passos" no final).
+{% endhint %}
+
 ## 1. Nome do projeto
 
-**Nome:** Bet Blocker — Bloqueio e Apoio contra Apostas Digitais
+**Nome (proposto, a confirmar com o grupo):** Guardião Gamer — Controle Parental para Jogos
 
-**Frase curta:** Ferramenta que bloqueia o acesso a sites e aplicativos de apostas no próprio dispositivo do usuário e oferece apoio no momento do impulso de apostar.
+**Frase curta:** Ferramenta que ajuda pais e responsáveis a definir e aplicar limites de tempo de tela para jogos eletrônicos no computador e no celular dos filhos, com relatório de uso e um painel de acompanhamento.
 
 ## 2. Integrantes do grupo
 
@@ -19,125 +23,125 @@
 
 ## 3. Problema ou oportunidade identificada
 
-**Problema:** as apostas esportivas on-line ("bets") cresceram de forma muito rápida no Brasil e vêm gerando um problema financeiro e comportamental relevante: parte dos apostadores tem dificuldade de controlar o próprio impulso de apostar, mesmo sabendo do risco.
+**Problema:** o uso excessivo/problemático de jogos eletrônicos por crianças e adolescentes brasileiros é comum e, segundo pesquisa, maior do que a média internacional — e os pais têm poucas ferramentas práticas para aplicar limites de forma consistente entre jogos e dispositivos diferentes.
 
 **Dados que sustentam o problema:**
 
-* Segundo estudo da Confederação Nacional do Comércio (CNC), os brasileiros gastaram cerca de **R$ 30 bilhões por mês** em apostas on-line em março de 2026, crescimento de cerca de **500% desde janeiro de 2023**. ([fonte](https://movimentoeconomico.com.br/economia/varejo/2026/04/29/cnc-bets-drenam-r-30-bi-por-mes-e-e-levam-270-mil-familias-a-inadimplencia/))
-* O mesmo estudo estima **R$ 143 bilhões** desviados do varejo entre jan/2023 e mar/2026, e cerca de **268 mil famílias** em inadimplência severa (atrasos acima de 90 dias) associada às apostas.
-* Grupos mais vulneráveis: homens, famílias de baixa renda (até 5 salários mínimos), pessoas com 35+ anos e ensino médio completo.
-* O governo já reconhece o problema: em dezembro de 2025 o Ministério da Fazenda lançou a **Plataforma Centralizada de Autoexclusão**, que bloqueia todas as bets licenciadas de uma vez. ([fonte](https://alertagov.com.br/2026/07/plataforma-de-autoexclusao-bloqueia-todas-as-bets-de-uma-so-vez-a-pedido-do-proprio-usuario/))
+* Estudo da USP (programa #Tamojunto 2.0, com mais de 7 mil estudantes de escolas públicas de SP e CE) encontrou que **85,85% dos adolescentes brasileiros jogam videogame**, e **28,17% preenchem os critérios de Transtorno do Jogo pela Internet (Internet Gaming Disorder)** — progorção maior que a média internacional. ([fonte](https://jornal.usp.br/ciencias/uso-problematico-de-video-games-entre-jovens-do-brasil-e-maior-que-a-media-de-outros-paises/))
+* O perfil de maior risco: meninos, usuários de álcool/tabaco, envolvidos em bullying (vítimas ou autores) e com sintomas de hiperatividade/problemas de conduta.
+* O próprio governo já reconhece a necessidade de mais controle nesse tema: a **Lei 15.211/2025 ("ECA Digital"/"Lei Felca")**, em vigor desde 17/03/2026, passou a exigir das plataformas verificação de idade mais rígida e ferramentas de controle parental — a ponto de jogos como League of Legends e Valorant terem mudado classificação indicativa e passado a exigir autorização de responsável para menores de 18 anos. ([fonte](https://www.cnnbrasil.com.br/tecnologia/lei-felca-proibe-lol-e-outros-jogos-para-menores-no-brasil-entenda/))
 
-**Por que ainda existe espaço para este projeto:** a autoexclusão oficial exige login gov.br (nível prata/ouro), leva até 72h para ativar, não pode ser revertida antes do prazo, e só cobre casas de apostas licenciadas — não bloqueia sites/apps estrangeiros ou não regulamentados. Além disso, ela só impede login/cadastro; não ajuda a pessoa a lidar com o impulso no momento em que ele acontece.
+**Por que ainda existe espaço para este projeto:** o controle parental exigido pela Lei Felca é implementado **por cada plataforma/publisher separadamente** (ex.: só vale para os jogos da Riot, através do portal da própria Riot). Um responsável com filhos jogando em vários jogos diferentes (Roblox, Free Fire, Minecraft, Fortnite...) precisaria configurar cada um separadamente, se é que o jogo oferece essa opção. Não existe uma ferramenta única, no nível do dispositivo, que junte o controle de tempo de vários jogos/apps ao mesmo tempo — esse é o espaço que a proposta ocupa.
 
 ## 4. Área de aplicação
 
-Saúde (bem-estar comportamental/financeiro) e Segurança Digital, com relação direta a Serviços Públicos — a solução se posiciona como **complementar** à política pública de jogo responsável já existente, não como concorrente.
+Educação e Saúde (bem-estar infantojuvenil), com relação direta à Proteção de Crianças e Adolescentes no ambiente digital (ECA Digital) — a solução se posiciona como **complementar** ao controle parental que cada plataforma já é obrigada a oferecer, unificando-o num só lugar.
 
 ## 5. Público-alvo e usuários
 
-* **Público-alvo:** pessoas maiores de 18 anos que já apostam ou já tiveram dificuldade de controlar o comportamento em apostas on-line.
-* **Usuário principal:** a própria pessoa, que instala e configura o bloqueio no seu dispositivo.
-* **Usuário secundário:** um "parceiro de confiança" (familiar/amigo), que pode opcionalmente receber um aviso quando houver tentativa de acesso bloqueada — sempre com consentimento explícito do usuário.
+* **Público-alvo:** famílias com crianças e adolescentes (6 a 17 anos) que jogam em computador e/ou celular.
+* **Usuário principal:** o pai/mãe/responsável, que instala o app no dispositivo da criança e configura os limites.
+* **Usuário secundário:** a própria criança/adolescente, que usa o dispositivo já com as regras aplicadas, com uma tela simples mostrando quanto tempo ainda tem disponível.
 
-**Cuidados de acessibilidade:** linguagem simples e acolhedora (sem julgamento moral), bom contraste na tela de pausa, funcionar bem em celulares de entrada.
+**Cuidados de acessibilidade:** linguagem simples tanto para o painel dos pais quanto para a tela da criança (sem tom punitivo/de vigilância), bom contraste, funcionar bem em celulares de entrada e computadores mais antigos.
 
 ## 6. Descrição da solução
 
-Antes: o usuário cadastra, uma única vez, a lista de sites/apps de apostas a bloquear (lista sugerida + adição manual). Durante: ao tentar abrir um item bloqueado, aparece uma tela de pausa (tempo de espera curto + pergunta de reflexão + acesso a um chatbot de apoio) antes de decidir se quer prosseguir. Depois: um painel privado mostra quantas tentativas foram registradas na semana, para o próprio usuário acompanhar seu progresso.
+**Antes:** o responsável instala o app no dispositivo do filho, cadastra os jogos/apps a monitorar e define um limite diário de tempo (total e/ou por jogo específico).
+
+**Durante:** ao atingir o limite, o jogo é bloqueado com uma tela de aviso mostrando quanto tempo foi usado e quando o acesso libera de novo (ex.: no dia seguinte).
+
+**Depois:** o responsável acompanha, num painel protegido por PIN, quanto tempo foi jogado por dia e por jogo na semana, e pode ajustar os limites quando quiser.
 
 ## 7. Principais funcionalidades
 
-**Essenciais**
+**Essenciais (priorizadas para a demonstração de segunda-feira):**
 
-* Cadastro da lista de sites/apps a bloquear;
-* Bloqueio efetivo no navegador (extensão);
-* Tela de pausa com tempo de espera e mensagem de reflexão;
-* Painel privado com número de tentativas bloqueadas por semana.
+* Limite de tempo diário por jogo/app;
+* Tela de bloqueio ao esgotar o tempo do dia;
+* Painel do responsável protegido por PIN (nesta versão, no mesmo dispositivo);
+* Relatório de uso (tempo jogado por dia/jogo ao longo da semana).
 
-**Desejáveis**
+**Desejáveis (próximas etapas, fora do escopo da demo)**
 
-* Chatbot de apoio com IA no momento do impulso;
-* Notificação opcional ao parceiro de confiança (sempre opt-in);
-* Registro do gatilho da tentativa (estresse, tédio, cobrança financeira...);
-* Lista fixa de contatos de apoio especializado.
+* Painel remoto de verdade, acessado de outro dispositivo do responsável, sincronizado pela nuvem;
+* Bloqueio automático por faixa etária/classificação indicativa (alinhado à Lei Felca);
+* Notificação ao responsável quando o limite é atingido ou há tentativa de burlar o bloqueio;
+* Agenda de horários permitidos (ex.: sem jogos em horário escolar).
 
 ## 8. Uso de inteligência artificial e automação
 
-* IA generativa alimenta o chatbot de apoio, com regras fixas de segurança (abaixo);
-* Automação (Make/Zapier) dispara a notificação ao parceiro de confiança quando configurada;
-* IA pode observar, de forma agregada e sem expor conteúdo pessoal, os horários mais frequentes das tentativas, para sugerir mensagens de apoio mais úteis.
+* IA pode ajudar a sugerir limites de tempo de referência por faixa etária, sempre citando a fonte da recomendação — nunca substituindo orientação médica/pedagógica;
+* Automação gera o relatório semanal de uso a partir dos dados registrados no dispositivo;
 
-> **Regra de segurança obrigatória do chatbot:** nunca se apresentar como terapeuta, nunca dar conselho financeiro, e sempre indicar contatos de apoio especializado (CVV, Jogadores Anônimos) quando o texto sugerir sofrimento intenso, desespero ou dívidas graves. Toda resposta deve deixar claro que pode estar errada e que não substitui ajuda profissional.
+> **Regra de segurança obrigatória:** o app nunca deve fazer diagnóstico de vício em jogos, TDAH ou qualquer outra condição de saúde da criança — mostra só dados objetivos de tempo de uso, deixando a interpretação para a família e, se for o caso, para profissionais de saúde.
 
 ## 9. Informações utilizadas pela solução
 
-* **Fornecidas pelo usuário:** lista de sites/apps a bloquear; contato do parceiro de confiança (dado pessoal, só com consentimento).
-* **Geradas pela solução:** data/hora das tentativas bloqueadas (sem conteúdo de navegação); mensagens com o chatbot; contagem semanal.
-* **Não será coletado:** dados bancários, dados de apostas reais, histórico de navegação além do necessário, documentos pessoais.
+* **Fornecidas pelo responsável:** lista de jogos/apps a monitorar, limites de tempo escolhidos, PIN de acesso ao painel.
+* **Geradas pela solução:** tempo de uso por jogo/dia (dado pessoal da criança/adolescente).
+* **Não será coletado:** conteúdo de conversas dentro dos jogos, geolocalização, dados de pagamento, dados de saúde, ou qualquer dado de terceiros com quem a criança joga online.
 
-O usuário pode apagar todo o seu histórico a qualquer momento; nada é compartilhado com o parceiro de confiança além do que ele mesmo autorizar.
+**Base legal:** consentimento do responsável legal, conforme **art. 14 da LGPD** (tratamento de dados de crianças e adolescentes exige consentimento específico de ao menos um dos pais/responsável). No MVP, os dados de uso ficam no próprio dispositivo/sob controle do responsável, sem envio a terceiros.
 
 ## 10. Tecnologias e ferramentas escolhidas
 
-* Extensão de navegador simples para o bloqueio (lista de domínios);
-* Chatbot no-code com IA (ex.: Voiceflow, Landbot ou agente configurado);
-* Make/Zapier para a automação de notificação;
-* Planilha/Airtable para registrar tentativas (dados fictícios nos testes);
-* Looker Studio (ou o próprio Airtable) para o painel semanal.
+* Flutter (multiplataforma) para computador (Windows) e celular (Android) — reaproveitando parte da base de código já iniciada no projeto anterior (persistência de estado, estrutura de telas);
+* Monitoramento do app/jogo em uso em primeiro plano, nativo por sistema operacional;
+* Protótipo interativo em HTML/CSS/JS, com dados de exemplo, para a demonstração de segunda-feira;
+* Gráficos do relatório semanal (SVG nativo, sem dependência externa).
 
-Justificativa: ferramentas gratuitas/baixo custo, sem exigir programação avançada, permitem colaboração entre o grupo e são suficientes para demonstrar o conceito no prazo do projeto.
+Justificativa: ferramentas já dominadas pelo grupo, permitem reaproveitar arquitetura já construída e são suficientes para demonstrar o conceito no prazo do projeto.
 
 ## 11. Viabilidade e escopo inicial
 
-**Será desenvolvido (MVP):**
+**Será desenvolvido (MVP para a demonstração de segunda-feira):**
 
-* Extensão que bloqueia uma lista pré-definida de sites de apostas;
-* Tela de pausa com tempo de espera e reflexão;
-* Chatbot básico (roteirizado + IA), com as regras do item 8;
-* Painel simples com dados fictícios.
+* Protótipo interativo com as 4 funcionalidades essenciais do item 7, com dados de exemplo (não são dados reais de nenhuma criança).
 
 **Não será desenvolvido nesta etapa:**
 
-* Bloqueio em nível de sistema operacional no celular (restrições técnicas fortes de iOS/Android para apps de terceiros) — o grupo demonstra o conceito via navegador e, se possível, um mockup para celular;
-* Integração bancária real;
-* Qualquer diagnóstico clínico de vício — a ferramenta é apoio, não tratamento.
+* Sincronização remota real entre o dispositivo da criança e o do responsável (exigiria um backend próprio);
+* Bloqueio automático por classificação indicativa;
+* Detecção de burla técnica avançada (múltiplas contas, máquina virtual etc.).
 
 ## 12. Impactos esperados
 
-**Positivos:** barreira imediata e prática (sem esperar 72h), cobre sites não regulamentados, fortalece a rede de apoio da pessoa, pode ser adotado por bancos/ONGs no futuro.
+**Positivos:** dá aos pais uma ferramenta única e multiplataforma, sem precisar configurar cada jogo separadamente; gera dados objetivos para conversas em família sobre uso de telas — alinhado à própria recomendação do estudo da USP ("pais devem jogar junto, conversar sobre o conteúdo e restringir a duração").
 
-**Negativos e riscos:** o bloqueio é autoimposto (o usuário pode desativar a qualquer momento); não substitui tratamento profissional; o recurso do parceiro de confiança pode virar vigilância se não for sempre opt-in e reversível.
+**Negativos e riscos:** pode gerar conflito familiar se usado de forma punitiva, sem diálogo; passa falsa sensação de segurança (não substitui acompanhamento humano); adolescentes mais velhos podem tentar contornar tecnicamente o bloqueio.
 
 ## 13. Aspectos éticos, de privacidade e segurança
 
-* **Ética:** sem julgamento moral a quem aposta; chatbot transparente sobre ser IA e suas limitações; respostas revisadas pelo grupo antes de consideradas prontas.
-* **Privacidade (LGPD):** consentimento explícito antes de ativar a notificação ao parceiro; finalidade clara; exclusão de histórico a qualquer momento.
-* **Segurança:** dados fictícios em todos os testes; sem nomes reais no painel de demonstração; PIN para desativar o bloqueio (fricção saudável contra desativação por impulso).
+* **Ética:** o app é ferramenta de apoio à mediação parental, não de vigilância total — mostra só tempo de uso, nunca conteúdo de conversas; a criança vê de forma transparente o que está sendo monitorado.
+* **Privacidade (LGPD art. 14 + Lei 15.211/2025):** consentimento do responsável legal antes de qualquer coleta; dado tratado localmente no MVP; sem venda ou compartilhamento com terceiros.
+* **Segurança:** PIN obrigatório para acessar/alterar o painel do responsável — a criança não deve conseguir mudar os próprios limites.
 
 ## 14. Forma de utilização da IA durante o projeto
 
 _(diferente do item 8: aqui é como o grupo usou IA para desenvolver a proposta/protótipo)_
 
-* Pesquisa: dados sobre bets, autoexclusão e Lei 14.790/2023;
-* Planejamento: organização do escopo e das funcionalidades essenciais x desejáveis;
-* Prototipação: sugestões de texto para a tela de pausa e roteiro inicial do chatbot (revisadas com cuidado, por ser tema sensível);
-* Desenvolvimento: apoio na programação da extensão e automações;
-* Documentação: organização deste espaço e revisão de textos.
+* Pesquisa: motivo do pivot (Medida Provisória que proibiu as bets), a Lei Felca/ECA Digital, o art. 14 da LGPD e dados sobre uso problemático de videogames no Brasil (estudo USP);
+* Planejamento: redesenho do escopo e das funcionalidades essenciais para o novo tema;
+* Prototipação: telas e fluxo do protótipo interativo de demonstração;
+* Desenvolvimento: apoio na adaptação da base de código já existente do protótipo anterior;
+* Documentação: reescrita deste espaço no GitBook.
 
-Ver o [Registro de Uso de IA](registro-de-uso-de-ia.md) para o log detalhado (ferramenta, prompt, resultado, correções).
+Ver o Registro de Uso de IA para o log detalhado (ferramenta, prompt, resultado, correções).
 
 ## 15. Referências consultadas
 
-* BRASIL. _Lei nº 14.790, de 29 de dezembro de 2023_ — regulamenta as bets no Brasil. [zugnopena.com.br](https://www.zugnopena.com.br/br/lei-14-790-2023-regulamentacao-das-bets). Acesso em: 13 set. 2026.
-* CONFEDERAÇÃO NACIONAL DO COMÉRCIO (CNC). _Estudo sobre o impacto das bets na inadimplência das famílias brasileiras_, 2026. [movimentoeconomico.com.br](https://movimentoeconomico.com.br/economia/varejo/2026/04/29/cnc-bets-drenam-r-30-bi-por-mes-e-e-levam-270-mil-familias-a-inadimplencia/). Acesso em: 13 set. 2026.
-* MINISTÉRIO DA FAZENDA / SECRETARIA DE PRÊMIOS E APOSTAS. _Plataforma Centralizada de Autoexclusão de Apostas_, dez. 2025. [alertagov.com.br](https://alertagov.com.br/2026/07/plataforma-de-autoexclusao-bloqueia-todas-as-bets-de-uma-so-vez-a-pedido-do-proprio-usuario/). Acesso em: 13 set. 2026.
+* BRASIL. _Lei nº 15.211, de 29 de dezembro de 2025_ — "ECA Digital"/"Lei Felca", altera o ECA para reforçar a proteção de crianças e adolescentes no ambiente digital. [planalto.gov.br](https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15211.htm). Acesso em: 30 set. 2026.
+* BRASIL. _Lei nº 13.709/2018 (LGPD)_, art. 14 — tratamento de dados pessoais de crianças e adolescentes. [lgpd-brasil.info](https://lgpd-brasil.info/capitulo_02/artigo_14). Acesso em: 30 set. 2026.
+* AGÊNCIA GOV. _Presidente Lula assina medida provisória que proíbe as bets no Brasil_, 25 set. 2026. [agenciagov.ebc.com.br](https://agenciagov.ebc.com.br/noticias/202609/presidente-lula-assina-medida-provisoria-que-proibe-as-bets-no-brasil). Acesso em: 30 set. 2026.
+* CNN BRASIL. _Lei Felca proíbe LoL e outros jogos para menores no Brasil; entenda_, 2026. [cnnbrasil.com.br](https://www.cnnbrasil.com.br/tecnologia/lei-felca-proibe-lol-e-outros-jogos-para-menores-no-brasil-entenda/). Acesso em: 30 set. 2026.
+* JORNAL DA USP. _Uso problemático de videogames entre jovens do Brasil é maior que a média de outros países_, 2026. [jornal.usp.br](https://jornal.usp.br/ciencias/uso-problematico-de-video-games-entre-jovens-do-brasil-e-maior-que-a-media-de-outros-paises/). Acesso em: 30 set. 2026.
 
 _Complementem com outras fontes usadas na pesquisa._
 
-
-
 ## 16. Divisão de funções
+
+_(mantida do projeto anterior — revisem se muda com o novo escopo)_
 
 * Christian Lorran da Silva Batista - Pesquisa
 * Rafael Felipe de Paula - Pesquisa
@@ -146,16 +150,14 @@ _Complementem com outras fontes usadas na pesquisa._
 * Lucas Pires Franco - Desenvolvimento
 * Alexandre Lott de Alcantra Bizarria - Desenvolvimento
 
-
-
 ## Conclusão
 
 _(a preencher ao final do projeto — síntese dos resultados alcançados)_
 
 ## Próximos passos
 
-* Validar coletivamente se o grupo topa seguir com este tema (é sensível — todos precisam se sentir confortáveis);
-* Decidir o tom final da comunicação e ajustar o que quiserem;
-* Dividir responsabilidades por etapa;
-* Transferir para o Anexo 4 e a ficha oficial;
-* Começar o cronograma (Anexo 1) e manter este espaço atualizado como diário técnico.
+* Validar coletivamente com o grupo se topam seguir com o novo tema (controle parental de jogos);
+* Confirmar o nome final do produto (proposto: "Guardião Gamer");
+* Revisar o protótipo interativo antes da demonstração de segunda-feira;
+* Dividir responsabilidades para a próxima etapa (sincronização remota real, bloqueio por classificação indicativa);
+* Transferir para o Anexo 4 e a ficha oficial quando o grupo validar o novo tema.
