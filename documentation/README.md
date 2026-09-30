@@ -17,7 +17,7 @@ Este espaço é o diário técnico do projeto, conforme pede a ficha de inscriç
 
 ## Onde começar
 
-* Proposta do Projeto — os 15 itens da proposta (problema, público, funcionalidades, ética etc.)
+* Proposta do Projeto — os 16 itens da proposta (problema, público, funcionalidades, ética etc.)
 * Registro de Uso de IA — log vivo de ferramentas, prompts e resultados usados pelo grupo
 * Protótipo — Guardião Gamer — telas navegáveis e app interativo de demonstração
 
