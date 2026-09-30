@@ -3,7 +3,7 @@
 > Rascunho vivo: revisem, ajustem o que quiserem e transcrevam para a ficha oficial (Anexo 4) com nomes, RA e as decisões finais do grupo.
 
 {% hint style="warning" %}
-**Proposta reescrita em 30/09/2026.** O tema original (bloqueio de bets) ficou obsoleto com a proibição federal das apostas online (item 3). Esta versão troca o tema para **controle parental de jogos eletrônicos**, mantendo a mesma estrutura de 15 itens. O grupo ainda precisa validar coletivamente se topa seguir com o novo tema (ver "Próximos passos" no final).
+**Proposta reescrita em 30/09/2026.** O tema original (bloqueio de bets) ficou obsoleto com a proibição federal das apostas online (item 3). Esta versão troca o tema para **controle parental de jogos eletrônicos**, mantendo a mesma estrutura de 16 itens. O grupo ainda precisa validar coletivamente se topa seguir com o novo tema (ver "Próximos passos" no final).
 {% endhint %}
 
 ## 1. Nome do projeto
