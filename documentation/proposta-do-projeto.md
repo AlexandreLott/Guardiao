@@ -27,7 +27,7 @@
 
 **Dados que sustentam o problema:**
 
-* Estudo da USP (programa #Tamojunto 2.0, com mais de 7 mil estudantes de escolas públicas de SP e CE) encontrou que **85,85% dos adolescentes brasileiros jogam videogame**, e **28,17% preenchem os critérios de Transtorno do Jogo pela Internet (Internet Gaming Disorder)** — progorção maior que a média internacional. ([fonte](https://jornal.usp.br/ciencias/uso-problematico-de-video-games-entre-jovens-do-brasil-e-maior-que-a-media-de-outros-paises/))
+* Estudo da USP (programa #Tamojunto 2.0, com mais de 7 mil estudantes de escolas públicas de SP e CE) encontrou que **85,85% dos adolescentes brasileiros jogam videogame**, e **28,17% preenchem os critérios de Transtorno do Jogo pela Internet (Internet Gaming Disorder)** — proporção maior que a média internacional. ([fonte](https://jornal.usp.br/ciencias/uso-problematico-de-video-games-entre-jovens-do-brasil-e-maior-que-a-media-de-outros-paises/))
 * O perfil de maior risco: meninos, usuários de álcool/tabaco, envolvidos em bullying (vítimas ou autores) e com sintomas de hiperatividade/problemas de conduta.
 * O próprio governo já reconhece a necessidade de mais controle nesse tema: a **Lei 15.211/2025 ("ECA Digital"/"Lei Felca")**, em vigor desde 17/03/2026, passou a exigir das plataformas verificação de idade mais rígida e ferramentas de controle parental — a ponto de jogos como League of Legends e Valorant terem mudado classificação indicativa e passado a exigir autorização de responsável para menores de 18 anos. ([fonte](https://www.cnnbrasil.com.br/tecnologia/lei-felca-proibe-lol-e-outros-jogos-para-menores-no-brasil-entenda/))
 
@@ -145,10 +145,10 @@ _(mantida do projeto anterior — revisem se muda com o novo escopo)_
 
 * Christian Lorran da Silva Batista - Pesquisa
 * Rafael Felipe de Paula - Pesquisa
-* Luís Felipe Alves dos Santos - Documentação
+* Luiz Philipe Alves dos Santos - Documentação
 * Victor Gabriel Dutra de Abreu - Documentação
 * Lucas Pires Franco - Desenvolvimento
-* Alexandre Lott de Alcantra Bizarria - Desenvolvimento
+* Alexandre Lott de Alcântara Bizarria - Desenvolvimento
 
 ## Conclusão
 
