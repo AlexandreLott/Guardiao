@@ -3,14 +3,14 @@
 Protótipo funcional do **Guardião Gamer**, o app de controle parental para jogos (PC e celular). Diferente de uma tela estática, este protótipo já roda com dados de exemplo e reage a cliques de verdade: dá pra estourar um limite de jogo, entrar no painel do responsável com PIN e ver o relatório semanal mudar em tempo real.
 
 {% hint style="success" %}
-**Alpha 0.1 instalável:** o protótipo agora roda como aplicativo no celular e no PC, inclusive sem internet. Veja como instalar em [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md).
+**Alpha 0.1 instalável:** o protótipo agora roda como aplicativo no celular e no PC, inclusive sem internet. Abra pelo endereço https://alexandrelott.github.io/guardiao-gamer-alpha/ e veja como instalar em [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md).
 
 **Como testar:** clique no botão **"Simular 10 min jogando (demo)"** em qualquer jogo, algumas vezes seguidas, até o limite diário estourar — a tela de bloqueio da criança aparece automaticamente. Para ver o painel do responsável, toque em **Responsável** na barra inferior e digite o PIN de demonstração **1234**.
 
-[Abrir o app interativo →](https://claude.ai/artifact/Eg3eVjQiXVJ1xnXvphdsYb)
+[Abrir o alpha instalável →](https://alexandrelott.github.io/guardiao-gamer-alpha/)
 {% endhint %}
 
-## O que já funciona nesta versão
+### O que já funciona nesta versão
 
 * **Limite de tempo por jogo/app** — cada jogo tem um limite diário configurável; a barra de progresso muda de cor e o status vira "Esgotado" quando o tempo acaba.
 * **Bloqueio automático** — ao atingir o limite, a criança é levada para uma tela de bloqueio sem opção de burlar, liberada de novo só à meia-noite (ou por um ajuste do responsável).
@@ -58,7 +58,7 @@ Depois do PIN, o responsável pode alterar o limite diário de cada jogo individ
 {% endtab %}
 {% endtabs %}
 
-## Padrões visuais usados
+### Padrões visuais usados
 
 * **Cores primárias (M3):** roxo `#6750A4` (primary) e `#D0BCFF` (primary container)
 * **Cores secundárias (M3):** verde `#386A20` (secondary) e `#9DD47E` (secondary container)
@@ -66,10 +66,10 @@ Depois do PIN, o responsável pode alterar o limite diário de cada jogo individ
 * **Ícones:** conjunto Material embutido no app em SVG (funciona offline)
 * **Componentes:** cards com cantos arredondados, navegação inferior, barras de progresso e badges de status, seguindo os estados (filled, tonal) do M3
 
-## Experiência completa (app interativo)
+### Experiência completa (app interativo)
 
 {% embed url="https://claude.ai/artifact/Eg3eVjQiXVJ1xnXvphdsYb" %}
-App interativo Guardião Gamer
+App interativo Guardião Gamer (versão de apresentação)
 {% endembed %}
 
 ***
