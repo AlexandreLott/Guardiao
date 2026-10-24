@@ -3,7 +3,9 @@
 Protótipo funcional do **Guardião Gamer**, o app de controle parental para jogos (PC e celular). Diferente de uma tela estática, este protótipo já roda com dados de exemplo e reage a cliques de verdade: dá pra estourar um limite de jogo, entrar no painel do responsável com PIN e ver o relatório semanal mudar em tempo real.
 
 {% hint style="success" %}
-**Como testar:** abra o app interativo abaixo e clique no botão **"Simular 10 min jogando (demo)"** em qualquer jogo, algumas vezes seguidas, até o limite diário estourar — a tela de bloqueio da criança aparece automaticamente. Para ver o painel do responsável, toque em **Responsável** na barra inferior e digite o PIN de demonstração **1234**.
+**Alpha 0.1 instalável:** o protótipo agora roda como aplicativo no celular e no PC, inclusive sem internet. Veja como instalar em [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md).
+
+**Como testar:** clique no botão **"Simular 10 min jogando (demo)"** em qualquer jogo, algumas vezes seguidas, até o limite diário estourar — a tela de bloqueio da criança aparece automaticamente. Para ver o painel do responsável, toque em **Responsável** na barra inferior e digite o PIN de demonstração **1234**.
 
 [Abrir o app interativo →](https://claude.ai/artifact/Eg3eVjQiXVJ1xnXvphdsYb)
 {% endhint %}
@@ -15,6 +17,8 @@ Protótipo funcional do **Guardião Gamer**, o app de controle parental para jog
 * **Painel do responsável protegido por PIN** — permite ajustar o limite diário de cada jogo e redefinir o tempo usado hoje.
 * **Relatório semanal de uso** — gráfico dos últimos 7 dias, total e média diária, dias em que o limite foi batido, e o jogo mais jogado da semana.
 * **Cadastro de novos jogos/apps** — tela para adicionar um jogo à lista monitorada com ícone e limite diário.
+* **Instalável e offline (alpha 0.1)** — roda como aplicativo no celular e no PC e continua funcionando sem internet depois da primeira abertura.
+* **Dados salvos no aparelho** — jogos e limites persistem ao fechar o app; a cada novo dia o tempo usado é zerado. O painel do responsável tem o botão "Restaurar dados de exemplo" para recomeçar a demonstração.
 
 {% tabs %}
 {% tab title="🏠 Início" %}
@@ -50,7 +54,7 @@ O painel do responsável fica atrás de um PIN de 4 dígitos, para a criança n�
 {% tab title="⚙️ Painel do responsável" %}
 **Ajustar limites e ver dispositivos**
 
-Depois do PIN, o responsável pode alterar o limite diário de cada jogo individualmente, redefinir o tempo usado no dia (útil para esta demo) e ver qual dispositivo está sendo monitorado. A sincronização remota entre o celular da criança e o app do responsável em outro aparelho é a próxima etapa (v2) — nesta versão os dados são locais e de exemplo.
+Depois do PIN, o responsável pode alterar o limite diário de cada jogo individualmente, zerar o tempo usado no dia (útil para esta demo), restaurar os dados de exemplo e ver qual dispositivo está sendo monitorado. A sincronização remota entre o celular da criança e o app do responsável em outro aparelho é a próxima etapa (v2) — nesta versão os dados são locais e de exemplo.
 {% endtab %}
 {% endtabs %}
 
@@ -58,8 +62,8 @@ Depois do PIN, o responsável pode alterar o limite diário de cada jogo individ
 
 * **Cores primárias (M3):** roxo `#6750A4` (primary) e `#D0BCFF` (primary container)
 * **Cores secundárias (M3):** verde `#386A20` (secondary) e `#9DD47E` (secondary container)
-* **Tipografia:** Roboto / Roboto Flex, seguindo a escala tipográfica do Material Design 3
-* **Ícones:** Material Symbols Outlined
+* **Tipografia:** Roboto Flex / Roboto quando instaladas no aparelho, com a fonte do sistema como reserva (o app não depende de internet)
+* **Ícones:** conjunto Material embutido no app em SVG (funciona offline)
 * **Componentes:** cards com cantos arredondados, navegação inferior, barras de progresso e badges de status, seguindo os estados (filled, tonal) do M3
 
 ## Experiência completa (app interativo)

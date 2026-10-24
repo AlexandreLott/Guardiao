@@ -17,10 +17,14 @@ Este espaço é o diário técnico do projeto, conforme pede a ficha de inscriç
 
 ## Onde começar
 
-* Proposta do Projeto — os 16 itens da proposta (problema, público, funcionalidades, ética etc.)
-* Registro de Uso de IA — log vivo de ferramentas, prompts e resultados usados pelo grupo
-* Protótipo — Guardião Gamer — telas navegáveis e app interativo de demonstração
+* [Proposta do Projeto](proposta-do-projeto.md) — os 16 itens da proposta (problema, público, funcionalidades, ética etc.)
+* [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md) — como instalar o app no celular e no PC, roteiro da demonstração e checklist
+* [Protótipo — Guardião Gamer](prototipo-guardiao-gamer.md) — telas navegáveis e app interativo de demonstração
+* [Auditoria do Projeto](auditoria-do-projeto-24-10-2026.md) — o que foi revisado, corrigido e o que ainda está em aberto
+* [Registro de Uso de IA](registro-de-uso-de-ia.md) — log vivo de ferramentas, prompts e resultados usados pelo grupo
 
 ## Sobre o projeto
 
 Ferramenta que ajuda pais e responsáveis a definir e aplicar limites de tempo de tela para jogos eletrônicos no computador e no celular dos filhos, com relatório de uso e um painel de acompanhamento — sem depender de cada jogo ter seu próprio sistema de controle parental.
+
+Código e documentação em PDF: [repositório no GitHub](https://github.com/AlexandreLott/Bet-Blocker) (o nome "Bet-Blocker" vem do projeto anterior).
