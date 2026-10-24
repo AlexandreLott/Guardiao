@@ -28,13 +28,14 @@ Auditoria feita em **24/10/2026** sobre o GitBook, o protótipo e os arquivos do
 | O PDF e o README estavam com data de 06/10 e sem guia de instalação | Atualizados nesta data, com o guia e esta auditoria |
 | O Registro de Uso de IA não tinha as linhas de 06/10 e de 24/10 no GitBook | Linhas adicionadas (somente acréscimo, nada apagado) |
 | A seção "Onde começar" não levava ao guia de instalação | Link adicionado |
-| O repositório não recebe arquivos pela sessão da IA (credencial do GitHub inválida) | **Pendente:** envio manual, no passo 0 do guia. As páginas do GitBook sincronizam sozinhas com a pasta `documentation/` do repositório |
-| O link público do alpha ainda não existe | **Pendente:** depende do envio e de ligar o GitHub Pages (passo 0) |
+| O repositório principal não recebia arquivos pela sessão da IA (credencial do GitHub inválida) | **Resolvido em 24/10:** README, pastas `app/`, `docs/` e `downloads/` enviadas pelo navegador já logado. As páginas do GitBook sincronizam sozinhas com a pasta `documentation/` |
+| O link público do alpha não existia (o repositório principal é privado e o Pages não funciona nele) | **Resolvido em 24/10:** repositório público separado (`guardiao-gamer-alpha`) com GitHub Pages ligado |
 
 ## Pontos em aberto para o grupo decidir
 
 * **Nome do produto:** "Guardião Gamer" ainda é proposta e precisa ser confirmado pelo grupo.
 * **Tema:** o grupo ainda precisa validar coletivamente a mudança de tema.
+* **Repositório principal privado:** o README traz nomes, RAs e e-mails dos integrantes, então ele deve continuar privado (ou ser revisado antes de qualquer publicação).
 * **Nome do repositório e do site:** continuam como "Bet-Blocker" (e `bet-blocker-docs`). Renomear muda o endereço do GitHub Pages, então vale deixar para depois da demonstração.
 * **Projeto Flutter antigo (Bet Blocker):** obsoleto e nunca compilado por completo. Não foi incluído no repositório.
 * **Protótipo no Claude Artifact:** o link é privado e só abre na conta de quem o publicou. Para o grupo e a banca, use o link do alpha.
