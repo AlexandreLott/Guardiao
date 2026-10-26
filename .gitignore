@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+*.iml
+.idea/
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/gradlew*
+**/android/gradle/wrapper/gradle-wrapper.jar
+**/android/captures/
+**/android/key.properties
+*.jks
+*.keystore
+# Segredos e configuração local
+.env
+*.env
+google-services.json
+GoogleService-Info.plist
+# Node (testes das regras)
+node_modules/
