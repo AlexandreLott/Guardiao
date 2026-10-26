@@ -18,7 +18,8 @@ Este espaço é o diário técnico do projeto, conforme pede a ficha de inscriç
 ## Onde começar
 
 * [Proposta do Projeto](proposta-do-projeto.md) — os 16 itens da proposta (problema, público, funcionalidades, ética etc.)
-* [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md) — como instalar o app no celular e no PC, roteiro da demonstração e checklist
+* [Implementação dos apps (marco 1)](implementacao-dos-apps-marco-1.md) — os dois aplicativos (filho e responsável): o que já funciona, o que falta e o que ainda não foi testado
+* [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md) — como instalar o app de demonstração no celular e no PC, roteiro e checklist
 * [Protótipo — Guardião Gamer](prototipo-guardiao-gamer.md) — telas navegáveis e app interativo de demonstração
 * [Auditoria do Projeto](auditoria-do-projeto-24-10-2026.md) — o que foi revisado, corrigido e o que ainda está em aberto
 * [Registro de Uso de IA](registro-de-uso-de-ia.md) — log vivo de ferramentas, prompts e resultados usados pelo grupo
@@ -26,5 +27,7 @@ Este espaço é o diário técnico do projeto, conforme pede a ficha de inscriç
 ## Sobre o projeto
 
 Ferramenta que ajuda pais e responsáveis a definir e aplicar limites de tempo de tela para jogos eletrônicos no computador e no celular dos filhos, com relatório de uso e um painel de acompanhamento — sem depender de cada jogo ter seu próprio sistema de controle parental.
+
+O produto tem **dois aplicativos**, definidos em reunião com o orientador: um fica no celular ou computador do filho e mostra o tempo restante de cada aplicativo; o outro fica no celular do responsável, que vê os aplicativos instalados no aparelho do filho, acompanha o tempo de tela de cada um e pode bloquear o uso por tempo.
 
 Código e documentação em PDF: [repositório no GitHub](https://github.com/AlexandreLott/Bet-Blocker) (o nome "Bet-Blocker" vem do projeto anterior).
