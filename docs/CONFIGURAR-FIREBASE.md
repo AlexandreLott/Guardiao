@@ -1,0 +1,65 @@
+# Configurar o Firebase
+
+Leva cerca de 15 minutos e usa o plano gratuito (Spark).
+
+## 1. Criar o projeto
+
+1. Entre em https://console.firebase.google.com com a conta do grupo e crie o projeto **guardiao-gamer** (pode desligar o Google Analytics).
+2. Em **Build → Authentication → Sign-in method**, ative **E-mail/senha** e **Anônimo**.
+3. Em **Build → Firestore Database**, crie o banco em **modo de produção** (região `southamerica-east1`, São Paulo).
+4. Em **Firestore → Regras**, cole o conteúdo de `firebase/firestore.rules` e publique.
+
+## 2. Registrar os apps
+
+Em **Configurações do projeto → Seus apps**, registre:
+
+| App | Plataforma | ID do pacote |
+| --- | --- | --- |
+| Responsável | Android | `br.edu.guardiaogamer.guardiao_parent` |
+| Filho (celular) | Android | `br.edu.guardiaogamer.guardiao_child` |
+| Filho (Windows) | **Web** | qualquer apelido (o Windows usa a configuração de um app web) |
+
+Cada app tem um **App ID** próprio (`1:123456789:android:abc...`). A **chave de API**, o **ID do projeto** e o **ID do remetente** (messagingSenderId) são os mesmos nos três.
+
+> Não é preciso baixar `google-services.json`: o app lê as chaves por `--dart-define`.
+
+## 3. Rodar
+
+```
+# Responsável (Android)
+cd apps/parent
+flutter run \
+  --dart-define=FIREBASE_API_KEY=<chave> \
+  --dart-define=FIREBASE_APP_ID=<app id do responsável> \
+  --dart-define=FIREBASE_PROJECT_ID=guardiao-gamer \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID=<remetente>
+
+# Filho (Android ou Windows)
+cd apps/child
+flutter run -d windows \
+  --dart-define=FIREBASE_API_KEY=<chave> \
+  --dart-define=FIREBASE_APP_ID=<app id do filho (ou do app web, no Windows)> \
+  --dart-define=FIREBASE_PROJECT_ID=guardiao-gamer \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID=<remetente>
+```
+
+No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para desktop com C++". O primeiro build baixa o SDK C++ do Firebase e demora.
+
+## 4. Testar o pareamento
+
+1. No app do responsável, crie a conta e toque em **Adicionar aparelho**: aparece um código como `K7M2-9QXA`.
+2. No app do filho, digite o código e toque em **Vincular**.
+3. O responsável vê o aparelho entrar na lista e, em segundos, a lista de aplicativos.
+4. No app do responsável, toque em um aplicativo, defina um limite ou bloqueio e confira no app do filho.
+
+## Problemas comuns
+
+- **"Esse tipo de login não está ativado"**: ative E-mail/senha e Anônimo no passo 1.
+- **"Não foi possível usar esse código"**: o código expira em 10 minutos e vale uma vez. Gere outro. Se persistir, confira se as regras do passo 1 foram publicadas.
+- **A lista de apps não chega**: abra o app do filho com internet; ele envia a lista ao abrir e a cada 6 horas.
+
+## Antes de ir para produção (não faz parte do marco 1)
+
+- Ativar o **App Check** para impedir o uso da API por apps de terceiros.
+- Definir alertas de orçamento no Google Cloud.
+- Assinar o app com chave própria (hoje o build de release usa a chave de debug).
