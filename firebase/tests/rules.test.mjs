@@ -7,7 +7,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch,
-  collection, getDocs, Timestamp, serverTimestamp,
+  collection, getDocs, query, where, Timestamp, serverTimestamp,
 } from 'firebase/firestore';
 
 let env;
@@ -214,6 +214,64 @@ test('outro responsável não define regras', async () => {
   await seedDevice();
   await assertFails(setDoc(doc(parentDb(OTHER_PARENT), 'devices', CHILD, 'rules', 'a'), { dailyLimitMinutes: 10, blocked: false }));
 });
+// ---------- rótulo do responsável no código ----------
+test('código pode levar o e-mail do responsável escondido', async () => {
+  await assertSucceeds(setDoc(doc(parentDb(), 'pairings', CODE),
+    { parentUid: PARENT, parentLabel: 'ma***@exemplo.com', expiresAt: minutes(10), used: false }));
+});
+test('rótulo do responsável que não é texto ou é enorme é recusado', async () => {
+  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
+    { parentUid: PARENT, parentLabel: 42, expiresAt: minutes(10), used: false }));
+  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
+    { parentUid: PARENT, parentLabel: 'x'.repeat(81), expiresAt: minutes(10), used: false }));
+});
+test('o filho vincula normalmente quando o código tem rótulo', async () => {
+  await seedPairing({ parentLabel: 'ma***@exemplo.com' });
+  await assertSucceeds(claimBatch(childDb()));
+});
+
+// ---------- tempo de uso ----------
+const usageDoc = (db, id = '2026-11-08_com.roblox.client') =>
+  doc(db, 'devices', CHILD, 'usage', id);
+const usage = (extra = {}) => ({
+  day: '2026-11-08', appId: 'com.roblox.client', minutes: 42,
+  updatedAt: serverTimestamp(), ...extra,
+});
+
+test('aparelho grava o próprio uso; o responsável lê', async () => {
+  await seedDevice();
+  await assertSucceeds(setDoc(usageDoc(childDb()), usage()));
+  await assertSucceeds(getDoc(usageDoc(parentDb())));
+  await assertSucceeds(getDocs(query(collection(parentDb(), 'devices', CHILD, 'usage'),
+    where('day', '>=', '2026-11-01'))));
+});
+test('responsável não escreve o uso do filho', async () => {
+  await seedDevice();
+  await assertFails(setDoc(usageDoc(parentDb()), usage()));
+});
+test('aparelho não grava uso em outro aparelho', async () => {
+  await seedDevice();
+  await assertFails(setDoc(usageDoc(childDb(CHILD2)), usage()));
+});
+test('outro responsável não lê o uso', async () => {
+  await seedDevice();
+  await seed((db) => setDoc(usageDoc(db), { day: '2026-11-08', appId: 'x', minutes: 1 }));
+  await assertFails(getDoc(usageDoc(parentDb(OTHER_PARENT))));
+});
+test('uso com minutos inválidos ou campos extras é recusado', async () => {
+  await seedDevice();
+  await assertFails(setDoc(usageDoc(childDb()), usage({ minutes: -1 })));
+  await assertFails(setDoc(usageDoc(childDb()), usage({ minutes: 1441 })));
+  await assertFails(setDoc(usageDoc(childDb()), usage({ minutes: 1.5 })));
+  await assertFails(setDoc(usageDoc(childDb()), usage({ day: '8/11' })));
+  await assertFails(setDoc(usageDoc(childDb()), usage({ extra: true })));
+});
+test('responsável limpa o uso ao desvincular', async () => {
+  await seedDevice();
+  await seed((db) => setDoc(usageDoc(db), { day: '2026-11-08', appId: 'x', minutes: 1 }));
+  await assertSucceeds(deleteDoc(usageDoc(parentDb())));
+});
+
 test('coleções desconhecidas são negadas', async () => {
   await assertFails(setDoc(doc(parentDb(), 'segredos', 'x'), { a: 1 }));
 });

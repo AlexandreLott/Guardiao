@@ -148,6 +148,62 @@ void main() {
     });
   });
 
+  group('prévia do código', () {
+    test('mostra o e-mail do responsável escondido, sem queimar o código', () async {
+      final code = await parent.createPairingCode();
+      final preview = await child.previewPairing(code.code);
+      expect(preview.parentLabel, 'ma***@exemplo.com');
+      expect(preview.expiresAt, code.expiresAt);
+      // Ainda dá para vincular depois de olhar a prévia.
+      final device = await child.claimPairing(
+          code: code.code, deviceName: 'Celular', platform: DevicePlatform.android);
+      expect(device.parentUid, parent.currentUid);
+    });
+
+    test('recusa código desconhecido, usado ou expirado', () async {
+      await expectLater(child.previewPairing('AAAAAAAA'), throwsA(isA<PairingException>()));
+      final code = await parent.createPairingCode();
+      clock = clock.add(const Duration(minutes: 11));
+      await expectLater(child.previewPairing(code.code), throwsA(isA<PairingException>()));
+      clock = DateTime(2026, 10, 26, 9);
+      final fresh = await parent.createPairingCode();
+      await child.claimPairing(
+          code: fresh.code, deviceName: 'Celular', platform: DevicePlatform.android);
+      final other = MemoryBackend(cloud);
+      await other.signInChild();
+      await expectLater(other.previewPairing(fresh.code), throwsA(isA<PairingException>()));
+    });
+  });
+
+  group('tempo de uso', () {
+    test('o filho envia, o responsável lê a partir do dia pedido', () async {
+      final device = await pair();
+      await child.reportUsage('2026-10-25', {'com.roblox.client': 30});
+      await child.reportUsage('2026-10-26', {'com.roblox.client': 45, 'com.whatsapp': 5});
+      final all = await parent.watchUsage(device.id, sinceDay: '2026-10-25').first;
+      expect(all, hasLength(3));
+      final today = await parent.watchUsage(device.id, sinceDay: '2026-10-26').first;
+      expect(today.map((e) => e.minutes), [45, 5]);
+      expect(today.first.appId, 'com.roblox.client');
+    });
+
+    test('um novo envio no mesmo dia substitui o anterior e limita a 24 h', () async {
+      final device = await pair();
+      await child.reportUsage('2026-10-26', {'a': 10});
+      await child.reportUsage('2026-10-26', {'a': 99999});
+      final list = await parent.watchUsage(device.id, sinceDay: '2026-10-26').first;
+      expect(list.single.minutes, 1440);
+    });
+
+    test('outro responsável não consegue ver o uso', () async {
+      final device = await pair();
+      final other = MemoryBackend(cloud);
+      await other.registerParent('pai@exemplo.com', 'segredo2');
+      expect(() => other.watchUsage(device.id, sinceDay: '2026-10-01'),
+          throwsA(isA<PairingException>()));
+    });
+  });
+
   test('touch atualiza o último contato e o status online', () async {
     final device = await pair();
     clock = clock.add(const Duration(hours: 2));

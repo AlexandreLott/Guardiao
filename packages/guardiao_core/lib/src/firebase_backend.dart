@@ -8,10 +8,11 @@ import 'pairing.dart';
 /// Implementação de produção, em cima de Firebase Auth e Cloud Firestore.
 ///
 /// Estrutura no Firestore:
-/// - `pairings/{codigo}`: parentUid, expiresAt, used, deviceId
+/// - `pairings/{codigo}`: parentUid, parentLabel, expiresAt, used, deviceId
 /// - `devices/{deviceId}`: parentUid, name, platform, pairedAt, lastSeen, pairingCode
 /// - `devices/{deviceId}/apps/{appId}`: name, packageName
 /// - `devices/{deviceId}/rules/{appId}`: dailyLimitMinutes, blocked
+/// - `devices/{deviceId}/usage/{dia}_{appId}`: day, appId, minutes, updatedAt
 class FirebaseBackend implements GuardianBackend {
   FirebaseBackend({FirebaseAuth? auth, FirebaseFirestore? firestore})
       : _auth = auth ?? FirebaseAuth.instance,
@@ -91,6 +92,7 @@ class FirebaseBackend implements GuardianBackend {
           if (snap.exists) return false;
           tx.set(ref, {
             'parentUid': uid,
+            'parentLabel': maskEmail(_auth.currentUser?.email),
             'expiresAt': Timestamp.fromDate(expires),
             'used': false,
           });
@@ -132,7 +134,7 @@ class FirebaseBackend implements GuardianBackend {
   Future<void> removeDevice(String deviceId) async {
     final ref = _db.collection('devices').doc(deviceId);
     // Subcoleções não são apagadas junto com o documento: limpamos antes.
-    for (final sub in ['apps', 'rules']) {
+    for (final sub in ['apps', 'rules', 'usage']) {
       final docs = await ref.collection(sub).get();
       for (var i = 0; i < docs.docs.length; i += 400) {
         final batch = _db.batch();
@@ -164,7 +166,67 @@ class FirebaseBackend implements GuardianBackend {
     });
   }
 
+  @override
+  Stream<List<UsageEntry>> watchUsage(String deviceId, {required String sinceDay}) =>
+      _db
+          .collection('devices')
+          .doc(deviceId)
+          .collection('usage')
+          .where('day', isGreaterThanOrEqualTo: sinceDay)
+          .snapshots()
+          .map((q) {
+        final list = q.docs.map((d) => UsageEntry.fromMap(d.data())).toList()
+          ..sort((a, b) {
+            final byDay = a.day.compareTo(b.day);
+            return byDay != 0 ? byDay : a.appId.compareTo(b.appId);
+          });
+        return list;
+      });
+
   // ---- App do filho ----
+
+  /// Lê o código e confere se ainda pode ser usado.
+  Future<Map<String, dynamic>> _readOpenPairing(
+      DocumentReference<Map<String, dynamic>> ref) async {
+    final snap = await ref.get();
+    final data = snap.data();
+    if (!snap.exists || data == null) {
+      throw const PairingException('Código não encontrado. Confira e tente de novo.');
+    }
+    if (data['used'] == true) {
+      throw const PairingException(
+          'Esse código já foi usado. Peça um novo ao responsável.');
+    }
+    final expires = (data['expiresAt'] as Timestamp).toDate();
+    if (!DateTime.now().isBefore(expires)) {
+      throw const PairingException('Esse código expirou. Peça um novo ao responsável.');
+    }
+    return data;
+  }
+
+  @override
+  Future<PairingPreview> previewPairing(String code) async {
+    _requireUid();
+    final normalized = normalizePairingCode(code);
+    if (!isValidPairingCode(normalized)) {
+      throw const PairingException('O código tem 8 letras e números.');
+    }
+    try {
+      final data = await _readOpenPairing(_db.collection('pairings').doc(normalized));
+      return PairingPreview(
+        parentLabel: (data['parentLabel'] as String?) ?? 'um responsável',
+        expiresAt: (data['expiresAt'] as Timestamp).toDate(),
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        throw const PairingException('Sem conexão com a internet.');
+      }
+      if (e.code == 'permission-denied') {
+        throw const PairingException('Não foi possível ler esse código.');
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<PairedDevice> claimPairing({
@@ -181,21 +243,7 @@ class FirebaseBackend implements GuardianBackend {
     final deviceRef = _db.collection('devices').doc(uid);
 
     try {
-      final snap = await pairingRef.get();
-      final data = snap.data();
-      if (!snap.exists || data == null) {
-        throw const PairingException(
-            'Código não encontrado. Confira e tente de novo.');
-      }
-      if (data['used'] == true) {
-        throw const PairingException(
-            'Esse código já foi usado. Peça um novo ao responsável.');
-      }
-      final expires = (data['expiresAt'] as Timestamp).toDate();
-      if (!DateTime.now().isBefore(expires)) {
-        throw const PairingException(
-            'Esse código expirou. Peça um novo ao responsável.');
-      }
+      final data = await _readOpenPairing(pairingRef);
       final parentUid = data['parentUid'] as String;
 
       // Os dois documentos mudam juntos: ou o aparelho é vinculado e o
@@ -271,6 +319,35 @@ class FirebaseBackend implements GuardianBackend {
       }
       await batch.commit();
     }
+  }
+
+  /// Último valor enviado por dia+app, para não repetir escritas iguais.
+  final _lastUsage = <String, int>{};
+
+  @override
+  Future<void> reportUsage(String day, Map<String, int> minutesByApp) async {
+    final uid = _requireUid();
+    final col = _db.collection('devices').doc(uid).collection('usage');
+    final changed = <String, int>{};
+    minutesByApp.forEach((appId, minutes) {
+      final value = minutes.clamp(0, 1440);
+      final key = '${day}_${safeId(appId)}';
+      if (_lastUsage[key] != value) changed[appId] = value;
+    });
+    for (var i = 0; i < changed.length; i += 400) {
+      final batch = _db.batch();
+      for (final entry in changed.entries.skip(i).take(400)) {
+        final key = '${day}_${safeId(entry.key)}';
+        batch.set(col.doc(key), {
+          'day': day,
+          'appId': entry.key,
+          'minutes': entry.value,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    }
+    changed.forEach((appId, value) => _lastUsage['${day}_${safeId(appId)}'] = value);
   }
 
   @override

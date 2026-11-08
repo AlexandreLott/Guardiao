@@ -26,7 +26,15 @@ abstract class GuardianBackend {
   Stream<Map<String, AppRule>> watchRules(String deviceId);
   Future<void> setRule(String deviceId, AppRule rule);
 
+  /// Tempo de uso por aplicativo a partir do dia [sinceDay] (`2026-11-08`).
+  Stream<List<UsageEntry>> watchUsage(String deviceId, {required String sinceDay});
+
   // ---- App do filho ----
+
+  /// Mostra a quem pertence um código antes de aceitá-lo.
+  /// Lança [PairingException] se o código não existe, já foi usado ou expirou.
+  Future<PairingPreview> previewPairing(String code);
+
   Future<PairedDevice> claimPairing({
     required String code,
     required String deviceName,
@@ -36,6 +44,10 @@ abstract class GuardianBackend {
   /// `null` enquanto o aparelho não está vinculado (ou foi desvinculado).
   Stream<PairedDevice?> watchOwnDevice();
   Future<void> syncInstalledApps(List<InstalledApp> apps);
+
+  /// Envia o tempo usado hoje, por aplicativo (em minutos). Só escreve o que
+  /// mudou desde o último envio.
+  Future<void> reportUsage(String day, Map<String, int> minutesByApp);
   Stream<List<InstalledApp>> watchOwnApps();
   Stream<Map<String, AppRule>> watchOwnRules();
 

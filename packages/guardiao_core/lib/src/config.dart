@@ -46,37 +46,30 @@ class BackendSetup {
   final bool isDemo;
 }
 
-/// Código fixo usado no modo demonstração do app do filho.
+/// Código fixo usado no modo demonstração para vincular um aparelho do filho.
 const demoPairingCode = 'DEMX2345';
 
+/// Conta do responsável usada no modo demonstração.
+const demoParentEmail = 'demo@guardiaogamer.app';
+const demoParentPassword = 'demo1234';
+
 /// Liga o Firebase quando configurado; senão usa a nuvem em memória.
-Future<BackendSetup> createBackend({required bool seedParentDevice}) async {
+Future<BackendSetup> createBackend() async {
   if (AppConfig.useFirebase) {
     await Firebase.initializeApp(options: AppConfig.firebaseOptions);
     return BackendSetup(FirebaseBackend(), isDemo: false);
   }
   final cloud = MemoryCloud();
   final backend = MemoryBackend(cloud);
-  if (seedParentDevice) {
-    await _seedDemoFamily(cloud);
-  } else {
-    await _seedDemoPairing(cloud);
-  }
+  await _seedDemo(cloud);
   return BackendSetup(backend, isDemo: true);
 }
 
-/// Demonstração do app do filho: já existe um responsável com um código.
-Future<void> _seedDemoPairing(MemoryCloud cloud) async {
+/// Dados de exemplo: um responsável com um aparelho já vinculado (cheio de
+/// apps, com algumas regras) e um código livre para vincular outro aparelho.
+Future<void> _seedDemo(MemoryCloud cloud) async {
   final parent = MemoryBackend(cloud);
-  await parent.registerParent('demo@guardiaogamer.app', 'demo1234');
-  cloud.addPairing(demoPairingCode, parent.currentUid!,
-      cloud.now().add(const Duration(days: 1)));
-}
-
-/// Demonstração do app do responsável: já existe um aparelho com apps.
-Future<void> _seedDemoFamily(MemoryCloud cloud) async {
-  final parent = MemoryBackend(cloud);
-  await parent.registerParent('demo@guardiaogamer.app', 'demo1234');
+  await parent.registerParent(demoParentEmail, demoParentPassword);
   final code = await parent.createPairingCode();
   final child = MemoryBackend(cloud);
   await child.signInChild();
@@ -98,4 +91,22 @@ Future<void> _seedDemoFamily(MemoryCloud cloud) async {
       const AppRule(appId: 'com.roblox.client', dailyLimitMinutes: 60));
   await parent.setRule(
       child.currentUid!, const AppRule(appId: 'com.dts.freefireth', blocked: true));
+  // Uma semana de uso de exemplo, para o painel do responsável não ficar vazio.
+  final today = cloud.now();
+  const week = [
+    {'com.roblox.client': 95, 'com.mojang.minecraftpe': 40, 'com.whatsapp': 20},
+    {'com.roblox.client': 70, 'com.mojang.minecraftpe': 55, 'com.android.chrome': 25},
+    {'com.roblox.client': 120, 'com.epicgames.fortnite': 30, 'com.whatsapp': 15},
+    {'com.roblox.client': 55, 'com.google.android.youtube': 45},
+    {'com.roblox.client': 80, 'com.mojang.minecraftpe': 60, 'com.whatsapp': 10},
+    {'com.roblox.client': 60, 'com.mojang.minecraftpe': 35},
+    {'com.roblox.client': 45, 'com.mojang.minecraftpe': 20, 'com.whatsapp': 12},
+  ];
+  for (var i = 0; i < week.length; i++) {
+    final day = dayKey(DateTime(today.year, today.month, today.day - (week.length - 1 - i)));
+    await child.reportUsage(day, week[i]);
+  }
+  // Segundo código, fixo, para quem quiser vincular o próprio aparelho.
+  cloud.addPairing(demoPairingCode, parent.currentUid!,
+      cloud.now().add(const Duration(days: 1)));
 }

@@ -22,7 +22,15 @@ class MemoryCloud {
 
   /// Registra um código de pareamento direto (usado no modo demonstração).
   void addPairing(String code, String parentUid, DateTime expiresAt) =>
-      pairings[code] = _Pairing(parentUid, expiresAt);
+      pairings[code] = _Pairing(parentUid, expiresAt, emailOf(parentUid));
+
+  /// E-mail da conta com esse uid (ou `null`).
+  String? emailOf(String uid) {
+    for (final entry in accounts.entries) {
+      if (entry.value.uid == uid) return entry.key;
+    }
+    return null;
+  }
 
   void notify() => _changes.add(null);
 
@@ -37,9 +45,11 @@ class MemoryCloud {
 }
 
 class _Pairing {
-  _Pairing(this.parentUid, this.expiresAt);
+  _Pairing(this.parentUid, this.expiresAt, [String? email])
+      : parentLabel = maskEmail(email);
   final String parentUid;
   final DateTime expiresAt;
+  final String parentLabel;
   bool used = false;
   String? deviceId;
 }
@@ -49,6 +59,7 @@ class _Device {
   PairedDevice info;
   final apps = <String, InstalledApp>{};
   final rules = <String, AppRule>{};
+  final usage = <String, UsageEntry>{};
 }
 
 class MemoryBackend implements GuardianBackend {
@@ -122,7 +133,7 @@ class MemoryBackend implements GuardianBackend {
       code = generatePairingCode(cloud.random);
     } while (cloud.pairings.containsKey(code));
     final expires = cloud.now().add(pairingCodeTtl);
-    cloud.pairings[code] = _Pairing(uid, expires);
+    cloud.pairings[code] = _Pairing(uid, expires, cloud.emailOf(uid));
     return PairingCode(code: code, parentUid: uid, expiresAt: expires);
   }
 
@@ -178,17 +189,26 @@ class MemoryBackend implements GuardianBackend {
     cloud.notify();
   }
 
+  @override
+  Stream<List<UsageEntry>> watchUsage(String deviceId, {required String sinceDay}) {
+    _ownedDevice(deviceId);
+    return cloud.watch(() {
+      final list = [
+        for (final e in cloud.devices[deviceId]?.usage.values ?? const <UsageEntry>[])
+          if (e.day.compareTo(sinceDay) >= 0) e,
+      ]..sort((a, b) {
+          final byDay = a.day.compareTo(b.day);
+          return byDay != 0 ? byDay : a.appId.compareTo(b.appId);
+        });
+      return list;
+    });
+  }
+
   // ---- filho ----
 
-  @override
-  Future<PairedDevice> claimPairing({
-    required String code,
-    required String deviceName,
-    required DevicePlatform platform,
-  }) async {
-    final uid = _requireUid();
-    final normalized = normalizePairingCode(code);
-    final pairing = cloud.pairings[normalized];
+  _Pairing _openPairing(String code) {
+    _requireUid();
+    final pairing = cloud.pairings[normalizePairingCode(code)];
     if (pairing == null) {
       throw const PairingException('Código não encontrado. Confira e tente de novo.');
     }
@@ -198,6 +218,24 @@ class MemoryBackend implements GuardianBackend {
     if (!cloud.now().isBefore(pairing.expiresAt)) {
       throw const PairingException('Esse código expirou. Peça um novo ao responsável.');
     }
+    return pairing;
+  }
+
+  @override
+  Future<PairingPreview> previewPairing(String code) async {
+    final pairing = _openPairing(code);
+    return PairingPreview(
+        parentLabel: pairing.parentLabel, expiresAt: pairing.expiresAt);
+  }
+
+  @override
+  Future<PairedDevice> claimPairing({
+    required String code,
+    required String deviceName,
+    required DevicePlatform platform,
+  }) async {
+    final uid = _requireUid();
+    final pairing = _openPairing(code);
     pairing
       ..used = true
       ..deviceId = uid;
@@ -234,6 +272,16 @@ class MemoryBackend implements GuardianBackend {
     device.apps
       ..clear()
       ..addEntries(apps.map((a) => MapEntry(a.id, a)));
+    cloud.notify();
+  }
+
+  @override
+  Future<void> reportUsage(String day, Map<String, int> minutesByApp) async {
+    final device = _ownDevice();
+    minutesByApp.forEach((appId, minutes) {
+      final entry = UsageEntry(day: day, appId: appId, minutes: minutes.clamp(0, 1440));
+      device.usage['$day|$appId'] = entry;
+    });
     cloud.notify();
   }
 

@@ -56,4 +56,18 @@ void main() {
     expect(safeId('   '), 'app');
     expect(safeId('x' * 300), hasLength(120));
   });
+
+  test('maskEmail esconde o meio do endereço', () {
+    expect(maskEmail('joao.silva@gmail.com'), 'jo***@gmail.com');
+    expect(maskEmail('ab@x.com'), 'a***@x.com');
+    expect(maskEmail('a@x.com'), 'a***@x.com');
+    expect(maskEmail(null), 'um responsável');
+    expect(maskEmail('sem-arroba'), 'um responsável');
+    expect(maskEmail('@x.com'), 'um responsável');
+  });
+
+  test('dayKey completa com zeros', () {
+    expect(dayKey(DateTime(2026, 1, 5)), '2026-01-05');
+    expect(dayKey(DateTime(2026, 11, 28)), '2026-11-28');
+  });
 }

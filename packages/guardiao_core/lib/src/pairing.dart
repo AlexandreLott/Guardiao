@@ -34,3 +34,15 @@ String formatPairingCode(String code) {
   if (c.length != pairingCodeLength) return c;
   return '${c.substring(0, 4)}-${c.substring(4)}';
 }
+
+/// Esconde parte do e-mail para mostrá-lo ao filho: `joao.silva@gmail.com`
+/// vira `jo***@gmail.com`. Serve para o filho confirmar a quem está se
+/// vinculando, sem expor o endereço inteiro.
+String maskEmail(String? email) {
+  final value = (email ?? '').trim();
+  final at = value.indexOf('@');
+  if (at <= 0) return 'um responsável';
+  final local = value.substring(0, at);
+  final shown = local.length <= 2 ? local.substring(0, 1) : local.substring(0, 2);
+  return '$shown***${value.substring(at)}';
+}

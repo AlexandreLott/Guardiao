@@ -123,6 +123,46 @@ class PairedDevice {
       lastSeen != null && now.difference(lastSeen!) < const Duration(minutes: 30);
 }
 
+/// Data local no formato `2026-11-08`, usada para agrupar o uso por dia.
+String dayKey(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
+
+/// Tempo de uso de um aplicativo em um dia, enviado pelo aparelho do filho.
+class UsageEntry {
+  const UsageEntry({required this.day, required this.appId, required this.minutes});
+
+  final String day;
+  final String appId;
+  final int minutes;
+
+  factory UsageEntry.fromMap(Map<String, dynamic> data) => UsageEntry(
+        day: (data['day'] as String?) ?? '',
+        appId: (data['appId'] as String?) ?? '',
+        minutes: ((data['minutes'] as num?) ?? 0).toInt(),
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is UsageEntry &&
+      other.day == day &&
+      other.appId == appId &&
+      other.minutes == minutes;
+
+  @override
+  int get hashCode => Object.hash(day, appId, minutes);
+}
+
+/// O que o aparelho do filho pode ver de um código antes de aceitá-lo.
+class PairingPreview {
+  const PairingPreview({required this.parentLabel, required this.expiresAt});
+
+  /// E-mail do responsável com parte escondida, como `jo***@gmail.com`.
+  final String parentLabel;
+  final DateTime expiresAt;
+}
+
 /// Código temporário gerado pelo responsável para vincular um aparelho.
 class PairingCode {
   const PairingCode({

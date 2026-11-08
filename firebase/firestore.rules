@@ -32,7 +32,10 @@ service cloud.firestore {
 
       // O responsável cria o código em nome dele.
       allow create: if isParentAccount()
-        && request.resource.data.keys().hasOnly(['parentUid', 'expiresAt', 'used'])
+        && request.resource.data.keys().hasOnly(['parentUid', 'parentLabel', 'expiresAt', 'used'])
+        && (!('parentLabel' in request.resource.data)
+            || (request.resource.data.parentLabel is string
+                && request.resource.data.parentLabel.size() <= 80))
         && request.resource.data.parentUid == request.auth.uid
         && request.resource.data.used == false
         && request.resource.data.expiresAt is timestamp
@@ -90,6 +93,23 @@ service cloud.firestore {
           && request.resource.data.name is string
           && request.resource.data.name.size() <= 200;
         // O responsável pode limpar tudo ao desvincular o aparelho.
+        allow delete: if signedIn() && (request.auth.uid == deviceId || isParentOf(deviceId));
+      }
+
+      // Tempo de uso por dia e aplicativo: só o próprio aparelho escreve; o
+      // responsável lê. O id do documento é "{dia}_{appId}".
+      match /usage/{usageId} {
+        allow read: if signedIn()
+          && (request.auth.uid == deviceId || isParentOf(deviceId));
+        allow create, update: if signedIn() && request.auth.uid == deviceId
+          && request.resource.data.keys().hasOnly(['day', 'appId', 'minutes', 'updatedAt'])
+          && request.resource.data.day is string
+          && request.resource.data.day.size() == 10
+          && request.resource.data.appId is string
+          && request.resource.data.appId.size() <= 120
+          && request.resource.data.minutes is int
+          && request.resource.data.minutes >= 0
+          && request.resource.data.minutes <= 1440;
         allow delete: if signedIn() && (request.auth.uid == deviceId || isParentOf(deviceId));
       }
 
