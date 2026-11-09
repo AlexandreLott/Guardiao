@@ -5,6 +5,8 @@ import 'package:guardiao/child/platform/installed_apps_source.dart';
 import 'package:guardiao/child/usage/usage_monitor.dart';
 import 'package:guardiao/qr/qr_scanner.dart';
 import 'package:guardiao/role/role.dart';
+import 'package:guardiao/watch/background_tasks.dart';
+import 'package:guardiao/watch/health_source.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
 /// Leitor de QR falso: em vez da câmera, o teste "lê" o texto que quiser.
@@ -49,6 +51,9 @@ Widget appFor(
   QrScanner? scanner,
   UsageMonitor? monitor,
   bool isDemo = false,
+  HealthSource? healthSource,
+  HealthStore? healthStore,
+  BackgroundTasks? background,
 }) => GuardiaoApp(
   backend: backend,
   roleStore: store ?? MemoryRoleStore(role),
@@ -57,6 +62,9 @@ Widget appFor(
   monitor: monitor ?? UnsupportedUsageMonitor(),
   initialRole: role,
   isDemo: isDemo,
+  healthSource: healthSource,
+  healthStore: healthStore,
+  background: background,
 );
 
 /// Desmonta a árvore para cancelar os temporizadores da sincronização.
@@ -67,3 +75,15 @@ Future<void> closeApp(WidgetTester tester) async =>
 String shownPairingCode(WidgetTester tester) => normalizePairingCode(
   tester.widget<Text>(find.byKey(const Key('pairingCode'))).data!,
 );
+
+/// Registra as chamadas de ligar/desligar a verificação em segundo plano.
+class RecordingBackground implements BackgroundTasks {
+  final calls = <String>[];
+
+  @override
+  Future<void> enable(DeviceRole role) async =>
+      calls.add('enable:${role.name}');
+
+  @override
+  Future<void> disable() async => calls.add('disable');
+}

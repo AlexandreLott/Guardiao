@@ -10,6 +10,8 @@ import 'role/role.dart';
 import 'role/role_screen.dart';
 import 'update/update_bar.dart';
 import 'update/update_controller.dart';
+import 'watch/background_tasks.dart';
+import 'watch/health_source.dart';
 
 /// O app inteiro: escolhe a função do aparelho no primeiro acesso e depois
 /// abre o lado do responsável ou o do filho.
@@ -24,6 +26,9 @@ class GuardiaoApp extends StatefulWidget {
     this.initialRole,
     this.isDemo = false,
     this.updates,
+    this.background,
+    this.healthSource,
+    this.healthStore,
   });
 
   final GuardianBackend backend;
@@ -37,6 +42,13 @@ class GuardiaoApp extends StatefulWidget {
   /// Aviso e instalação de versões novas (só no Android).
   final UpdateController? updates;
 
+  /// Verificação periódica em segundo plano (avisos de burla e falta de sinal).
+  final BackgroundTasks? background;
+
+  /// Leitura das proteções do aparelho do filho.
+  final HealthSource? healthSource;
+  final HealthStore? healthStore;
+
   @override
   State<GuardiaoApp> createState() => _GuardiaoAppState();
 }
@@ -44,8 +56,16 @@ class GuardiaoApp extends StatefulWidget {
 class _GuardiaoAppState extends State<GuardiaoApp> {
   late DeviceRole? _role = widget.initialRole;
 
+  @override
+  void initState() {
+    super.initState();
+    final role = _role;
+    if (role != null) widget.background?.enable(role);
+  }
+
   Future<void> _pick(DeviceRole role) async {
     await widget.roleStore.write(role);
+    await widget.background?.enable(role);
     if (mounted) setState(() => _role = role);
   }
 
@@ -54,6 +74,7 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
   Future<void> _changeRole() async {
     await widget.backend.signOut();
     await widget.roleStore.write(null);
+    await widget.background?.disable();
     if (mounted) setState(() => _role = null);
   }
 
@@ -80,6 +101,8 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
           backend: widget.backend,
           source: widget.source,
           monitor: widget.monitor,
+          healthSource: widget.healthSource,
+          healthStore: widget.healthStore,
           isDemo: widget.isDemo,
           onChangeRole: _changeRole,
         ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../../watch/child_watch.dart';
 import '../platform/installed_apps_source.dart';
 
 /// Mantém a nuvem em dia com o que há no aparelho: lista de apps e
@@ -10,9 +11,15 @@ class DeviceSync {
   DeviceSync(
     this.backend,
     this.source, {
+    this.health,
     this.appsEvery = const Duration(hours: 6),
     this.heartbeatEvery = const Duration(minutes: 10),
+    this.healthEvery = const Duration(minutes: 2),
   });
+
+  /// Confere as proteções e avisa o responsável do que foi retirado.
+  final HealthReporter? health;
+  final Duration healthEvery;
 
   final GuardianBackend backend;
   final InstalledAppsSource source;
@@ -21,6 +28,7 @@ class DeviceSync {
 
   Timer? _apps;
   Timer? _beat;
+  Timer? _health;
 
   final lastSync = StreamController<DateTime>.broadcast();
   final errors = StreamController<String>.broadcast();
@@ -29,6 +37,18 @@ class DeviceSync {
     unawaited(syncNow());
     _apps = Timer.periodic(appsEvery, (_) => unawaited(syncNow()));
     _beat = Timer.periodic(heartbeatEvery, (_) => unawaited(_touch()));
+    if (health != null) {
+      unawaited(_checkHealth());
+      _health = Timer.periodic(healthEvery, (_) => unawaited(_checkHealth()));
+    }
+  }
+
+  Future<void> _checkHealth() async {
+    try {
+      await health!.run();
+    } catch (_) {
+      // Sem internet agora; a próxima rodada tenta de novo.
+    }
   }
 
   Future<void> syncNow() async {
@@ -53,6 +73,7 @@ class DeviceSync {
   void dispose() {
     _apps?.cancel();
     _beat?.cancel();
+    _health?.cancel();
     lastSync.close();
     errors.close();
   }

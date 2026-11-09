@@ -315,6 +315,68 @@ test('responsável limpa o uso ao desvincular', async () => {
   await assertSucceeds(deleteDoc(usageDoc(parentDb())));
 });
 
+// ---------- avisos de burla e situação das proteções ----------
+const alertDoc = (db, id = 'a1') => doc(db, 'devices', CHILD, 'alerts', id);
+const alertData = (extra = {}) => ({ kind: 'admin_disabled', at: serverTimestamp(), seen: false, ...extra });
+const healthData = (extra = {}) => ({
+  usageAccess: true, overlay: true, notifications: true, admin: false,
+  monitorRunning: true, checkedAt: serverTimestamp(), ...extra,
+});
+
+test('aparelho cria aviso de burla; o responsável lê', async () => {
+  await seedDevice();
+  await assertSucceeds(setDoc(alertDoc(childDb()), alertData()));
+  await assertSucceeds(getDoc(alertDoc(parentDb())));
+  await assertSucceeds(getDocs(collection(parentDb(), 'devices', CHILD, 'alerts')));
+});
+test('aviso com tipo desconhecido, já visto, com data falsa ou campo extra é recusado', async () => {
+  await seedDevice();
+  await assertFails(setDoc(alertDoc(childDb()), alertData({ kind: 'qualquer' })));
+  await assertFails(setDoc(alertDoc(childDb()), alertData({ seen: true })));
+  await assertFails(setDoc(alertDoc(childDb()), alertData({ at: minutes(-600) })));
+  await assertFails(setDoc(alertDoc(childDb()), alertData({ extra: 1 })));
+});
+test('aparelho não cria aviso em outro aparelho; responsável não cria aviso', async () => {
+  await seedDevice();
+  await assertFails(setDoc(alertDoc(childDb(CHILD2)), alertData()));
+  await assertFails(setDoc(alertDoc(parentDb()), alertData()));
+});
+test('aparelho não lê, altera nem apaga avisos; outro responsável também não lê', async () => {
+  await seedDevice();
+  await seed((db) => setDoc(alertDoc(db), { kind: 'admin_disabled', at: Timestamp.now(), seen: false }));
+  await assertFails(getDoc(alertDoc(childDb())));
+  await assertFails(updateDoc(alertDoc(childDb()), { seen: true }));
+  await assertFails(deleteDoc(alertDoc(childDb())));
+  await assertFails(getDoc(alertDoc(parentDb(OTHER_PARENT))));
+});
+test('responsável marca como visto, mas não altera outros campos', async () => {
+  await seedDevice();
+  await seed((db) => setDoc(alertDoc(db), { kind: 'admin_disabled', at: Timestamp.now(), seen: false }));
+  await assertFails(updateDoc(alertDoc(parentDb()), { kind: 'overlay_revoked' }));
+  await assertFails(updateDoc(alertDoc(parentDb()), { seen: false }));
+  await assertSucceeds(updateDoc(alertDoc(parentDb()), { seen: true }));
+  await assertFails(updateDoc(alertDoc(parentDb(OTHER_PARENT)), { seen: true }));
+});
+test('responsável apaga avisos ao desvincular', async () => {
+  await seedDevice();
+  await seed((db) => setDoc(alertDoc(db), { kind: 'admin_disabled', at: Timestamp.now(), seen: false }));
+  await assertFails(deleteDoc(alertDoc(parentDb(OTHER_PARENT))));
+  await assertSucceeds(deleteDoc(alertDoc(parentDb())));
+});
+test('aparelho informa a situação das proteções junto com o último contato', async () => {
+  await seedDevice();
+  await assertSucceeds(updateDoc(doc(childDb(), 'devices', CHILD),
+    { lastSeen: serverTimestamp(), health: healthData() }));
+});
+test('situação das proteções inválida é recusada', async () => {
+  await seedDevice();
+  const ref = doc(childDb(), 'devices', CHILD);
+  await assertFails(updateDoc(ref, { health: healthData({ admin: 'sim' }) }));
+  await assertFails(updateDoc(ref, { health: healthData({ extra: true }) }));
+  await assertFails(updateDoc(ref, { health: 'tudo certo' }));
+  await assertFails(updateDoc(doc(parentDb(), 'devices', CHILD), { health: healthData() }));
+});
+
 test('coleções desconhecidas são negadas', async () => {
   await assertFails(setDoc(doc(parentDb(), 'segredos', 'x'), { a: 1 }));
 });

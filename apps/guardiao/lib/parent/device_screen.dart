@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import 'alerts_panel.dart';
 import 'rule_sheet.dart';
 import 'usage_summary.dart';
 
@@ -16,6 +17,15 @@ class DeviceScreen extends StatefulWidget {
 }
 
 class _DeviceScreenState extends State<DeviceScreen> {
+  late final Stream<PairedDevice> _live = widget.backend.watchDevices().map(
+    (list) => list.firstWhere(
+      (d) => d.id == widget.device.id,
+      orElse: () => widget.device,
+    ),
+  );
+  late final Stream<List<TamperAlert>> _alerts = widget.backend.watchAlerts(
+    widget.device.id,
+  );
   late final Stream<List<InstalledApp>> _apps = widget.backend.watchApps(
     widget.device.id,
   );
@@ -163,6 +173,21 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
                 return Column(
                   children: [
+                    StreamBuilder<PairedDevice>(
+                      stream: _live,
+                      initialData: widget.device,
+                      builder: (context, deviceSnap) =>
+                          StreamBuilder<List<TamperAlert>>(
+                            stream: _alerts,
+                            builder: (context, alertsSnap) => AlertsPanel(
+                              device: deviceSnap.data ?? widget.device,
+                              alerts: alertsSnap.data ?? const [],
+                              onMarkSeen: () => widget.backend.markAlertsSeen(
+                                widget.device.id,
+                              ),
+                            ),
+                          ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       child: Column(

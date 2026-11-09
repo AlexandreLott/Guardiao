@@ -50,4 +50,10 @@ class AndroidUsageMonitor implements UsageMonitor {
 
   @override
   Future<void> stop() => _channel.invokeMethod<void>('stop');
+
+  @override
+  Future<bool?> adminActive() => _channel.invokeMethod<bool>('adminActive');
+
+  @override
+  Future<void> requestAdmin() => _channel.invokeMethod<void>('requestAdmin');
 }

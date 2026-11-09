@@ -35,6 +35,13 @@ abstract class GuardianBackend {
   Stream<Map<String, AppRule>> watchRules(String deviceId);
   Future<void> setRule(String deviceId, AppRule rule);
 
+  /// Avisos de tentativa de burla enviados pelo aparelho do filho (os mais
+  /// recentes primeiro).
+  Stream<List<TamperAlert>> watchAlerts(String deviceId);
+
+  /// Marca todos os avisos do aparelho como vistos.
+  Future<void> markAlertsSeen(String deviceId);
+
   /// Tempo de uso por aplicativo a partir do dia [sinceDay] (`2026-11-08`).
   Stream<List<UsageEntry>> watchUsage(
     String deviceId, {
@@ -65,6 +72,12 @@ abstract class GuardianBackend {
 
   /// Avisa a nuvem que o aparelho está ativo.
   Future<void> touch();
+
+  /// Informa ao responsável que uma proteção foi retirada.
+  Future<void> reportAlert(AlertKind kind);
+
+  /// Guarda a situação atual das proteções (permissões, administrador).
+  Future<void> reportHealth(DeviceHealth health);
 }
 
 class AuthException implements Exception {

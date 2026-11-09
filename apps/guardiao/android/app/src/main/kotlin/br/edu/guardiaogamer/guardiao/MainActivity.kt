@@ -1,6 +1,7 @@
 package br.edu.guardiaogamer.guardiao
 
 import android.Manifest
+import android.app.admin.DevicePolicyManager
 import android.content.Intent
 import androidx.core.content.FileProvider
 import java.io.File
@@ -137,9 +138,26 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "usageToday" -> usageToday(result)
+                    "health" -> result.success(HealthSnapshot.write(this))
+                    "adminActive" -> result.success(HealthSnapshot.isAdminActive(this))
+                    "requestAdmin" -> {
+                        requestAdmin()
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /** Abre a tela do sistema que pede para ativar o administrador do dispositivo. */
+    private fun requestAdmin() {
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, HealthSnapshot.adminComponent(this))
+            .putExtra(
+                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                "Impede que o Guardião seja desinstalado sem avisar o responsável.",
+            )
+        startActivity(intent)
     }
 
     private fun monitorPermissions(): Map<String, Boolean> = mapOf(

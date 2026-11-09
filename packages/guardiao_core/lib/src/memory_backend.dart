@@ -70,6 +70,7 @@ class _Device {
   final apps = <String, InstalledApp>{};
   final rules = <String, AppRule>{};
   final usage = <String, UsageEntry>{};
+  final alerts = <TamperAlert>[];
 }
 
 class MemoryBackend implements GuardianBackend {
@@ -358,16 +359,66 @@ class MemoryBackend implements GuardianBackend {
   @override
   Future<void> touch() async {
     final device = _ownDevice();
-    final i = device.info;
-    device.info = PairedDevice(
-      id: i.id,
-      parentUid: i.parentUid,
-      name: i.name,
-      platform: i.platform,
-      pairedAt: i.pairedAt,
-      lastSeen: cloud.now(),
-      parentLabel: i.parentLabel,
+    device.info = device.info.copyWith(lastSeen: cloud.now());
+    cloud.notify();
+  }
+
+  @override
+  Future<void> reportAlert(AlertKind kind) async {
+    final device = _ownDevice();
+    device.alerts.add(
+      TamperAlert(
+        id: 'alert-${++cloud._counter}',
+        deviceId: device.info.id,
+        kind: kind,
+        at: cloud.now(),
+      ),
     );
+    cloud.notify();
+  }
+
+  @override
+  Future<void> reportHealth(DeviceHealth health) async {
+    final device = _ownDevice();
+    device.info = device.info.copyWith(
+      lastSeen: cloud.now(),
+      health: DeviceHealth(
+        usageAccess: health.usageAccess,
+        overlay: health.overlay,
+        notifications: health.notifications,
+        admin: health.admin,
+        monitorRunning: health.monitorRunning,
+        checkedAt: cloud.now(),
+      ),
+    );
+    cloud.notify();
+  }
+
+  @override
+  Stream<List<TamperAlert>> watchAlerts(String deviceId) {
+    _ownedDevice(deviceId);
+    return cloud.watch(() {
+      final list = [...?cloud.devices[deviceId]?.alerts]
+        ..sort((a, b) => b.at.compareTo(a.at));
+      return list;
+    });
+  }
+
+  @override
+  Future<void> markAlertsSeen(String deviceId) async {
+    final device = _ownedDevice(deviceId);
+    for (var i = 0; i < device.alerts.length; i++) {
+      final a = device.alerts[i];
+      if (!a.seen) {
+        device.alerts[i] = TamperAlert(
+          id: a.id,
+          deviceId: a.deviceId,
+          kind: a.kind,
+          at: a.at,
+          seen: true,
+        );
+      }
+    }
     cloud.notify();
   }
 

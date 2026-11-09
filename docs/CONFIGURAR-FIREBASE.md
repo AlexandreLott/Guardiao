@@ -7,7 +7,7 @@ Procedimento com duração aproximada de 15 minutos, no plano gratuito (Spark).
 1. Acesse https://console.firebase.google.com com a conta da equipe e crie o projeto **guardiao-gamer** (o identificador do projeto é mantido por não ser alterável; o Google Analytics pode ser desativado).
 2. Em **Build → Authentication → Sign-in method**, ative os provedores **E-mail/senha** e **Anônimo**.
 3. Em **Build → Firestore Database**, crie o banco em **modo de produção** (região `southamerica-east1`, São Paulo).
-4. Em **Firestore → Regras**, cole o conteúdo de `firebase/firestore.rules` e publique.
+4. Em **Firestore → Regras**, cole o conteúdo de `firebase/firestore.rules` e publique. Sempre que `firestore.rules` mudar (por exemplo, ao incluir os avisos de burla), publique novamente.
 
 ## 2. Registro dos aplicativos
 

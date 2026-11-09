@@ -34,12 +34,13 @@ Funcionalidades implementadas e testadas:
 - Bloqueio efetivo: no Android, um serviço exibe a tela de “tempo esgotado” sobre o aplicativo e retorna ao início; no Windows, o processo é encerrado. As regras são mantidas no próprio aparelho e continuam válidas sem conexão com a internet.
 - Relatório de uso para o responsável (dia atual e últimos sete dias) e painel de tempo utilizado e restante para o filho.
 - Atualização dentro do aplicativo (Android): ao detectar uma versão mais recente, o app exibe um aviso, baixa o APK da Release, verifica sua integridade (SHA-256) e abre o instalador do Android para confirmação.
-- Regras de segurança do Firestore validadas em emulador (45 testes) e testes automatizados do aplicativo e do pacote compartilhado.
+- Aviso de tentativa de burla: o responsável é notificado quando o filho retira uma permissão (acesso ao uso, sobreposição, notificações), desativa a proteção contra desinstalação, o serviço de acompanhamento para, ou o aparelho fica sem comunicação por 45 minutos (indício de desinstalação). A verificação ocorre em segundo plano nos dois aparelhos (WorkManager, a cada 15 minutos, sem custo adicional) e a desinstalação passa a exigir a desativação prévia do administrador do dispositivo.
+- Regras de segurança do Firestore validadas em emulador (53 testes) e testes automatizados do aplicativo e do pacote compartilhado.
 
 Limitações conhecidas (detalhadas em [docs/ARQUITETURA.md](../docs/ARQUITETURA.md)):
 
 - O tempo de uso só é enviado ao responsável enquanto o aplicativo do filho está aberto; o bloqueio, por outro lado, opera em segundo plano.
-- Não há proteção contra desinstalação do aplicativo (depende do modo administrador do dispositivo).
+- A desinstalação não pode ser comunicada pelo próprio aparelho: o responsável é avisado quando o administrador do dispositivo é desativado (etapa que a precede) ou, na ausência de sinal por 45 minutos. O aviso chega com atraso de cerca de 15 a 30 minutos e depende de o filho ativar a *Proteção contra desinstalação* na tela inicial do aplicativo. A Google Play restringe o uso do administrador do dispositivo.
 - A leitura do QR pela câmera está disponível apenas em Android e iOS; no Windows, o responsável informa o código.
 - A leitura por câmera e o bloqueio nativo foram verificados por simulação e, no caso do bloqueio, em um aparelho real. A validação completa em dispositivos físicos segue o roteiro de [docs/ARQUITETURA.md](../docs/ARQUITETURA.md).
 - A atualização dentro do aplicativo não está disponível no Windows.

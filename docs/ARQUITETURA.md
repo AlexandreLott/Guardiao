@@ -43,9 +43,10 @@ Não há necessidade de domínio nem de servidor próprio: o QR contém apenas o
 | Dado | Responsável (dono) | Aparelho do filho | Outros |
 | --- | --- | --- | --- |
 | `pairRequests/{código}` | lê um pedido por vez e o “queima” (uma vez, antes de expirar) | cria o próprio pedido e o apaga | nada (sem listagem) |
-| `devices/{id}` | cria (no vínculo), lê, renomeia, remove | lê e atualiza só `lastSeen` | nada |
+| `devices/{id}` | cria (no vínculo), lê, renomeia, remove | lê e atualiza só `lastSeen` e `health` (cinco booleanos e `checkedAt`) | nada |
 | `devices/{id}/apps/*` | lê, limpa ao remover | escreve (só no próprio aparelho) | nada |
 | `devices/{id}/rules/*` | lê e escreve (limite de 0 a 1440 min) | só lê | nada |
+| `devices/{id}/alerts/*` | lê, marca como visto (só `seen: true`) e apaga | cria (tipo válido, `at` = horário do servidor, `seen: false`) | nada |
 | `devices/{id}/usage/*` | lê e apaga | lê e escreve (minutos de 0 a 1440, só no próprio aparelho) | nada |
 
 Os testes em `firebase/tests/rules.test.mjs` cobrem cada linha dessa tabela, incluindo as tentativas de burla (reusar código, código expirado, aparelho de outro filho, criar o aparelho sem queimar o pedido, escrever regra ou uso pelo lado errado).
@@ -75,6 +76,20 @@ As regras (`rules/*`) chegam ao aparelho do filho pelo Firestore e são **copiad
 
 **Envio ao responsável**: a cada 30 s, enquanto o app do filho está aberto, os minutos de hoje por app vão para `usage/{dia}_{app}` (só o que mudou). O responsável vê o total de hoje, a média e as barras dos últimos 7 dias e o uso de cada app.
 
+## Proteção contra burla
+
+Objetivo: o responsável ser avisado quando o filho tentar contornar o controle (retirar permissões, desativar a proteção ou desinstalar).
+
+**Modelo de dados.** O documento do aparelho recebe o campo `health` (`usageAccess`, `overlay`, `notifications`, `admin`, `monitorRunning`, `checkedAt`), que representa a situação mais recente das proteções. Cada perda (transição de ativo para inativo) gera um documento em `devices/{id}/alerts/{autoId}` com `kind` (`usage_access_revoked`, `overlay_revoked`, `notifications_revoked`, `admin_disabled`, `monitor_stopped`), `at` (horário do servidor) e `seen`. A comparação com a leitura anterior (`DeviceHealth.newlyLost`) evita repetir o mesmo aviso a cada verificação.
+
+**Aparelho do filho.** O serviço nativo (`MonitorService`) grava a situação das proteções em `FlutterSharedPreferences` (`HealthSnapshot`) a cada cerca de 30 s e quando o administrador é ativado ou desativado (`GuardianAdminReceiver`). Com o app aberto, o `HealthReporter` envia a situação a cada 2 minutos; em segundo plano, o WorkManager executa a mesma rotina a cada 15 minutos (`runChildWatch`), lendo o instantâneo gravado pelo serviço, pois o motor Flutter do WorkManager não possui os canais da `MainActivity`.
+
+**Aparelho do responsável.** O mesmo agendamento executa o `ParentWatch`: consulta os avisos não vistos e os aparelhos sem sinal (`lastSeen` com mais de 45 minutos) e exibe notificações locais, registrando as já exibidas para não repeti-las. Não há Cloud Functions nem push (FCM), portanto não há custo e o plano gratuito do Firebase é suficiente.
+
+**Desinstalação.** O aplicativo desinstalado não consegue avisar. A mitigação é dupla: (1) o administrador do dispositivo faz o Android exigir a desativação prévia (*Configurações → Segurança → Administradores*) antes da desinstalação, e essa desativação gera o aviso `admin_disabled`; (2) a ausência de contato por 45 minutos destaca o aparelho como “sem comunicação” no responsável.
+
+**Limites.** O aviso tem latência de aproximadamente 15 a 30 minutos (mínimo do WorkManager e economia de bateria do fabricante). Se o app for removido logo após a desativação do administrador, apenas o critério de ausência de sinal o detecta; ele não distingue desinstalação, encerramento forçado, aparelho desligado ou sem internet. A proteção só vale após o filho tocar em *Ativar proteção contra desinstalação*. A Google Play restringe o uso do administrador do dispositivo, o que deve ser considerado em uma futura publicação.
+
 ## Atualização dentro do app (Android)
 
 `lib/update/` consulta a API pública do GitHub (`releases/latest`) ao abrir o app e a cada 6 horas. A etiqueta `apk-N` vira o número da versão (`versionCode`); se for maior que o instalado, é exibida a barra de aviso com o botão **Atualizar**. O aplicativo baixa o `guardiao.apk` para o cache, confere tamanho e SHA-256 informados pelo GitHub e entrega o arquivo ao instalador do Android por `FileProvider` (a confirmação do usuário é exigida pelo Android). Requer a permissão “instalar apps desconhecidos” para o próprio app e que o APK novo seja assinado com a mesma chave (`KEYSTORE_*` no workflow). No Windows, não há atualização automática.
@@ -88,13 +103,14 @@ Os testes automáticos utilizam simulações (sem câmera nem Android físico). 
 3. No filho, conceder *acesso ao uso* e *sobreposição a outros aplicativos*.
 4. No responsável, definir limite de 1 minuto para um jogo instalado. Abrir o jogo no filho: após 1 minuto de uso, a tela de bloqueio deve aparecer e o aparelho deve retornar ao início.
 5. Com o Guardião aberto no filho, o responsável deve visualizar o uso do dia em até 30 s.
+6. No filho, tocar em *Ativar proteção contra desinstalação*. No responsável, permitir as notificações. Em seguida, no filho, retirar o *acesso ao uso* (Configurações do Android): em até cerca de 30 minutos, o responsável deve receber a notificação e ver o aviso na tela do aparelho. Repetir desativando o administrador do dispositivo e, por fim, desinstalando o aplicativo (o aparelho passa a “sem comunicação” após 45 minutos).
 
 ## Decisões e limites conhecidos
 
 - **Autenticação anônima no filho**: a criança não precisa de senha, mas o aparelho só obtém acesso aos dados após o uso de um código válido.
 - **Windows**: o Firebase utiliza a configuração de um aplicativo web, conforme documentado em `CONFIGURAR-FIREBASE.md`.
 - **Ícones dos aplicativos**: enviados apenas pelo Android, reduzidos para 96×96 px e comprimidos, para limitar o volume no Firestore. No Windows, o aplicativo exibe a inicial do nome.
-- **Envio do uso condicionado ao aplicativo aberto**: o bloqueio local não depende disso, mas o relatório sim. O envio em segundo plano exigiria executar o Flutter no serviço (WorkManager), o que está previsto para uma etapa futura.
-- **Desinstalação**: nada impede a criança de desinstalar o aplicativo ou revogar as permissões. No Android, isso exigiria o modo de administrador do dispositivo, previsto para uma etapa futura.
+- **Envio do uso condicionado ao aplicativo aberto**: o bloqueio local não depende disso, mas o relatório sim. A verificação de proteções em segundo plano já existe (seção anterior), mas o envio do tempo de uso ainda não foi levado ao WorkManager.
+- **Desinstalação e permissões**: ver a seção *Proteção contra burla* (avisos, administrador do dispositivo e limites).
 - **Dois jogos simultâneos** (tela dividida): o Android informa apenas um aplicativo em primeiro plano; o outro não é contabilizado.
 - **Encerramento no Windows**: o processo é finalizado de imediato e o progresso do jogo pode ser perdido; um aviso prévio é uma melhoria prevista.

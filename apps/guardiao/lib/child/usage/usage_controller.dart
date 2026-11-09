@@ -35,6 +35,10 @@ class UsageController extends ChangeNotifier {
   /// Permissões que faltam (vazio quando está tudo liberado).
   Set<MonitorPermission> missing = const {};
 
+  /// Proteção contra desinstalação (administrador do dispositivo). `null`
+  /// quando o aparelho não tem esse recurso.
+  bool? adminActive;
+
   /// Minutos usados hoje, por `appId`.
   Map<String, int> usedByAppId = const {};
 
@@ -60,12 +64,18 @@ class UsageController extends ChangeNotifier {
     await refresh();
   }
 
+  Future<void> requestAdmin() async {
+    await monitor.requestAdmin();
+    await refresh();
+  }
+
   /// Confere permissões, aplica as regras, lê o uso e envia ao responsável.
   Future<void> refresh() async {
     if (_busy || _disposed || !supported) return;
     _busy = true;
     try {
       missing = await monitor.missingPermissions();
+      adminActive = await monitor.adminActive();
       final hasAccess = !missing.contains(MonitorPermission.usageAccess);
       final wanted = buildMonitored(_apps, _rules, platform);
       if (_pushed == null ||

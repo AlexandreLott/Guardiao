@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../watch/health_source.dart';
 import 'platform/installed_apps_source.dart';
 import 'usage/usage_monitor.dart';
 import 'screens/home_screen.dart';
@@ -16,7 +17,13 @@ class ChildGate extends StatefulWidget {
     required this.onChangeRole,
     required this.monitor,
     this.isDemo = false,
+    this.healthSource,
+    this.healthStore,
   });
+
+  /// Se informado, o aparelho confere as proteções e avisa o responsável.
+  final HealthSource? healthSource;
+  final HealthStore? healthStore;
 
   final GuardianBackend backend;
   final UsageMonitor monitor;
@@ -90,6 +97,8 @@ class _ChildGateState extends State<ChildGate> {
               source: widget.source,
               monitor: widget.monitor,
               device: device,
+              healthSource: widget.healthSource,
+              healthStore: widget.healthStore,
             );
           },
         );

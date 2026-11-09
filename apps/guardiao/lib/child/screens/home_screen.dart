@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../../watch/child_watch.dart';
+import '../../watch/health_source.dart';
 import '../platform/installed_apps_source.dart';
 import '../sync/device_sync.dart';
 import '../usage/usage_controller.dart';
@@ -15,7 +17,12 @@ class HomeScreen extends StatefulWidget {
     required this.source,
     required this.monitor,
     required this.device,
+    this.healthSource,
+    this.healthStore,
   });
+
+  final HealthSource? healthSource;
+  final HealthStore? healthStore;
 
   final GuardianBackend backend;
   final InstalledAppsSource source;
@@ -40,7 +47,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _sync = DeviceSync(widget.backend, widget.source)..start();
+    final healthSource = widget.healthSource;
+    _sync = DeviceSync(
+      widget.backend,
+      widget.source,
+      health: healthSource == null
+          ? null
+          : HealthReporter(
+              backend: widget.backend,
+              source: healthSource,
+              store: widget.healthStore ?? MemoryHealthStore(),
+            ),
+    )..start();
     _errors = _sync.errors.stream.listen((e) => setState(() => _syncError = e));
     _sync.lastSync.stream.listen((t) {
       if (mounted) {
@@ -119,6 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else if (_usage.missing.isNotEmpty)
           _PermissionsCard(missing: _usage.missing, onRequest: _usage.request),
+        if (_usage.supported && _usage.adminActive != null) ...[
+          const SizedBox(height: 8),
+          _AdminCard(
+            active: _usage.adminActive!,
+            onActivate: _usage.requestAdmin,
+          ),
+        ],
         if (_syncError != null) ...[
           const SizedBox(height: 8),
           Notice(_syncError!, isError: true),
@@ -184,6 +209,52 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Proteção contra desinstalação: o Android passa a exigir desativar o
+/// "administrador do dispositivo" antes de remover o app, e o responsável é
+/// avisado quando isso acontece.
+class _AdminCard extends StatelessWidget {
+  const _AdminCard({required this.active, required this.onActivate});
+
+  final bool active;
+  final Future<void> Function() onActivate;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    if (active) {
+      return const Notice(
+        'Proteção contra desinstalação ativa.',
+        icon: Icons.verified_user_outlined,
+      );
+    }
+    return Card(
+      key: const Key('adminCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Proteção contra desinstalação', style: text.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Ativada, o Android exige desativar esta proteção antes de remover '
+              'o Guardião, e o responsável é avisado. Também é avisado quando '
+              'uma permissão é retirada.',
+              style: text.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonal(
+              key: const Key('adminButton'),
+              onPressed: onActivate,
+              child: const Text('Ativar proteção'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

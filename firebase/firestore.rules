@@ -97,10 +97,20 @@ service cloud.firestore {
         && pairRequestAfter(request.resource.data.pairingCode).used == true
         && pairRequestAfter(request.resource.data.pairingCode).parentUid == request.auth.uid;
 
-      // O aparelho só atualiza "lastSeen" (batimento); o responsável só o nome.
+      // O aparelho só atualiza "lastSeen" (batimento) e "health" (situação das
+      // proteções); o responsável só o nome.
       allow update: if signedIn() && (
         (request.auth.uid == deviceId
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen']))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen', 'health'])
+          && (!('health' in request.resource.data)
+              || (request.resource.data.health is map
+                  && request.resource.data.health.keys().hasOnly(
+                       ['usageAccess', 'overlay', 'notifications', 'admin', 'monitorRunning', 'checkedAt'])
+                  && request.resource.data.health.usageAccess is bool
+                  && request.resource.data.health.overlay is bool
+                  && request.resource.data.health.notifications is bool
+                  && request.resource.data.health.admin is bool
+                  && request.resource.data.health.monitorRunning is bool)))
         || (resource.data.parentUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']))
       );
@@ -133,6 +143,23 @@ service cloud.firestore {
           && request.resource.data.minutes >= 0
           && request.resource.data.minutes <= 1440;
         allow delete: if signedIn() && (request.auth.uid == deviceId || isParentOf(deviceId));
+      }
+
+      // Avisos de burla (permissão retirada, administrador desativado...): o
+      // aparelho cria, o responsável lê, marca como visto e apaga.
+      match /alerts/{alertId} {
+        allow read: if isParentOf(deviceId);
+        allow create: if signedIn() && request.auth.uid == deviceId
+          && request.resource.data.keys().hasOnly(['kind', 'at', 'seen'])
+          && request.resource.data.kind in [
+               'usage_access_revoked', 'overlay_revoked', 'notifications_revoked',
+               'admin_disabled', 'monitor_stopped']
+          && request.resource.data.at == request.time
+          && request.resource.data.seen == false;
+        allow update: if isParentOf(deviceId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen'])
+          && request.resource.data.seen == true;
+        allow delete: if isParentOf(deviceId);
       }
 
       // Regras por aplicativo: só o responsável escreve; o aparelho lê.

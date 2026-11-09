@@ -9,6 +9,8 @@ import 'role/role.dart';
 import 'update/update_controller.dart';
 import 'update/update_installer.dart';
 import 'update/update_source.dart';
+import 'watch/background_tasks.dart';
+import 'watch/health_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,9 @@ Future<void> main() async {
       initialRole: await roleStore.read(),
       isDemo: setup.isDemo,
       updates: updates,
+      background: BackgroundTasks.detect(),
+      healthSource: HealthSource.detect(),
+      healthStore: const PrefsHealthStore(),
     ),
   );
 }

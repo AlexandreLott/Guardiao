@@ -1,4 +1,4 @@
-# Guardião Gamer — aplicativo
+# Guardião — aplicativo
 
 Um só app para Android e Windows. Veja o [README principal](../../README.md) e [docs/CONFIGURAR-FIREBASE.md](../../docs/CONFIGURAR-FIREBASE.md).
 

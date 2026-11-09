@@ -158,4 +158,10 @@ class WindowsUsageMonitor implements UsageMonitor {
     _timer = null;
     await _save();
   }
+
+  @override
+  Future<bool?> adminActive() async => null;
+
+  @override
+  Future<void> requestAdmin() async {}
 }

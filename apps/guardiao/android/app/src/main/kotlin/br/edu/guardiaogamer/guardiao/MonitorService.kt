@@ -22,6 +22,7 @@ class MonitorService : Service() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var overlay: BlockOverlay
     private var running = false
+    private var ticks = 0
 
     private val tick = object : Runnable {
         override fun run() {
@@ -30,6 +31,15 @@ class MonitorService : Service() {
                 check()
             } catch (_: Exception) {
                 // Uma leitura ruim não pode derrubar o serviço.
+            }
+            // A cada ~30 s: prova de vida do serviço e leitura das proteções,
+            // que a tarefa em segundo plano envia ao responsável.
+            if (ticks++ % HEALTH_EVERY_TICKS == 0) {
+                try {
+                    HealthSnapshot.markTick(this@MonitorService)
+                    HealthSnapshot.write(this@MonitorService)
+                } catch (_: Exception) {
+                }
             }
             main.postDelayed(this, INTERVAL_MS)
         }
@@ -43,7 +53,9 @@ class MonitorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!UsageReader.hasUsageAccess(this) || !MonitorConfig.isEnabled(this)) {
+        // Continua ligado mesmo sem o acesso ao uso: retirá-lo é justamente uma
+        // tentativa de burla que precisa ser percebida e informada.
+        if (!MonitorConfig.isEnabled(this)) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -129,6 +141,7 @@ class MonitorService : Service() {
         private const val CHANNEL = "guardiao_monitor"
         private const val NOTIFICATION_ID = 7101
         private const val INTERVAL_MS = 3_000L
+        private const val HEALTH_EVERY_TICKS = 10
 
         fun start(context: Context) {
             val intent = Intent(context, MonitorService::class.java)

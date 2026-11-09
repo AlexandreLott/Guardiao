@@ -115,6 +115,13 @@ abstract class UsageMonitor {
 
   Future<void> stop();
 
+  /// O Guardião é administrador do dispositivo (o Android exige desativar isso
+  /// antes de desinstalar)? `null` onde o recurso não existe.
+  Future<bool?> adminActive();
+
+  /// Abre o pedido do sistema para ativar a proteção contra desinstalação.
+  Future<void> requestAdmin();
+
   factory UsageMonitor.detect() {
     if (Platform.isAndroid) return AndroidUsageMonitor();
     if (Platform.isWindows) return WindowsUsageMonitor.system();
@@ -140,13 +147,24 @@ class UnsupportedUsageMonitor implements UsageMonitor {
 
   @override
   Future<void> stop() async {}
+
+  @override
+  Future<bool?> adminActive() async => null;
+
+  @override
+  Future<void> requestAdmin() async {}
 }
 
 /// Medidor de mentira para a demonstração e para testes: o uso só muda
 /// quando alguém chama [simulate].
 class DemoUsageMonitor implements UsageMonitor {
-  DemoUsageMonitor({Set<MonitorPermission> missing = const {}})
-    : _missing = {...missing};
+  DemoUsageMonitor({
+    Set<MonitorPermission> missing = const {},
+    bool? adminActive,
+  }) : _missing = {...missing},
+       _admin = adminActive;
+
+  bool? _admin;
 
   final Set<MonitorPermission> _missing;
   final Map<String, int> _usage = {};
@@ -184,4 +202,11 @@ class DemoUsageMonitor implements UsageMonitor {
 
   @override
   Future<void> stop() async => stopped = true;
+
+  @override
+  Future<bool?> adminActive() async => _admin;
+
+  /// No teste, "abrir o pedido do sistema" já ativa.
+  @override
+  Future<void> requestAdmin() async => _admin = true;
 }

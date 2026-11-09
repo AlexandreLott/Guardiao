@@ -99,6 +99,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                   itemCount: devices.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) => _DeviceTile(
+                    backend: widget.backend,
                     device: devices[i],
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -154,36 +155,71 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _DeviceTile extends StatelessWidget {
-  const _DeviceTile({required this.device, required this.onTap});
+class _DeviceTile extends StatefulWidget {
+  const _DeviceTile({
+    required this.backend,
+    required this.device,
+    required this.onTap,
+  });
 
+  final GuardianBackend backend;
   final PairedDevice device;
   final VoidCallback onTap;
 
   @override
+  State<_DeviceTile> createState() => _DeviceTileState();
+}
+
+class _DeviceTileState extends State<_DeviceTile> {
+  late final Stream<List<TamperAlert>> _alerts = widget.backend.watchAlerts(
+    widget.device.id,
+  );
+
+  @override
   Widget build(BuildContext context) {
-    final online = device.isOnline(DateTime.now());
+    final device = widget.device;
+    final now = DateTime.now();
+    final online = device.isOnline(now);
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          device.platform == DevicePlatform.windows
-              ? Icons.computer
-              : Icons.smartphone,
-          size: 32,
-        ),
-        title: Text(device.name),
-        subtitle: Text(
-          '${device.platform.label} · ${lastSeenLabel(device.lastSeen, DateTime.now())}',
-        ),
-        trailing: Icon(
-          Icons.circle,
-          size: 12,
-          color: online ? scheme.secondary : scheme.outlineVariant,
-          semanticLabel: online ? 'Online' : 'Offline',
-        ),
-      ),
+    return StreamBuilder<List<TamperAlert>>(
+      stream: _alerts,
+      builder: (context, snap) {
+        final unseen = (snap.data ?? const []).where((a) => !a.seen).length;
+        final silent = device.hasNoSignal(now);
+        final warn = unseen > 0 || silent;
+        return Card(
+          child: ListTile(
+            onTap: widget.onTap,
+            leading: Icon(
+              device.platform == DevicePlatform.windows
+                  ? Icons.computer
+                  : Icons.smartphone,
+              size: 32,
+            ),
+            title: Text(device.name),
+            subtitle: Text(
+              '${device.platform.label} · ${lastSeenLabel(device.lastSeen, now)}',
+              style: silent ? TextStyle(color: scheme.error) : null,
+            ),
+            trailing: warn
+                ? Badge(
+                    key: const Key('deviceWarning'),
+                    label: Text(unseen > 0 ? '$unseen' : '!'),
+                    backgroundColor: scheme.error,
+                    child: Icon(
+                      Icons.warning_amber_rounded,
+                      color: scheme.error,
+                    ),
+                  )
+                : Icon(
+                    Icons.circle,
+                    size: 12,
+                    color: online ? scheme.secondary : scheme.outlineVariant,
+                    semanticLabel: online ? 'Online' : 'Offline',
+                  ),
+          ),
+        );
+      },
     );
   }
 }

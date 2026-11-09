@@ -17,6 +17,7 @@ import 'pairing.dart';
 /// - `devices/{deviceId}/apps/{appId}`: name, packageName
 /// - `devices/{deviceId}/rules/{appId}`: dailyLimitMinutes, blocked
 /// - `devices/{deviceId}/usage/{dia}_{appId}`: day, appId, minutes, updatedAt
+/// - `devices/{deviceId}/alerts/{id}`: kind, at, seen (avisos de burla)
 class FirebaseBackend implements GuardianBackend {
   FirebaseBackend({FirebaseAuth? auth, FirebaseFirestore? firestore})
     : _auth = auth ?? FirebaseAuth.instance,
@@ -202,7 +203,7 @@ class FirebaseBackend implements GuardianBackend {
   Future<void> removeDevice(String deviceId) async {
     final ref = _db.collection('devices').doc(deviceId);
     // Subcoleções não são apagadas junto com o documento: limpamos antes.
-    for (final sub in ['apps', 'rules', 'usage']) {
+    for (final sub in ['apps', 'rules', 'usage', 'alerts']) {
       final docs = await ref.collection(sub).get();
       for (var i = 0; i < docs.docs.length; i += 400) {
         final batch = _db.batch();
@@ -409,6 +410,67 @@ class FirebaseBackend implements GuardianBackend {
     'lastSeen': FieldValue.serverTimestamp(),
   });
 
+  @override
+  Future<void> reportAlert(AlertKind kind) =>
+      _db.collection('devices').doc(_requireUid()).collection('alerts').add({
+        'kind': kind.wire,
+        'at': FieldValue.serverTimestamp(),
+        'seen': false,
+      });
+
+  @override
+  Future<void> reportHealth(DeviceHealth health) =>
+      _db.collection('devices').doc(_requireUid()).update({
+        'lastSeen': FieldValue.serverTimestamp(),
+        'health': {
+          'usageAccess': health.usageAccess,
+          'overlay': health.overlay,
+          'notifications': health.notifications,
+          'admin': health.admin,
+          'monitorRunning': health.monitorRunning,
+          'checkedAt': FieldValue.serverTimestamp(),
+        },
+      });
+
+  @override
+  Stream<List<TamperAlert>> watchAlerts(String deviceId) => _db
+      .collection('devices')
+      .doc(deviceId)
+      .collection('alerts')
+      .snapshots()
+      .map((q) {
+        final list = <TamperAlert>[];
+        for (final d in q.docs) {
+          final data = d.data();
+          final kind = AlertKind.parse(data['kind'] as String?);
+          if (kind == null) continue;
+          list.add(
+            TamperAlert(
+              id: d.id,
+              deviceId: deviceId,
+              kind: kind,
+              at: (data['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              seen: data['seen'] == true,
+            ),
+          );
+        }
+        list.sort((a, b) => b.at.compareTo(a.at));
+        return list;
+      });
+
+  @override
+  Future<void> markAlertsSeen(String deviceId) async {
+    final col = _db.collection('devices').doc(deviceId).collection('alerts');
+    final open = await col.where('seen', isEqualTo: false).get();
+    for (var i = 0; i < open.docs.length; i += 400) {
+      final batch = _db.batch();
+      for (final d in open.docs.skip(i).take(400)) {
+        batch.update(d.reference, {'seen': true});
+      }
+      await batch.commit();
+    }
+  }
+
   // ---- auxiliares ----
 
   Stream<List<InstalledApp>> _appsStream(String deviceId) => _db
@@ -445,6 +507,19 @@ class FirebaseBackend implements GuardianBackend {
       pairedAt: (d['pairedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       lastSeen: (d['lastSeen'] as Timestamp?)?.toDate(),
       parentLabel: d['parentLabel'] as String?,
+      health: _healthFrom(d['health']),
+    );
+  }
+
+  DeviceHealth? _healthFrom(Object? raw) {
+    if (raw is! Map) return null;
+    return DeviceHealth(
+      usageAccess: raw['usageAccess'] == true,
+      overlay: raw['overlay'] == true,
+      notifications: raw['notifications'] == true,
+      admin: raw['admin'] == true,
+      monitorRunning: raw['monitorRunning'] != false,
+      checkedAt: (raw['checkedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 }

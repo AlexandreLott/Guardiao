@@ -116,6 +116,7 @@ class PairedDevice {
     required this.pairedAt,
     this.lastSeen,
     this.parentLabel,
+    this.health,
   });
 
   final String id;
@@ -125,6 +126,9 @@ class PairedDevice {
   final DateTime pairedAt;
   final DateTime? lastSeen;
 
+  /// Última situação das permissões informada pelo aparelho (Android).
+  final DeviceHealth? health;
+
   /// E-mail do responsável com parte escondida (`jo***@gmail.com`), para o
   /// filho saber a quem está vinculado.
   final String? parentLabel;
@@ -133,6 +137,172 @@ class PairedDevice {
   bool isOnline(DateTime now) =>
       lastSeen != null &&
       now.difference(lastSeen!) < const Duration(minutes: 30);
+
+  /// O aparelho filho avisa a nuvem a cada ~15 minutos em segundo plano. Se
+  /// passar [noSignalAfter] sem aviso, o Guardião pode ter sido desinstalado,
+  /// parado à força, ou o aparelho está desligado ou sem internet.
+  bool hasNoSignal(DateTime now) =>
+      lastSeen != null && now.difference(lastSeen!) > noSignalAfter;
+
+  PairedDevice copyWith({
+    String? name,
+    DateTime? lastSeen,
+    DeviceHealth? health,
+  }) => PairedDevice(
+    id: id,
+    parentUid: parentUid,
+    name: name ?? this.name,
+    platform: platform,
+    pairedAt: pairedAt,
+    lastSeen: lastSeen ?? this.lastSeen,
+    parentLabel: parentLabel,
+    health: health ?? this.health,
+  );
+}
+
+/// Tempo sem sinal do aparelho do filho a partir do qual o responsável é
+/// avisado (três verificações perdidas).
+const noSignalAfter = Duration(minutes: 45);
+
+/// Tempo sem o serviço de acompanhamento "bater" para considerá-lo parado.
+const monitorStaleAfter = Duration(minutes: 20);
+
+/// O que o responsável precisa saber quando alguém tenta burlar o Guardião.
+enum AlertKind {
+  usageAccessRevoked,
+  overlayRevoked,
+  notificationsRevoked,
+  adminDisabled,
+  monitorStopped;
+
+  /// Nome usado no Firestore.
+  String get wire => switch (this) {
+    AlertKind.usageAccessRevoked => 'usage_access_revoked',
+    AlertKind.overlayRevoked => 'overlay_revoked',
+    AlertKind.notificationsRevoked => 'notifications_revoked',
+    AlertKind.adminDisabled => 'admin_disabled',
+    AlertKind.monitorStopped => 'monitor_stopped',
+  };
+
+  static AlertKind? parse(String? value) {
+    for (final kind in AlertKind.values) {
+      if (kind.wire == value) return kind;
+    }
+    return null;
+  }
+
+  String get title => switch (this) {
+    AlertKind.usageAccessRevoked => 'Acesso ao uso foi retirado',
+    AlertKind.overlayRevoked => 'Permissão de sobreposição foi retirada',
+    AlertKind.notificationsRevoked => 'Notificações foram desativadas',
+    AlertKind.adminDisabled => 'Proteção contra desinstalação desativada',
+    AlertKind.monitorStopped => 'Acompanhamento interrompido',
+  };
+
+  String get description => switch (this) {
+    AlertKind.usageAccessRevoked => 'Sem o acesso ao uso, o Guardião não consegue medir o tempo nem bloquear.',
+    AlertKind.overlayRevoked =>
+      'Sem essa permissão, a tela de bloqueio não pode ser exibida.',
+    AlertKind.notificationsRevoked =>
+      'O aviso fixo do acompanhamento deixou de ser exibido.',
+    AlertKind.adminDisabled => 'O administrador do dispositivo foi desativado; o aplicativo pode ser desinstalado em seguida.',
+    AlertKind.monitorStopped =>
+      'O serviço que mede e bloqueia deixou de funcionar neste aparelho.',
+  };
+}
+
+/// Um aviso gerado pelo aparelho do filho.
+class TamperAlert {
+  const TamperAlert({
+    required this.id,
+    required this.deviceId,
+    required this.kind,
+    required this.at,
+    this.seen = false,
+  });
+
+  final String id;
+  final String deviceId;
+  final AlertKind kind;
+  final DateTime at;
+  final bool seen;
+}
+
+/// Situação das proteções do Guardião em um aparelho Android.
+class DeviceHealth {
+  const DeviceHealth({
+    required this.usageAccess,
+    required this.overlay,
+    required this.notifications,
+    required this.admin,
+    required this.monitorRunning,
+    required this.checkedAt,
+  });
+
+  final bool usageAccess;
+  final bool overlay;
+  final bool notifications;
+
+  /// Administrador do dispositivo (impede desinstalar sem desativá-lo antes).
+  final bool admin;
+
+  /// O serviço de acompanhamento bateu há pouco tempo (ou nem deveria estar
+  /// ligado, caso em que vale `true`).
+  final bool monitorRunning;
+  final DateTime checkedAt;
+
+  /// Proteções que estavam ativas em [before] e deixaram de estar agora.
+  /// Sem leitura anterior não há como saber o que mudou, então não avisa.
+  static List<AlertKind> newlyLost(DeviceHealth? before, DeviceHealth now) {
+    if (before == null) return const [];
+    return [
+      if (before.usageAccess && !now.usageAccess) AlertKind.usageAccessRevoked,
+      if (before.overlay && !now.overlay) AlertKind.overlayRevoked,
+      if (before.notifications && !now.notifications)
+        AlertKind.notificationsRevoked,
+      if (before.admin && !now.admin) AlertKind.adminDisabled,
+      if (before.monitorRunning && !now.monitorRunning)
+        AlertKind.monitorStopped,
+    ];
+  }
+
+  /// Mesmo estado das proteções, ignorando o horário da leitura.
+  bool sameState(DeviceHealth? other) =>
+      other != null &&
+      other.usageAccess == usageAccess &&
+      other.overlay == overlay &&
+      other.notifications == notifications &&
+      other.admin == admin &&
+      other.monitorRunning == monitorRunning;
+
+  /// Formato guardado no aparelho (SharedPreferences, escrito pelo Android).
+  factory DeviceHealth.fromJson(Map<String, dynamic> json) => DeviceHealth(
+    usageAccess: json['usageAccess'] == true,
+    overlay: json['overlay'] == true,
+    notifications: json['notifications'] == true,
+    admin: json['admin'] == true,
+    monitorRunning: json['monitorRunning'] != false,
+    checkedAt: DateTime.fromMillisecondsSinceEpoch(
+      ((json['checkedAt'] as num?) ?? 0).toInt(),
+    ),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'usageAccess': usageAccess,
+    'overlay': overlay,
+    'notifications': notifications,
+    'admin': admin,
+    'monitorRunning': monitorRunning,
+    'checkedAt': checkedAt.millisecondsSinceEpoch,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is DeviceHealth && sameState(other) && other.checkedAt == checkedAt;
+
+  @override
+  int get hashCode =>
+      Object.hash(usageAccess, overlay, notifications, admin, monitorRunning);
 }
 
 /// Data local no formato `2026-11-08`, usada para agrupar o uso por dia.
