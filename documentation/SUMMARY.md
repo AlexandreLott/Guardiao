@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Guardião Gamer 🎮](README.md)
+* [Guardião](README.md)
 * [Proposta do Projeto](proposta-do-projeto.md)
 * [Instalar o Alpha (demonstração)](instalar-o-alpha-demonstracao.md)
 * [Implementação dos apps (marco 1)](implementacao-dos-apps-marco-1.md)
