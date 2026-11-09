@@ -60,13 +60,13 @@ jobs:
             --dart-define=FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/guardiao-gamer.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/guardiao.apk"
 
       - name: Publicar na Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "apk-${{ github.run_number }}" guardiao-gamer.apk \
-            --title "Guardião Gamer (APK #${{ github.run_number }})" \
+          gh release create "apk-${{ github.run_number }}" guardiao.apk \
+            --title "Guardião (APK #${{ github.run_number }})" \
             --notes "APK para Android compilado de ${GITHUB_SHA::7}. Quem já tem o app instalado recebe o aviso de atualização dentro do próprio app." \
             --latest
