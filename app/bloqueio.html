@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guardian · Tela de bloqueio</title>
+<link rel="icon" href="icons/logo-guardiao.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg: #F3F5FA; --ink: #0F172A; --muted: #64708A; --line: #E6EAF2;
+    --sky: #2B59FF; --sky-soft: #EDF2FF; --coral: #FF7A1A; --coral-soft: #FFEEE0; --sun-soft: #F2FAE0;
+    --spring: cubic-bezier(.34,1.56,.64,1); --ease: cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Lexend', system-ui, sans-serif;
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; align-items: flex-start; padding: 32px 16px; }
+  h1, h2, b.t { font-family: 'Lexend', 'Lexend', sans-serif; }
+
+  /* controles */
+  .panel { width: 320px; max-width: 100%; background: #fff; border-radius: 24px; padding: 20px; box-shadow: 0 1px 0 var(--line), 0 20px 40px -28px rgba(15,23,42,.35); }
+  .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .panel-head img { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 2px 8px -4px rgba(15,23,42,.3); }
+  .panel-head b { font-size: 17px; display: block; line-height: 1.1; }
+  .panel-head span { font-size: 11.5px; color: var(--muted); }
+  .panel p.lead { font-size: 12.5px; color: #4A5570; line-height: 1.55; margin: 12px 0 0; }
+  .panel h4 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 8px; }
+  .apps { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+  .app-opt { border: 1.5px solid var(--line); background: #fff; border-radius: 14px; padding: 8px 4px 6px; cursor: pointer; font-family: inherit;
+    display: grid; justify-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: var(--muted);
+    transition: border-color .35s, background-color .35s, color .35s, transform .45s var(--spring); }
+  .app-opt img { width: 34px; height: 34px; border-radius: 9px; transition: transform .45s var(--spring); }
+  .app-opt:hover { border-color: #D6DEF0; }
+  .app-opt:active { transform: scale(.95); }
+  .app-opt.on { background: var(--sky-soft); border-color: #B8C9FF; color: #2B59FF; transform: translateY(-1px); }
+  .app-opt.on img { transform: scale(1.06) rotate(-4deg); }
+  .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--sky-soft); border-radius: 100px; padding: 3px; }
+  .seg .pill { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(33.333% - 2px); background: #fff; border-radius: 100px;
+    box-shadow: 0 1px 4px rgba(15,23,42,.12); transition: transform .5s var(--spring); }
+  .seg[data-v="1"] .pill { transform: translateX(100%); }
+  .seg[data-v="2"] .pill { transform: translateX(200%); }
+  .seg button { position: relative; z-index: 1; border: 0; background: none; font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--muted);
+    padding: 8px 6px; cursor: pointer; transition: color .35s; }
+  .seg button.on { color: var(--ink); }
+  .replay { margin-top: 14px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 100px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--muted); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: background .25s, color .25s, border-color .25s; }
+  .replay:hover { background: var(--sky-soft); color: #2B59FF; border-color: #B8C9FF; }
+  .back { display: inline-block; margin-top: 14px; font-size: 12px; font-weight: 700; color: #2B59FF; text-decoration: none; }
+  .note { font-size: 10.5px; color: #97A1B5; line-height: 1.5; margin: 12px 0 0; }
+
+  /* celular */
+  .phone { width: 340px; height: 700px; max-width: 100%; border: 8px solid #0F172A; border-radius: 40px; position: relative; overflow: hidden;
+    box-shadow: 0 20px 50px -24px rgba(15,23,42,.3); background: #000; }
+  .phone::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 110px; height: 22px; background: #0F172A;
+    border-radius: 0 0 14px 14px; z-index: 5; }
+  .game { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(14px) saturate(1.1); transform: scale(1.2);
+    transition: background-image .4s; }
+  .scrim { position: absolute; inset: 0; background: rgba(238,246,251,.80); backdrop-filter: blur(6px); }
+  .sheet { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; text-align: center; padding: 28px; }
+  .brand { position: absolute; top: 36px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 13px; color: var(--ink); opacity: .75; }
+  .brand img { width: 20px; height: 20px; border-radius: 6px; }
+  .icon-wrap { position: relative; margin-bottom: 20px; }
+  .icon-wrap img.app { width: 68px; height: 68px; border-radius: 22px; filter: grayscale(.65); opacity: .9; box-shadow: 0 10px 24px -12px rgba(15,23,42,.5); }
+  .lock { position: absolute; right: -10px; bottom: -10px; width: 36px; height: 36px; border-radius: 50%; background: var(--sky); color: #fff;
+    display: grid; place-items: center; border: 4px solid #F3F9FD; }
+  .lock svg { width: 16px; height: 16px; fill: currentColor; }
+  .sheet h2 { margin: 0; font-size: 21px; font-weight: 800; line-height: 1.2; }
+  .sheet p { margin: 8px 0 0; font-size: 13px; line-height: 1.55; color: #55607A; max-width: 250px; }
+  .time-pill { margin-top: 16px; display: inline-flex; align-items: center; gap: 6px; background: var(--sun-soft); color: #3F5C00; font-size: 11.5px; font-weight: 800;
+    padding: 7px 14px; border-radius: 100px; }
+  .ideas { margin-top: 22px; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .idea { background: #fff; border-radius: 14px; padding: 10px 4px 8px; font-size: 10.5px; font-weight: 700; color: var(--muted);
+    box-shadow: 0 1px 0 var(--line), 0 4px 10px -8px rgba(15,23,42,.3); }
+  .idea span { display: block; font-size: 20px; margin-bottom: 2px; }
+  .home-btn { margin-top: 14px; width: 100%; padding: 12px; border-radius: 100px; border: 0; background: var(--sky); color: #fff;
+    font-family: inherit; font-weight: 800; font-size: 13.5px; cursor: pointer; box-shadow: 0 3px 0 #1C3FD1; transition: transform .15s, box-shadow .15s; }
+  .home-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #1C3FD1; }
+  .ask { margin-top: 10px; background: none; border: 0; font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .ask:hover { color: #2B59FF; }
+  .toast { position: absolute; left: 20px; right: 20px; bottom: 26px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; padding: 10px 14px;
+    border-radius: 14px; opacity: 0; transform: translateY(10px); transition: opacity .3s, transform .4s var(--spring); pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+
+  /* entrada da tela */
+  .anim .scrim { animation: fade .5s var(--ease) both; }
+  .anim .icon-wrap { animation: pop .65s .1s var(--spring) both; }
+  .anim .lock { animation: pop .5s .45s var(--spring) both; }
+  .anim h2, .anim .sheet p, .anim .unlock, .anim .sugs, .anim .home-btn, .anim .ask { animation: up .55s var(--ease) both; }
+  .anim h2 { animation-delay: .2s; } .anim .sheet p { animation-delay: .27s; } .anim .unlock { animation-delay: .34s; }
+  .anim .mission { animation: up .55s .38s cubic-bezier(.2,.8,.2,1) both; }
+  .anim .sugs { animation-delay: .41s; } .anim .home-btn { animation-delay: .48s; } .anim .ask { animation-delay: .52s; }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.5); } }
+  @keyframes up { from { opacity: 0; transform: translateY(10px); } }
+  
+  @media (max-width: 720px) { .phone { order: -1; } }
+
+  /* ---- Contador até o desbloqueio + sugestões ---- */
+  .unlock { margin-top: 14px; display: grid; justify-items: center; gap: 6px; }
+  .unlock-k { font-size: 10.5px; font-weight: 700; color: #64708A; text-transform: uppercase; letter-spacing: .06em; }
+  .clock { display: flex; align-items: center; gap: 4px; font-family: 'Lexend', sans-serif; }
+  .clock span { min-width: 42px; padding: 6px 4px 2px; border-radius: 12px; background: #fff; font-size: 20px; font-weight: 800; color: #2B59FF;
+    line-height: 1; text-align: center; font-variant-numeric: tabular-nums; box-shadow: 0 1px 0 #E6EAF2, 0 4px 10px -8px rgba(15,23,42,.35); }
+  .clock span small { display: block; font-family: 'Lexend', sans-serif; font-size: 8.5px; font-weight: 700; color: #97A1B5; padding: 2px 0 4px; letter-spacing: .04em; }
+  .clock i { font-style: normal; color: #BFD9EA; font-weight: 800; }
+  .clock span.tick { animation: tick .45s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes tick { 0% { transform: translateY(-3px); } 100% { transform: none; } }
+  .sugs { width: 100%; margin-top: 16px; display: grid; gap: 7px; text-align: left; }
+  .sugs-k { font-size: 11.5px; font-weight: 800; color: #0F172A; margin-left: 2px; }
+  .sug { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 14px; background: #fff; cursor: pointer; font-family: inherit;
+    text-align: left; color: #0F172A; box-shadow: 0 1px 0 #E6EAF2, 0 4px 10px -8px rgba(15,23,42,.3);
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .3s; }
+  .sug:hover { transform: translateY(-2px); box-shadow: 0 1px 0 #E6EAF2, 0 10px 16px -10px rgba(15,23,42,.35); }
+  .sug:active { transform: scale(.97); }
+  .sug img { width: 32px; height: 32px; border-radius: 9px; flex: none; }
+  .sug b { display: block; font-size: 12px; }
+  .sug small { font-size: 10.5px; color: #64708A; }
+  .sug .go { margin-left: auto; font-size: 10.5px; font-weight: 800; color: #0C8A4F; background: #E3F8EC; padding: 4px 9px; border-radius: 100px; }
+
+  /* ---- Ícones próprios (traço) ---- */
+  .gi { width: 1em; height: 1em; display: inline-block; vertical-align: -.15em; flex: none; }
+  .rt-e { color: #64708A; font-size: 18px !important; filter: none !important; }
+  .rt.on .rt-e { color: #2B59FF; background: #EDF2FF !important; }
+  .rt.on .rt-e.k-meal, .rt.on .rt-e.k-sun { color: #D95F00; background: #FFEEE0 !important; }
+  .rt.on .rt-e.k-moon { color: #3B4BB8; background: #E9ECFF !important; }
+  .rt.on .rt-e.k-game { color: #0C8A4F; background: #E3F8EC !important; }
+  .tip-ic { width: 30px; height: 30px; border-radius: 10px; background: #fff; display: grid; place-items: center; color: #4B7A00; font-size: 17px !important; flex: none; }
+  .ap-feats li { display: flex; align-items: center; gap: 8px; }
+  .ap-feats .gi { color: #2B59FF; font-size: 16px; }
+  .ap-cta-ic { color: #2B59FF; font-size: 17px !important; }
+  .global-banner > span { width: 30px; height: 30px; border-radius: 10px; background: #FFE2CC; color: #D95F00; display: grid; place-items: center; font-size: 16px; flex: none; }
+  .emoji-row button { color: #64708A; font-size: 17px !important; display: grid; place-items: center; }
+  .emoji-row button.on { color: #2B59FF; }
+  .hello-wave { color: #FF7A1A; font-size: .95em; margin-left: 4px; display: inline-block; transform-origin: 70% 80%; animation: wave 2.4s ease-in-out 1s 2; }
+  @keyframes wave { 0%,60%,100% { transform: none; } 10%,30% { transform: rotate(14deg); } 20%,40% { transform: rotate(-8deg); } }
+
+  /* ---- missão e créditos ---- */
+  .gi { width: 1em; height: 1em; display: inline-block; vertical-align: -.15em; flex: none; }
+  .mission { width: 100%; margin-top: 14px; background: #fff; border-radius: 18px; padding: 12px; text-align: left;
+    box-shadow: 0 0 0 1.5px #FFD0AD, 0 8px 18px -12px rgba(255,122,26,.6); }
+  .mission[hidden] { display: none; }
+  .mo-k { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; color: #C25400; text-transform: uppercase; letter-spacing: .04em; }
+  .mo-body { display: flex; align-items: center; gap: 10px; margin: 8px 0 10px; }
+  .mo-body b { font-size: 13px; line-height: 1.35; color: #0F172A; }
+  .mo-ic { width: 34px; height: 34px; border-radius: 11px; background: #FFEEE0; color: #D95F00; display: grid; place-items: center; font-size: 18px; flex: none; }
+  .mo-btn { width: 100%; border: 0; border-radius: 100px; padding: 10px; background: #FF7A1A; color: #fff; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+    box-shadow: 0 3px 0 #D95F00; transition: transform .15s, box-shadow .15s; }
+  .mo-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #D95F00; }
+  .mo-tag { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; border-radius: 100px; font-size: 11px; font-weight: 700; animation: pop .45s cubic-bezier(.34,1.56,.64,1); }
+  .mo-tag.wait { background: #FFF5EC; color: #C25400; }
+  .mo-tag.ok { background: #E3F8EC; color: #0C8A4F; }
+  .mo-bal { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F1F4FA; font-size: 11.5px; color: #4A5570; }
+  .mo-bal > .gi { color: #FF7A1A; }
+  .mo-bal b { color: #0F172A; }
+  .mo-use { margin-left: auto; border: 0; border-radius: 100px; padding: 6px 12px; background: #EDF2FF; color: #2B59FF; font-family: inherit; font-weight: 700; font-size: 11px; cursor: pointer;
+    transition: background-color .3s, transform .15s; }
+  .mo-use:hover { background: #DFE7FF; }
+  .mo-use:active { transform: scale(.95); }
+  .mo-use:disabled { opacity: .45; cursor: not-allowed; }
+  .tgl { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .tgl span { flex: 1; display: grid; }
+  .tgl b { font-size: 12.5px; }
+  .tgl small { font-size: 10.5px; color: #64708A; }
+  .mini-sw { width: 36px; height: 22px; border-radius: 100px; border: 0; padding: 0; background: #D3DAE6; position: relative; cursor: pointer; flex: none; transition: background-color .3s; }
+  .mini-sw i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
+  .mini-sw[aria-checked="true"] { background: #2B59FF; }
+  .mini-sw[aria-checked="true"] i { transform: translateX(14px); }
+
+  /* ---- encaixe: conteúdo começa no topo e rola sem barra ---- */
+  .phone { height: 760px; }
+  .sheet { justify-content: flex-start !important; padding: 66px 22px 22px !important; scrollbar-width: none; }
+  .sheet::-webkit-scrollbar { display: none; }
+  .brand { top: 32px !important; z-index: 2; }
+  .icon-wrap { margin-bottom: 14px !important; }
+  .icon-wrap img.app { width: 60px !important; height: 60px !important; border-radius: 17px !important; }
+  .lock { width: 28px !important; height: 28px !important; right: -8px !important; bottom: -8px !important; border-width: 3px !important; }
+  .lock svg { width: 13px !important; height: 13px !important; }
+  .sheet h2 { font-size: 18px !important; }
+  .sheet p { font-size: 12px !important; margin-top: 6px !important; }
+  .unlock { margin-top: 10px !important; }
+  .clock span { min-width: 38px !important; font-size: 18px !important; }
+  .mission { margin-top: 12px; }
+  .sugs { margin-top: 12px !important; gap: 6px !important; }
+  .sug { padding: 6px 9px !important; }
+  .sug img { width: 28px !important; height: 28px !important; }
+  .home-btn { margin-top: 12px !important; flex: none; }
+  .ask { flex: none; padding-bottom: 6px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="gi-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol><symbol id="gi-meal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.2 1.6-3 4.2-3 7 0 1.7.8 3 3 3"/></symbol><symbol id="gi-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H20"/><path d="M8 7h8"/></symbol><symbol id="gi-game" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8.5h10a4.5 4.5 0 0 1 4.4 5.4l-.4 2a2.7 2.7 0 0 1-4.6 1.3L14.6 15H9.4l-1.8 2.2A2.7 2.7 0 0 1 3 15.9l-.4-2A4.5 4.5 0 0 1 7 8.5z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.6" r=".6"/><circle cx="17" cy="13.4" r=".6"/></symbol><symbol id="gi-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z"/></symbol><symbol id="gi-bath" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z"/><path d="M9.5 15a2.5 2.5 0 0 0 2.5 2.5"/></symbol><symbol id="gi-ball" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 7.5 3.6 2.6-1.4 4.2H9.8l-1.4-4.2z"/><path d="M12 3v4.5M15.6 10.1l4.6-1.4M14.2 14.3l2.6 4.3M9.8 14.3l-2.6 4.3M8.4 10.1 3.8 8.7"/></symbol><symbol id="gi-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/></symbol><symbol id="gi-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19C5 10.5 10.5 5 19.5 4.5 19.5 13.5 14 19 5.5 19"/><path d="M5 19l7.5-7.5"/></symbol><symbol id="gi-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/></symbol><symbol id="gi-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><path d="M12 14.5v2.5"/></symbol><symbol id="gi-family" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="2.6"/><circle cx="16.5" cy="7.5" r="2.2"/><path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h1A4.5 4.5 0 0 1 13 18.5V20"/><path d="M13.5 14.6a3.8 3.8 0 0 1 2.3-.6h1.4a3.8 3.8 0 0 1 3.8 3.8V20"/></symbol><symbol id="gi-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol><symbol id="gi-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></symbol><symbol id="gi-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="gi-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11.5V6.8a1.4 1.4 0 0 1 2.8 0V11M9.8 10V5.4a1.4 1.4 0 0 1 2.8 0V10M12.6 10V6.2a1.4 1.4 0 0 1 2.8 0V12M15.4 9.6a1.4 1.4 0 0 1 2.8 0V14a7 7 0 0 1-7 7 6.6 6.6 0 0 1-5.4-2.8L3.6 15a1.5 1.5 0 0 1 2.4-1.8L7 14.6"/></symbol><symbol id="gi-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol><symbol id="gi-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.6 7.1L4 20l1.4-4.2A8 8 0 1 1 20 11.5z"/></symbol><symbol id="gi-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5V20h14v-7.5M12 8.5V20M12 8.5H8.2a2.3 2.3 0 1 1 0-4.6c2.3 0 3.8 4.6 3.8 4.6zM12 8.5h3.8a2.3 2.3 0 1 0 0-4.6c-2.3 0-3.8 4.6-3.8 4.6z"/></symbol><symbol id="gi-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol><symbol id="gi-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol><symbol id="gi-broom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5 10 12"/><path d="M6.5 12.5h8l1.5 8h-11z"/><path d="M9 16.5v4M12 16.5v4"/></symbol><symbol id="gi-dish" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/></symbol><symbol id="gi-dog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9.5 4 5l4 2.5h8L20 5l-1 4.5V14a7 7 0 0 1-14 0z"/><circle cx="9.5" cy="12" r=".6"/><circle cx="14.5" cy="12" r=".6"/><path d="M11 15.5h2l-1 1.2z"/></symbol></defs></svg>
+
+<section class="panel" aria-label="Opções da visualização">
+  <div class="panel-head"><img src="icons/logo-guardiao.svg" alt=""><div><b class="t">Tela de bloqueio</b><span>Como a criança vê no celular</span></div></div>
+  <p class="lead">Quando o tempo combinado de um jogo acaba (ou o responsável bloqueia o app), o Guardian cobre a tela com este aviso gentil e leva a criança de volta ao início.</p>
+
+  <h4>App que a criança tentou abrir</h4>
+  <div class="apps" id="apps"></div>
+
+  <h4>Motivo</h4>
+  <div class="seg" id="seg" data-v="0"><span class="pill"></span><button class="on" data-v="0">Tempo esgotado</button><button data-v="1">Bloqueado</button><button data-v="2">Geral</button></div>
+
+  <h4>Créditos benéficos</h4>
+  <label class="tgl"><span><b>Mostrar missão e créditos</b><small>Usa a missão configurada no painel do responsável</small></span><button class="mini-sw" id="crToggle" role="switch" aria-checked="true" aria-label="Mostrar missão e créditos"><i></i></button></label>
+
+  <button class="replay" id="replay"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 5V2L8 6l4 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Ver a animação de novo</button>
+  <a class="back" href="./">← Voltar para o app</a>
+  <p class="note">Visualização do design proposto. No Android, o bloqueio é desenhado pelo app nativo (BlockOverlay.kt).</p>
+</section>
+
+<div class="phone" id="phone">
+  <div class="game" id="game"></div>
+  <div class="scrim"></div>
+  <div class="brand"><img src="icons/logo-guardiao.svg" alt="">Guardian</div>
+  <div class="sheet">
+    <div class="icon-wrap"><img class="app" id="appIcon" alt=""><span class="lock"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0z"/></svg></span></div>
+    <h2 id="title">Free Fire descansa por hoje</h2>
+    <p id="msg">Você usou todo o tempo combinado com a sua família. Amanhã tem mais!</p>
+    <div class="unlock"><span class="unlock-k" id="pill">Libera de novo em</span>
+            <div class="clock" data-clock><span data-h>00<small>horas</small></span><i>:</i><span data-m>00<small>min</small></span><i>:</i><span data-s>00<small>seg</small></span></div></div>
+    <div class="mission" id="mission"></div>
+    <div class="sugs"><span class="sugs-k">Enquanto isso, que tal…</span>
+            <button class="sug" data-open="Duolingo"><img src="icons/apps/com.duolingo.png" alt=""><span><b>Estudar um pouco?</b><small>Duolingo · lição de 5 min</small></span><span class="go">Abrir</span></button>
+            <button class="sug" data-open="Spotify"><img src="icons/apps/com.spotify.music.png" alt=""><span><b>Ouvir uma música?</b><small>Spotify · sua playlist favorita</small></span><span class="go">Abrir</span></button>
+            <button class="sug" data-open="WhatsApp"><img src="icons/apps/com.whatsapp.png" alt=""><span><b>Mandar um oi pra família?</b><small>WhatsApp · sempre liberado</small></span><span class="go">Abrir</span></button>
+          </div>
+    <button class="home-btn" id="homeBtn">Voltar ao início</button>
+    <button class="ask" id="askBtn">Pedir mais tempo ao responsável</button>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function () {
+  /* contador regressivo até o desbloqueio (meia-noite, ou 7h no bloqueio geral) */
+  function startUnlockClock(root, untilHour, onDone) {
+    function target() {
+      var t = new Date(); t.setHours(untilHour, 0, 0, 0);
+      if (t <= new Date()) t.setDate(t.getDate() + 1);
+      return t;
+    }
+    var end = target(), last = {};
+    function set(sel, v, lbl) {
+      var el = root.querySelector(sel); if (!el) return;
+      var txt = String(v).padStart(2, "0");
+      if (last[sel] !== txt) {
+        el.innerHTML = txt + "<small>" + lbl + "</small>";
+        el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
+        last[sel] = txt;
+      }
+    }
+    function upd() {
+      var d = Math.max(0, Math.round((end - new Date()) / 1000));
+      set("[data-h]", Math.floor(d / 3600), "horas"); set("[data-m]", Math.floor(d % 3600 / 60), "min"); set("[data-s]", d % 60, "seg");
+      if (!d && onDone) onDone();
+    }
+    upd();
+    clearInterval(root._clk); root._clk = setInterval(upd, 1000);
+  }
+
+  var APPS = [
+    { id: "com.dts.freefireth", name: "Free Fire" },
+    { id: "com.roblox.client", name: "Roblox" },
+    { id: "com.mojang.minecraftpe", name: "Minecraft" },
+    { id: "com.epicgames.fortnite", name: "Fortnite" }
+  ];
+  var MSG = [
+    { t: function (n) { return n + " descansa por hoje"; }, m: "Você usou todo o tempo combinado com a sua família. Amanhã tem mais!", p: "Libera de novo em", until: 0 },
+    { t: function (n) { return n + " está pausado"; }, m: "Seu responsável pausou este app por enquanto. Que tal fazer outra coisa legal?", p: "Seu responsável libera quando quiser", until: null },
+    { t: function () { return "Hora de dar uma pausa"; }, m: "Todos os apps estão descansando agora. Os apps de estudo e música continuam liberados.", p: "Hora de dormir · libera em", until: 7 }
+  ];
+  var cur = 0, motivo = 0;
+  var $ = function (id) { return document.getElementById(id); };
+  var phone = $("phone");
+
+  $("apps").innerHTML = APPS.map(function (a, i) {
+    return '<button class="app-opt' + (i === 0 ? " on" : "") + '" data-i="' + i + '"><img src="icons/apps/' + a.id + '.png" alt="">' + a.name + "</button>";
+  }).join("");
+
+
+  /* ---- créditos benéficos (lidos do painel do responsável) ---- */
+  var PKEY = "guardian-painel-v1", ps = {};
+  try { ps = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) {}
+  var CR = ps.credits || {
+    balance: 20,
+    tasks: [{ id: "t1", icon: "broom", title: "Arrumar o quarto", min: 50, status: "open" }],
+    offer: { on: true, task: "t1", msg: "Arrume o quarto e ganhe mais 50 minutos!" },
+    from: "08:00", to: "21:00"
+  };
+  var showCr = true;
+  function fmt(m) { var h = Math.floor(m / 60), r = m % 60; return h ? h + "h" + (r ? " " + String(r).padStart(2, "0") + "min" : "") : m + " min"; }
+  function gi(n) { return '<svg class="gi" aria-hidden="true"><use href="#gi-' + n + '"/></svg>'; }
+  function savePs() { ps.credits = CR; try { localStorage.setItem(PKEY, JSON.stringify(ps)); } catch (e) {} }
+  function renderMission() {
+    var el = $("mission");
+    var t = (CR.tasks || []).find(function (x) { return x.id === CR.offer.task; });
+    if (!showCr || !CR.offer.on || !t) { el.hidden = true; return; }
+    el.hidden = false;
+    var action = t.status === "open" ? '<button class="mo-btn" id="doneBtn">Fiz a tarefa!</button>'
+      : t.status === "pending" ? '<span class="mo-tag wait">Esperando o responsável aprovar</span>'
+      : '<span class="mo-tag ok">' + gi("check") + "Crédito liberado!</span>";
+    el.innerHTML = '<span class="mo-k">' + gi("gift") + "Missão para ganhar mais tempo</span>" +
+      '<div class="mo-body"><span class="mo-ic">' + gi(t.icon || "star") + "</span><b>" + CR.offer.msg.replace(/</g, "&lt;") + "</b></div>" + action +
+      '<div class="mo-bal">' + gi("star") + "<span>Seus créditos: <b>" + fmt(CR.balance) + "</b></span>" +
+      '<button class="mo-use" id="useBtn"' + (CR.balance > 0 ? "" : " disabled") + ">Usar crédito</button></div>";
+  }
+  $("mission").addEventListener("click", function (e) {
+    if (e.target.closest("#doneBtn")) {
+      var t = CR.tasks.find(function (x) { return x.id === CR.offer.task; });
+      t.status = "pending"; savePs(); renderMission();
+      toast("Pedido enviado! Seu responsável vai conferir.");
+    } else if (e.target.closest("#useBtn")) {
+      var m = Math.min(15, CR.balance); if (!m) return;
+      CR.balance -= m; savePs(); renderMission();
+      toast("+" + fmt(m) + " liberados em " + APPS[cur].name + ". Divirta-se!");
+    }
+  });
+  $("crToggle").addEventListener("click", function () {
+    showCr = !showCr; $("crToggle").setAttribute("aria-checked", String(showCr)); renderMission();
+  });
+
+  function render(animate) {
+    var a = APPS[cur], m = MSG[motivo];
+    $("appIcon").src = "icons/apps/" + a.id + ".png";
+    $("game").style.backgroundImage = "url(icons/apps/" + a.id + ".png)";
+    $("title").textContent = m.t(a.name);
+    $("msg").textContent = m.m;
+    $("pill").textContent = m.p;
+    renderMission();
+    var clk = document.querySelector("[data-clock]");
+    clk.style.display = m.until === null ? "none" : "";
+    if (m.until !== null) startUnlockClock(document.querySelector(".unlock"), m.until);
+    if (animate) { phone.classList.remove("anim"); void phone.offsetWidth; phone.classList.add("anim"); }
+  }
+  $("apps").addEventListener("click", function (e) {
+    var b = e.target.closest(".app-opt"); if (!b) return;
+    cur = +b.dataset.i;
+    document.querySelectorAll(".app-opt").forEach(function (x) { x.classList.toggle("on", x === b); });
+    render(true);
+  });
+  $("seg").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    motivo = +b.dataset.v; $("seg").dataset.v = motivo;
+    $("seg").querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+    render(true);
+  });
+  $("replay").addEventListener("click", function () { render(true); });
+
+  var t;
+  function toast(s) { var el = $("toast"); el.textContent = s; el.classList.add("show"); clearTimeout(t); t = setTimeout(function () { el.classList.remove("show"); }, 2200); }
+  document.addEventListener("click", function (e) { var s = e.target.closest(".sug"); if (s) toast("Abrindo " + s.dataset.open + "… (demo)"); });
+  $("homeBtn").addEventListener("click", function () { toast("Voltando para a tela inicial do celular…"); });
+  $("askBtn").addEventListener("click", function () { toast("Pedido enviado! Seu responsável vai ver no app. (demo)"); });
+
+  if (/motivo=geral/.test(location.search)) { var gb = $("seg").querySelector('[data-v="2"]'); gb.click(); }
+  else render(true);
+})();
+</script>
+</body>
+</html>

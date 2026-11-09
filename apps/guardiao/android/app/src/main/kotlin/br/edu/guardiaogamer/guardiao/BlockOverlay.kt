@@ -37,19 +37,27 @@ class BlockOverlay(private val context: Context, private val onGoHome: () -> Uni
         }
         val body = TextView(context).apply {
             text = message
-            setTextColor(Color.parseColor("#D7DCE5"))
+            setTextColor(Color.parseColor("#B9B3A6"))
             textSize = 16f
             gravity = Gravity.CENTER
             setPadding(dp(32), dp(12), dp(32), dp(24))
         }
         val button = Button(context).apply {
             text = "Voltar ao início"
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = dp(28).toFloat()
+                setColor(Color.parseColor("#E4572E"))
+            }
+            setPadding(dp(28), dp(12), dp(28), dp(12))
             setOnClickListener { onGoHome() }
         }
         val column = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#F2111827"))
+            setBackgroundColor(Color.parseColor("#F51B1A17"))
             addView(title)
             addView(body)
             addView(button)
