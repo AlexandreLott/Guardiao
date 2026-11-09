@@ -5,7 +5,7 @@ description: >-
 icon: hand-wave
 ---
 
-# Guardião Gamer 🎮
+# Guardião
 
 Controle parental para jogos eletrônicos, no computador e no celular — Projeto A3, UC Exploração Digital e Fundamentos Tecnológicos.
 
@@ -30,4 +30,4 @@ Ferramenta que ajuda pais e responsáveis a definir e aplicar limites de tempo d
 
 O produto tem **dois aplicativos**, definidos em reunião com o orientador: um fica no celular ou computador do filho e mostra o tempo restante de cada aplicativo; o outro fica no celular do responsável, que vê os aplicativos instalados no aparelho do filho, acompanha o tempo de tela de cada um e pode bloquear o uso por tempo.
 
-Código e documentação em PDF: [repositório no GitHub](https://github.com/AlexandreLott/Bet-Blocker) (o nome "Bet-Blocker" vem do projeto anterior).
+Código e documentação em PDF: [repositório no GitHub](https://github.com/AlexandreLott/Guardiao) (o repositório se chamava "Bet-Blocker", nome do projeto anterior, e foi renomeado para "Guardiao"). O produto passou a se chamar **Guardião**; o aplicativo agora também avisa o responsável quando o filho tenta burlar o controle (retirar permissões ou desinstalar), conforme descrito no README do repositório.
