@@ -5,18 +5,18 @@
 Um único aplicativo (`apps/guardiao`). A função do aparelho (responsável ou filho) é escolhida no primeiro acesso e guardada localmente; o resto do app muda conforme ela.
 
 ```
- Aparelho do responsável (Android/Windows)      Firebase                       Aparelho do filho (Android/Windows)
- ┌──────────────────────────────┐     ┌────────────────────────────┐     ┌──────────────────────────────────────┐
- │ login e-mail/senha           │     │ Authentication             │     │ login anônimo                         │
- │ gera código de pareamento    ├────►│ pairings/{código}          │◄────┤ digita (ou recebe por Bluetooth)      │
- │ lista aparelhos              │◄────┤ devices/{idDoAparelho}     │◄────┤ cria o próprio documento              │
- │ vê apps instalados           │◄────┤  ├ apps/{idDoApp}          │◄────┤ envia a lista de apps                 │
- │ define limite / bloqueio     ├────►│  ├ rules/{idDoApp}         ├────►│ recebe as regras e as guarda no       │
- │ vê o uso de hoje e da semana │◄────┤  └ usage/{dia}_{idDoApp}   │◄────┤ aparelho; mede e bloqueia sozinho     │
- └──────────────────────────────┘     └────────────────────────────┘     └──────────────────────────────────────┘
-          ▲                                                                           ▲
-          └──────── Bluetooth (só leva o código, de Android para Android) ────────────┘
+ Aparelho do filho (Android/Windows)        Firebase                         Aparelho do responsável (Android/Windows)
+ ┌─────────────────────────────────┐   ┌──────────────────────────────┐   ┌──────────────────────────────────────┐
+ │ login anônimo                   │   │ Authentication               │   │ login e-mail/senha                    │
+ │ gera o QR e o código de reserva ├──►│ pairRequests/{código}        │◄──┤ lê o QR (câmera) ou digita o código   │
+ │ espera o vínculo                │◄──┤ devices/{idDoAparelho}       │◄──┤ confere e vincula (lote)              │
+ │ envia a lista de apps           ├──►│  ├ apps/{idDoApp}            │──►│ vê os apps instalados                 │
+ │ recebe as regras, mede e bloqueia│◄──┤  ├ rules/{idDoApp}           │◄──┤ define limite / bloqueio              │
+ │ envia o tempo de uso            ├──►│  └ usage/{dia}_{idDoApp}     │──►│ vê o uso de hoje e da semana          │
+ └─────────────────────────────────┘   └──────────────────────────────┘   └──────────────────────────────────────┘
 ```
+
+Um responsável pode ter **vários aparelhos de filhos** (cada um é um documento em `devices` com o mesmo `parentUid`).
 
 O código compartilhado fica em `packages/guardiao_core`:
 
@@ -27,36 +27,28 @@ O código compartilhado fica em `packages/guardiao_core`:
 
 `GuardiaoApp` (`lib/app.dart`) lê a função de `RoleStore` (SharedPreferences). Sem função, mostra `RoleScreen`; com função, abre `ParentFlow` ou `ChildGate`. Trocar de função **sai da conta antes** (`signOut`) e apaga a escolha: assim um aparelho nunca fica com a sessão do outro lado (por exemplo, um login de responsável no aparelho do filho).
 
-## Pareamento
+## Pareamento (o filho gera o QR)
 
-1. O responsável (conta com e-mail e senha) cria `pairings/{código}` com `parentUid`, `parentLabel` (e-mail parcialmente escondido, como `ma***@gmail.com`), validade de 10 minutos e `used: false`.
-2. O aparelho do filho entra de forma anônima, pode **pré-visualizar** o código (`previewPairing`, só leitura) e então o reivindica: em um único lote marca o código como usado (`used: true`, `deviceId`) e cria `devices/{uid}` apontando para o responsável.
-3. As regras de segurança conferem as duas pontas do lote: o código existe, não foi usado, não expirou e pertence ao responsável indicado no aparelho. Se algo falhar, nada é gravado.
+1. O aparelho do filho (celular **ou** computador) entra de forma anônima e cria `pairRequests/{código}` com `deviceId` (o uid dele), nome, plataforma, validade de 10 minutos e `used: false`. O código é gerado ali mesmo, com 8 caracteres de um alfabeto de 31 símbolos (sem 0, O, 1, I, L), cerca de 8 × 10¹¹ combinações, o que torna inviável adivinhar um código dentro dos 10 minutos.
+2. A tela mostra o **QR** (`guardiao://pair?code=K7M29QXA`, feito com `qr_flutter`) e o código por escrito. Ao expirar, gera outro sozinho; ao sair da tela, apaga o pedido.
+3. O responsável (conta com e-mail e senha) lê o QR com a câmera (`mobile_scanner`, Android/iOS) ou digita o código (único caminho no Windows). O app faz uma **prévia** (`previewPairRequest`, só leitura) e mostra o nome e a plataforma do aparelho para ele conferir (e renomear).
+4. Ao tocar em *Vincular*, um único lote marca o pedido como usado (`used: true`, `parentUid`) e cria `devices/{deviceId}` com o `parentUid`, o `parentLabel` (e-mail parcialmente escondido, como `ma***@gmail.com`) e o nome.
+5. O aparelho do filho observa o próprio documento (`watchOwnDevice`) e avança sozinho para a tela principal, onde aparece “Responsável: ma***@gmail.com”.
+6. As regras de segurança conferem as duas pontas do lote: o pedido existe, não foi usado, não expirou, pertence ao aparelho indicado e a plataforma bate. Se algo falhar, nada é gravado.
 
-O código tem 8 caracteres de um alfabeto de 31 símbolos (sem 0, O, 1, I, L), cerca de 8 × 10¹¹ combinações, o que torna inviável adivinhar um código dentro dos 10 minutos de validade.
-
-### Por Bluetooth
-
-Como ainda não há domínio próprio (links de convite, QR com endereço), o Bluetooth serve para **entregar o código sem digitar**. O Firebase continua sendo a base.
-
-- Filho: `BleNearby.kt` abre um servidor GATT com um serviço e uma única característica de escrita, e anuncia o serviço (o nome do aparelho vai na resposta de varredura). A tela “Receber código por Bluetooth” fica esperando.
-- Responsável: procura aparelhos que anunciam esse serviço, lista, e ao tocar conecta, escreve o código de 8 caracteres e desconecta.
-- Ao receber, o filho **não vincula sozinho**: consulta a nuvem (`previewPairing`), mostra “o responsável ma***@gmail.com quer acompanhar este aparelho” e só vincula depois do toque em *Vincular*.
-- Nada além do código trafega por Bluetooth (sem senha, sem dados). Um aparelho estranho que anunciasse o mesmo serviço poderia receber um código, mas ele vale 10 minutos, uma vez, e o responsável vê na lista de aparelhos qualquer vínculo que não reconheça.
-- Implementado sem biblioteca de terceiros (a mais comum, flutter_blue_plus, exige licença paga para uso comercial). Permissões: `BLUETOOTH_SCAN`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT` (Android 12+) e localização só até o Android 11.
-- Windows não participa: não consegue ser servidor Bluetooth LE de forma confiável pelo Flutter. Lá vale digitar o código.
+Não é preciso domínio nem servidor próprio: o QR carrega só o código; quem faz o vínculo é o Firebase. Um responsável vincula quantos aparelhos quiser repetindo o processo. A leitura do QR por câmera não existe no Windows; lá o responsável digita o código (o filho no Windows mostra o QR normalmente).
 
 ## Quem pode o quê (regras do Firestore)
 
 | Dado | Responsável (dono) | Aparelho do filho | Outros |
 | --- | --- | --- | --- |
-| `pairings/{código}` | cria e apaga os seus | lê um código e o marca como usado, uma vez | nada |
-| `devices/{id}` | lê, renomeia, remove | lê e atualiza só `lastSeen` | nada |
+| `pairRequests/{código}` | lê um pedido por vez e o “queima” (uma vez, antes de expirar) | cria o próprio pedido e o apaga | nada (sem listagem) |
+| `devices/{id}` | cria (no vínculo), lê, renomeia, remove | lê e atualiza só `lastSeen` | nada |
 | `devices/{id}/apps/*` | lê, limpa ao remover | escreve (só no próprio aparelho) | nada |
 | `devices/{id}/rules/*` | lê e escreve (limite de 0 a 1440 min) | só lê | nada |
 | `devices/{id}/usage/*` | lê e apaga | lê e escreve (minutos de 0 a 1440, só no próprio aparelho) | nada |
 
-Os testes em `firebase/tests/rules.test.mjs` cobrem cada linha dessa tabela, incluindo as tentativas de burla (reusar código, código expirado, apontar para outro responsável, escrever regra ou uso pelo lado errado).
+Os testes em `firebase/tests/rules.test.mjs` cobrem cada linha dessa tabela, incluindo as tentativas de burla (reusar código, código expirado, aparelho de outro filho, criar o aparelho sem queimar o pedido, escrever regra ou uso pelo lado errado).
 
 ## Lista de apps instalados
 
@@ -83,10 +75,10 @@ As regras (`rules/*`) chegam ao aparelho do filho pelo Firestore e são **copiad
 
 ## Roteiro para provar em celulares de verdade
 
-Nada disso roda no ambiente de desenvolvimento automático (sem Bluetooth, sem Android físico); os testes automáticos usam simulações. Antes de apresentar, conferir com dois Androids:
+Nada disso roda no ambiente de desenvolvimento automático (sem câmera, sem Android físico); os testes automáticos usam simulações. Antes de apresentar, conferir com dois Androids (ou um Android e um notebook):
 
 1. Instalar nos dois, escolher *responsável* em um e *filho* no outro, e criar conta no primeiro.
-2. Filho: *Receber código por Bluetooth* (liberar as permissões). Responsável: *Adicionar aparelho → Procurar aparelhos por perto → tocar no celular do filho*. Conferir o diálogo de confirmação no filho.
+2. Filho: aparece o QR. Responsável: *Adicionar aparelho → Ler QR* (liberar a câmera), apontar para o QR e tocar em *Vincular*. Conferir que o filho avança sozinho. Repetir com um segundo aparelho de filho (por exemplo o notebook) para provar o vínculo múltiplo.
 3. No filho, liberar *acesso ao uso* e *aparecer sobre outros apps*.
 4. No responsável, definir 1 minuto de limite em um jogo instalado. Abrir o jogo no filho: depois de 1 minuto de uso a tela de bloqueio aparece e o aparelho volta ao início.
 5. No filho, abrir o Guardião: em até 30 s o responsável vê o uso de hoje.

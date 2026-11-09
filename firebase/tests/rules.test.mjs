@@ -34,95 +34,154 @@ beforeEach(async () => env.clearFirestore());
 
 const seed = (fn) => env.withSecurityRulesDisabled(async (ctx) => fn(ctx.firestore()));
 
-const claimBatch = (db, { uid = CHILD, parentUid = PARENT, code = CODE } = {}) => {
+// O responsável vincula: queima o pedido do filho e cria o aparelho, num lote só.
+const approveBatch = (db, { deviceId = CHILD, uid = PARENT, code = CODE, name = 'Celular',
+  platform = 'android', label = 'ma***@exemplo.com' } = {}) => {
   const b = writeBatch(db);
-  b.update(doc(db, 'pairings', code), { used: true, deviceId: uid });
-  b.set(doc(db, 'devices', uid), {
-    parentUid, name: 'Celular', platform: 'android', pairingCode: code,
+  b.update(doc(db, 'pairRequests', code), { used: true, parentUid: uid });
+  b.set(doc(db, 'devices', deviceId), {
+    parentUid: uid, parentLabel: label, name, platform, pairingCode: code,
     pairedAt: serverTimestamp(), lastSeen: serverTimestamp(),
   });
   return b.commit();
 };
 
-const seedPairing = (extra = {}) => seed((db) =>
-  setDoc(doc(db, 'pairings', CODE), { parentUid: PARENT, expiresAt: minutes(10), used: false, ...extra }));
+const seedRequest = (extra = {}, code = CODE) => seed((db) =>
+  setDoc(doc(db, 'pairRequests', code), {
+    deviceId: CHILD, name: 'Celular', platform: 'android', expiresAt: minutes(10), used: false, ...extra,
+  }));
 
-const seedDevice = () => seed(async (db) => {
+const seedDevice = (extra = {}) => seed(async (db) => {
   await setDoc(doc(db, 'devices', CHILD), {
     parentUid: PARENT, name: 'Celular', platform: 'android', pairingCode: CODE,
-    pairedAt: Timestamp.now(), lastSeen: Timestamp.now(),
+    pairedAt: Timestamp.now(), lastSeen: Timestamp.now(), ...extra,
   });
 });
 
-// ---------- pairings ----------
-test('responsável cria código válido', async () => {
-  await assertSucceeds(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: PARENT, expiresAt: minutes(10), used: false }));
-});
-test('login anônimo não cria código', async () => {
-  await assertFails(setDoc(doc(childDb(), 'pairings', CODE),
-    { parentUid: CHILD, expiresAt: minutes(10), used: false }));
-});
-test('não dá para criar código em nome de outro responsável', async () => {
-  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: OTHER_PARENT, expiresAt: minutes(10), used: false }));
-});
-test('código com validade longa demais é recusado', async () => {
-  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: PARENT, expiresAt: minutes(120), used: false }));
-});
-test('não é possível listar códigos', async () => {
-  await seedPairing();
-  await assertFails(getDocs(collection(childDb(), 'pairings')));
-});
-test('aparelho logado lê um código específico', async () => {
-  await seedPairing();
-  await assertSucceeds(getDoc(doc(childDb(), 'pairings', CODE)));
-});
-test('visitante sem login não lê nada', async () => {
-  await seedPairing();
-  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'pairings', CODE)));
+// ---------- pedidos de vínculo (gerados pelo filho) ----------
+const request = (extra = {}) => ({
+  deviceId: CHILD, name: 'Celular', platform: 'android', expiresAt: minutes(10), used: false, ...extra,
 });
 
-// ---------- vínculo ----------
-test('filho vincula o aparelho com um código válido', async () => {
-  await seedPairing();
-  await assertSucceeds(claimBatch(childDb()));
+test('o aparelho do filho cria um pedido válido', async () => {
+  await assertSucceeds(setDoc(doc(childDb(), 'pairRequests', CODE), request()));
 });
-test('criar o aparelho sem queimar o código é recusado', async () => {
-  await seedPairing();
-  await assertFails(setDoc(doc(childDb(), 'devices', CHILD), {
+test('conta de responsável não cria pedido de vínculo', async () => {
+  await assertFails(setDoc(doc(parentDb(), 'pairRequests', CODE), request({ deviceId: PARENT })));
+});
+test('não dá para criar pedido em nome de outro aparelho', async () => {
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ deviceId: CHILD2 })));
+});
+test('pedido com validade longa demais, já vencido ou usado é recusado', async () => {
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ expiresAt: minutes(120) })));
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ expiresAt: minutes(-1) })));
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ used: true })));
+});
+test('pedido com nome vazio, enorme, plataforma estranha ou campo extra é recusado', async () => {
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ name: '' })));
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ name: 'x'.repeat(81) })));
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ platform: 'ios' })));
+  await assertFails(setDoc(doc(childDb(), 'pairRequests', CODE), request({ parentUid: PARENT })));
+});
+test('não é possível listar pedidos', async () => {
+  await seedRequest();
+  await assertFails(getDocs(collection(parentDb(), 'pairRequests')));
+  await assertFails(getDocs(collection(childDb(), 'pairRequests')));
+});
+test('conta logada lê um pedido específico; visitante não', async () => {
+  await seedRequest();
+  await assertSucceeds(getDoc(doc(parentDb(), 'pairRequests', CODE)));
+  await assertSucceeds(getDoc(doc(childDb(), 'pairRequests', CODE)));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'pairRequests', CODE)));
+});
+test('só o aparelho que gerou o código o cancela', async () => {
+  await seedRequest();
+  await assertFails(deleteDoc(doc(childDb(CHILD2), 'pairRequests', CODE)));
+  await assertFails(deleteDoc(doc(parentDb(), 'pairRequests', CODE)));
+  await assertSucceeds(deleteDoc(doc(childDb(), 'pairRequests', CODE)));
+});
+test('a coleção antiga de códigos do responsável não existe mais', async () => {
+  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
+    { parentUid: PARENT, expiresAt: minutes(10), used: false }));
+});
+
+// ---------- vínculo (o responsável aprova) ----------
+test('responsável vincula o aparelho com um pedido válido', async () => {
+  await seedRequest();
+  await assertSucceeds(approveBatch(parentDb()));
+});
+test('o filho vê o próprio aparelho depois de vinculado', async () => {
+  await seedRequest();
+  await assertSucceeds(approveBatch(parentDb()));
+  await assertSucceeds(getDoc(doc(childDb(), 'devices', CHILD)));
+});
+test('um responsável vincula vários aparelhos', async () => {
+  await seedRequest();
+  await seedRequest({ deviceId: CHILD2, name: 'Notebook', platform: 'windows' }, 'ABCD2345');
+  await assertSucceeds(approveBatch(parentDb()));
+  await assertSucceeds(approveBatch(parentDb(), {
+    deviceId: CHILD2, code: 'ABCD2345', name: 'Notebook', platform: 'windows' }));
+  const q = query(collection(parentDb(), 'devices'), where('parentUid', '==', PARENT));
+  const snap = await assertSucceeds(getDocs(q));
+  if (snap.size !== 2) throw new Error('esperava 2 aparelhos');
+});
+test('o responsável pode trocar o nome ao vincular', async () => {
+  await seedRequest();
+  await assertSucceeds(approveBatch(parentDb(), { name: 'Celular do Pedro' }));
+});
+test('criar o aparelho sem queimar o pedido é recusado', async () => {
+  await seedRequest();
+  await assertFails(setDoc(doc(parentDb(), 'devices', CHILD), {
     parentUid: PARENT, name: 'Celular', platform: 'android', pairingCode: CODE,
     pairedAt: serverTimestamp(), lastSeen: serverTimestamp(),
   }));
 });
-test('código já usado não vincula outro aparelho', async () => {
-  await seedPairing({ used: true, deviceId: CHILD2 });
-  await assertFails(claimBatch(childDb()));
-});
-test('código expirado não vincula', async () => {
-  await seedPairing({ expiresAt: Timestamp.fromMillis(Date.now() - 60_000) });
-  await assertFails(claimBatch(childDb()));
-});
-test('aparelho não pode apontar para outro responsável', async () => {
-  await seedPairing();
-  await assertFails(claimBatch(childDb(), { parentUid: OTHER_PARENT }));
-});
-test('aparelho não pode se vincular com o uid de outro aparelho', async () => {
-  await seedPairing();
-  const db = childDb(CHILD);
+test('o próprio filho não se vincula a um responsável', async () => {
+  await seedRequest();
+  const db = childDb();
   const b = writeBatch(db);
-  b.update(doc(db, 'pairings', CODE), { used: true, deviceId: CHILD2 });
-  b.set(doc(db, 'devices', CHILD2), {
-    parentUid: PARENT, name: 'X', platform: 'android', pairingCode: CODE,
+  b.update(doc(db, 'pairRequests', CODE), { used: true, parentUid: PARENT });
+  b.set(doc(db, 'devices', CHILD), {
+    parentUid: PARENT, name: 'Celular', platform: 'android', pairingCode: CODE,
     pairedAt: serverTimestamp(), lastSeen: serverTimestamp(),
   });
   await assertFails(b.commit());
 });
-test('código não pode ser reaberto depois de usado', async () => {
-  await seedPairing();
-  await assertSucceeds(claimBatch(childDb()));
-  await assertFails(updateDoc(doc(childDb(), 'pairings', CODE), { used: false }));
+test('pedido já usado não vincula de novo', async () => {
+  await seedRequest({ used: true, parentUid: OTHER_PARENT });
+  await assertFails(approveBatch(parentDb()));
+});
+test('pedido expirado não vincula', async () => {
+  await seedRequest({ expiresAt: Timestamp.fromMillis(Date.now() - 60_000) });
+  await assertFails(approveBatch(parentDb()));
+});
+test('o responsável não vincula em nome de outro responsável', async () => {
+  await seedRequest();
+  await assertFails(approveBatch(parentDb(), { uid: OTHER_PARENT }));
+});
+test('o aparelho criado precisa ser o dono do pedido', async () => {
+  await seedRequest();
+  await assertFails(approveBatch(parentDb(), { deviceId: CHILD2 }));
+});
+test('a plataforma do aparelho precisa bater com a do pedido', async () => {
+  await seedRequest();
+  await assertFails(approveBatch(parentDb(), { platform: 'windows' }));
+});
+test('vincular não sobrescreve um aparelho que já tem dono', async () => {
+  await seedRequest();
+  await seedDevice({ parentUid: OTHER_PARENT });
+  await assertFails(approveBatch(parentDb()));
+});
+test('pedido não pode ser reaberto depois de usado', async () => {
+  await seedRequest();
+  await assertSucceeds(approveBatch(parentDb()));
+  await assertFails(updateDoc(doc(parentDb(), 'pairRequests', CODE), { used: false }));
+  await assertFails(updateDoc(doc(childDb(), 'pairRequests', CODE), { used: false }));
+});
+test('rótulo do responsável que não é texto ou é enorme é recusado', async () => {
+  await seedRequest();
+  await assertFails(approveBatch(parentDb(), { label: 42 }));
+  await assertFails(approveBatch(parentDb(), { label: 'x'.repeat(81) }));
 });
 
 // ---------- leitura de dispositivos ----------
@@ -214,22 +273,6 @@ test('outro responsável não define regras', async () => {
   await seedDevice();
   await assertFails(setDoc(doc(parentDb(OTHER_PARENT), 'devices', CHILD, 'rules', 'a'), { dailyLimitMinutes: 10, blocked: false }));
 });
-// ---------- rótulo do responsável no código ----------
-test('código pode levar o e-mail do responsável escondido', async () => {
-  await assertSucceeds(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: PARENT, parentLabel: 'ma***@exemplo.com', expiresAt: minutes(10), used: false }));
-});
-test('rótulo do responsável que não é texto ou é enorme é recusado', async () => {
-  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: PARENT, parentLabel: 42, expiresAt: minutes(10), used: false }));
-  await assertFails(setDoc(doc(parentDb(), 'pairings', CODE),
-    { parentUid: PARENT, parentLabel: 'x'.repeat(81), expiresAt: minutes(10), used: false }));
-});
-test('o filho vincula normalmente quando o código tem rótulo', async () => {
-  await seedPairing({ parentLabel: 'ma***@exemplo.com' });
-  await assertSucceeds(claimBatch(childDb()));
-});
-
 // ---------- tempo de uso ----------
 const usageDoc = (db, id = '2026-11-08_com.roblox.client') =>
   doc(db, 'devices', CHILD, 'usage', id);

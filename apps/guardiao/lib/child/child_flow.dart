@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
-import '../nearby/nearby.dart';
 import 'platform/installed_apps_source.dart';
 import 'usage/usage_monitor.dart';
 import 'screens/home_screen.dart';
 import 'screens/pairing_screen.dart';
 
-/// Lado do filho. Decide a tela: entrando na conta, pedindo o código ou
-/// mostrando o tempo.
+/// Lado do filho. Decide a tela: entrando na conta, mostrando o QR de
+/// vínculo ou mostrando o tempo.
 class ChildGate extends StatefulWidget {
   const ChildGate({
     super.key,
     required this.backend,
     required this.source,
     required this.onChangeRole,
-    required this.nearby,
     required this.monitor,
     this.isDemo = false,
   });
 
   final GuardianBackend backend;
-  final NearbyPairing nearby;
   final UsageMonitor monitor;
   final InstalledAppsSource source;
   final VoidCallback onChangeRole;
@@ -53,7 +50,9 @@ class _ChildGateState extends State<ChildGate> {
       future: _signIn,
       builder: (context, signIn) {
         if (signIn.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         if (signIn.hasError) {
           return _ConnectionError(
@@ -70,15 +69,17 @@ class _ChildGateState extends State<ChildGate> {
                 onRetry: () => setState(_start),
               );
             }
-            if (!snap.hasData && snap.connectionState != ConnectionState.active) {
-              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            if (!snap.hasData &&
+                snap.connectionState != ConnectionState.active) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
             }
             final device = snap.data;
             if (device == null) {
               return PairingScreen(
                 backend: widget.backend,
                 source: widget.source,
-                nearby: widget.nearby,
                 isDemo: widget.isDemo,
                 onChangeRole: widget.onChangeRole,
               );
@@ -116,7 +117,10 @@ class _ConnectionError extends StatelessWidget {
               children: [
                 Notice(message, isError: true),
                 const SizedBox(height: 16),
-                FilledButton(onPressed: onRetry, child: const Text('Tentar de novo')),
+                FilledButton(
+                  onPressed: onRetry,
+                  child: const Text('Tentar de novo'),
+                ),
               ],
             ),
           ),

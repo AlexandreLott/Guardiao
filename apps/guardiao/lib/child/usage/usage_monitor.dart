@@ -25,11 +25,11 @@ class MonitoredApp {
   final bool blocked;
 
   Map<String, Object?> toJson() => {
-        'pkg': key,
-        'name': name,
-        'limit': limitMinutes,
-        'blocked': blocked,
-      };
+    'pkg': key,
+    'name': name,
+    'limit': limitMinutes,
+    'blocked': blocked,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -82,13 +82,15 @@ List<MonitoredApp> buildMonitored(
     if (rule == null || rule.isDefault) continue;
     final key = monitorKey(app, platform);
     if (key == null) continue;
-    out.add(MonitoredApp(
-      appId: app.id,
-      key: key,
-      name: app.name,
-      limitMinutes: rule.dailyLimitMinutes,
-      blocked: rule.blocked,
-    ));
+    out.add(
+      MonitoredApp(
+        appId: app.id,
+        key: key,
+        name: app.name,
+        limitMinutes: rule.dailyLimitMinutes,
+        blocked: rule.blocked,
+      ),
+    );
   }
   return out;
 }
@@ -143,7 +145,8 @@ class UnsupportedUsageMonitor implements UsageMonitor {
 /// Medidor de mentira para a demonstração e para testes: o uso só muda
 /// quando alguém chama [simulate].
 class DemoUsageMonitor implements UsageMonitor {
-  DemoUsageMonitor({Set<MonitorPermission> missing = const {}}) : _missing = {...missing};
+  DemoUsageMonitor({Set<MonitorPermission> missing = const {}})
+    : _missing = {...missing};
 
   final Set<MonitorPermission> _missing;
   final Map<String, int> _usage = {};
@@ -166,7 +169,8 @@ class DemoUsageMonitor implements UsageMonitor {
 
   /// No teste, "abrir a tela do sistema" já libera.
   @override
-  Future<void> request(MonitorPermission permission) async => _missing.remove(permission);
+  Future<void> request(MonitorPermission permission) async =>
+      _missing.remove(permission);
 
   @override
   Future<void> start(List<MonitoredApp> apps) async {

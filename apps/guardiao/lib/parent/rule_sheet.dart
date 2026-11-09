@@ -20,14 +20,15 @@ class _RuleSheetState extends State<RuleSheet> {
 
   late bool _blocked = widget.rule.blocked;
   late bool _limited = widget.rule.dailyLimitMinutes != null;
-  late double _minutes =
-      (widget.rule.dailyLimitMinutes ?? 60).clamp(_min, _max).toDouble();
+  late double _minutes = (widget.rule.dailyLimitMinutes ?? 60)
+      .clamp(_min, _max)
+      .toDouble();
 
   AppRule get _result => AppRule(
-        appId: widget.app.id,
-        dailyLimitMinutes: _limited ? _minutes.round() : null,
-        blocked: _blocked,
-      );
+    appId: widget.app.id,
+    dailyLimitMinutes: _limited ? _minutes.round() : null,
+    blocked: _blocked,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +36,11 @@ class _RuleSheetState extends State<RuleSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-            24, 0, 24, 16 + MediaQuery.of(context).viewInsets.bottom),
+          24,
+          0,
+          24,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -65,8 +70,11 @@ class _RuleSheetState extends State<RuleSheet> {
             ),
             if (_limited && !_blocked) ...[
               Center(
-                child: Text(formatMinutes(_minutes.round()),
-                    key: const Key('limitLabel'), style: text.headlineSmall),
+                child: Text(
+                  formatMinutes(_minutes.round()),
+                  key: const Key('limitLabel'),
+                  style: text.headlineSmall,
+                ),
               ),
               Slider(
                 key: const Key('limitSlider'),

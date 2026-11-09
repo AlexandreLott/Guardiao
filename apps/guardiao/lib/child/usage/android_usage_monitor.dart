@@ -8,7 +8,7 @@ import 'usage_monitor.dart';
 /// serviço em primeiro plano cobre o app bloqueado, mesmo com este app fechado.
 class AndroidUsageMonitor implements UsageMonitor {
   AndroidUsageMonitor([MethodChannel? channel])
-      : _channel = channel ?? const MethodChannel('br.edu.guardiaogamer/monitor');
+    : _channel = channel ?? const MethodChannel('br.edu.guardiaogamer/monitor');
 
   final MethodChannel _channel;
 
@@ -17,7 +17,8 @@ class AndroidUsageMonitor implements UsageMonitor {
 
   @override
   Future<Set<MonitorPermission>> missingPermissions() async {
-    final raw = await _channel.invokeMapMethod<String, bool>('permissions') ?? const {};
+    final raw =
+        await _channel.invokeMapMethod<String, bool>('permissions') ?? const {};
     return {
       if (raw['usageAccess'] != true) MonitorPermission.usageAccess,
       if (raw['overlay'] != true) MonitorPermission.overlay,
@@ -38,7 +39,8 @@ class AndroidUsageMonitor implements UsageMonitor {
   }
 
   @override
-  Future<void> start(List<MonitoredApp> apps) => _channel.invokeMethod<void>('start', {
+  Future<void> start(List<MonitoredApp> apps) =>
+      _channel.invokeMethod<void>('start', {
         'apps': jsonEncode([for (final a in apps) a.toJson()]),
       });
 

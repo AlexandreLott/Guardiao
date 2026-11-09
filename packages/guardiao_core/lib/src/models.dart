@@ -4,16 +4,14 @@ enum DevicePlatform {
   windows,
   other;
 
-  static DevicePlatform parse(String? value) => DevicePlatform.values.firstWhere(
-        (p) => p.name == value,
-        orElse: () => DevicePlatform.other,
-      );
+  static DevicePlatform parse(String? value) => DevicePlatform.values
+      .firstWhere((p) => p.name == value, orElse: () => DevicePlatform.other);
 
   String get label => switch (this) {
-        DevicePlatform.android => 'Android',
-        DevicePlatform.windows => 'Windows',
-        DevicePlatform.other => 'Outro',
-      };
+    DevicePlatform.android => 'Android',
+    DevicePlatform.windows => 'Windows',
+    DevicePlatform.other => 'Outro',
+  };
 }
 
 /// Transforma qualquer texto em um identificador aceito como id de documento
@@ -26,11 +24,7 @@ String safeId(String raw) {
 
 /// Um aplicativo instalado no aparelho do filho.
 class InstalledApp {
-  const InstalledApp({
-    required this.id,
-    required this.name,
-    this.packageName,
-  });
+  const InstalledApp({required this.id, required this.name, this.packageName});
 
   /// Identificador estável (pacote no Android, chave do registro no Windows).
   final String id;
@@ -45,9 +39,9 @@ class InstalledApp {
       );
 
   Map<String, dynamic> toMap() => {
-        'name': name,
-        if (packageName != null) 'packageName': packageName,
-      };
+    'name': name,
+    if (packageName != null) 'packageName': packageName,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -79,15 +73,15 @@ class AppRule {
   bool get isDefault => dailyLimitMinutes == null && !blocked;
 
   factory AppRule.fromMap(String appId, Map<String, dynamic> data) => AppRule(
-        appId: appId,
-        dailyLimitMinutes: (data['dailyLimitMinutes'] as num?)?.toInt(),
-        blocked: (data['blocked'] as bool?) ?? false,
-      );
+    appId: appId,
+    dailyLimitMinutes: (data['dailyLimitMinutes'] as num?)?.toInt(),
+    blocked: (data['blocked'] as bool?) ?? false,
+  );
 
   Map<String, dynamic> toMap() => {
-        'dailyLimitMinutes': dailyLimitMinutes,
-        'blocked': blocked,
-      };
+    'dailyLimitMinutes': dailyLimitMinutes,
+    'blocked': blocked,
+  };
 
   /// Minutos ainda disponíveis hoje, dado o tempo já usado.
   /// `null` quando não há limite; 0 quando bloqueado ou esgotado.
@@ -109,6 +103,7 @@ class PairedDevice {
     required this.platform,
     required this.pairedAt,
     this.lastSeen,
+    this.parentLabel,
   });
 
   final String id;
@@ -118,9 +113,14 @@ class PairedDevice {
   final DateTime pairedAt;
   final DateTime? lastSeen;
 
+  /// E-mail do responsável com parte escondida (`jo***@gmail.com`), para o
+  /// filho saber a quem está vinculado.
+  final String? parentLabel;
+
   /// Considera o aparelho online se falou com a nuvem nos últimos 30 minutos.
   bool isOnline(DateTime now) =>
-      lastSeen != null && now.difference(lastSeen!) < const Duration(minutes: 30);
+      lastSeen != null &&
+      now.difference(lastSeen!) < const Duration(minutes: 30);
 }
 
 /// Data local no formato `2026-11-08`, usada para agrupar o uso por dia.
@@ -131,17 +131,21 @@ String dayKey(DateTime date) =>
 
 /// Tempo de uso de um aplicativo em um dia, enviado pelo aparelho do filho.
 class UsageEntry {
-  const UsageEntry({required this.day, required this.appId, required this.minutes});
+  const UsageEntry({
+    required this.day,
+    required this.appId,
+    required this.minutes,
+  });
 
   final String day;
   final String appId;
   final int minutes;
 
   factory UsageEntry.fromMap(Map<String, dynamic> data) => UsageEntry(
-        day: (data['day'] as String?) ?? '',
-        appId: (data['appId'] as String?) ?? '',
-        minutes: ((data['minutes'] as num?) ?? 0).toInt(),
-      );
+    day: (data['day'] as String?) ?? '',
+    appId: (data['appId'] as String?) ?? '',
+    minutes: ((data['minutes'] as num?) ?? 0).toInt(),
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -154,25 +158,32 @@ class UsageEntry {
   int get hashCode => Object.hash(day, appId, minutes);
 }
 
-/// O que o aparelho do filho pode ver de um código antes de aceitá-lo.
-class PairingPreview {
-  const PairingPreview({required this.parentLabel, required this.expiresAt});
-
-  /// E-mail do responsável com parte escondida, como `jo***@gmail.com`.
-  final String parentLabel;
-  final DateTime expiresAt;
-}
-
-/// Código temporário gerado pelo responsável para vincular um aparelho.
-class PairingCode {
-  const PairingCode({
+/// Pedido de vínculo criado pelo aparelho do filho. O código vai no QR e,
+/// por escrito, na tela do filho; o responsável o escaneia ou digita.
+class PairRequest {
+  const PairRequest({
     required this.code,
-    required this.parentUid,
+    required this.deviceId,
     required this.expiresAt,
   });
 
   final String code;
-  final String parentUid;
+  final String deviceId;
+  final DateTime expiresAt;
+}
+
+/// O que o responsável vê do aparelho antes de confirmar o vínculo.
+class PairRequestPreview {
+  const PairRequestPreview({
+    required this.code,
+    required this.deviceName,
+    required this.platform,
+    required this.expiresAt,
+  });
+
+  final String code;
+  final String deviceName;
+  final DevicePlatform platform;
   final DateTime expiresAt;
 }
 

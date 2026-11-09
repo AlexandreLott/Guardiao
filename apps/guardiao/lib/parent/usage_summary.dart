@@ -16,7 +16,11 @@ class DayTotal {
 }
 
 /// Os últimos [days] dias (do mais antigo ao de hoje), incluindo os sem uso.
-List<DayTotal> summarizeDays(List<UsageEntry> entries, DateTime today, {int days = 7}) {
+List<DayTotal> summarizeDays(
+  List<UsageEntry> entries,
+  DateTime today, {
+  int days = 7,
+}) {
   final totals = <String, int>{};
   for (final e in entries) {
     totals[e.day] = (totals[e.day] ?? 0) + e.minutes;
@@ -33,9 +37,9 @@ List<DayTotal> summarizeDays(List<UsageEntry> entries, DateTime today, {int days
 
 /// Minutos de hoje por aplicativo.
 Map<String, int> usageOfDay(List<UsageEntry> entries, String day) => {
-      for (final e in entries)
-        if (e.day == day) e.appId: e.minutes,
-    };
+  for (final e in entries)
+    if (e.day == day) e.appId: e.minutes,
+};
 
 const _weekdays = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
@@ -63,11 +67,16 @@ class UsageSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hoje: ${formatMinutes(todayMinutes)} de jogo e apps',
-                key: const Key('usageToday'), style: text.titleMedium),
+            Text(
+              'Hoje: ${formatMinutes(todayMinutes)} de jogo e apps',
+              key: const Key('usageToday'),
+              style: text.titleMedium,
+            ),
             const SizedBox(height: 2),
-            Text('Média dos últimos ${totals.length} dias: ${formatMinutes(average)} por dia',
-                style: text.bodySmall),
+            Text(
+              'Média dos últimos ${totals.length} dias: ${formatMinutes(average)} por dia',
+              style: text.bodySmall,
+            ),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -87,7 +96,10 @@ class UsageSummary extends StatelessWidget {
                                 width: 18,
                                 height: peak == 0
                                     ? 2
-                                    : (barArea * t.minutes / peak).clamp(2.0, barArea),
+                                    : (barArea * t.minutes / peak).clamp(
+                                        2.0,
+                                        barArea,
+                                      ),
                                 decoration: BoxDecoration(
                                   color: t.day == today
                                       ? scheme.primary

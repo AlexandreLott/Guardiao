@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -8,15 +10,17 @@ import 'pairing.dart';
 /// Implementação de produção, em cima de Firebase Auth e Cloud Firestore.
 ///
 /// Estrutura no Firestore:
-/// - `pairings/{codigo}`: parentUid, parentLabel, expiresAt, used, deviceId
-/// - `devices/{deviceId}`: parentUid, name, platform, pairedAt, lastSeen, pairingCode
+/// - `pairRequests/{codigo}`: deviceId, name, platform, expiresAt, used, parentUid
+///   (criado pelo aparelho do filho; o responsável o "queima" ao vincular)
+/// - `devices/{deviceId}`: parentUid, parentLabel, name, platform, pairedAt,
+///   lastSeen, pairingCode (criado pelo responsável, junto com a baixa do pedido)
 /// - `devices/{deviceId}/apps/{appId}`: name, packageName
 /// - `devices/{deviceId}/rules/{appId}`: dailyLimitMinutes, blocked
 /// - `devices/{deviceId}/usage/{dia}_{appId}`: day, appId, minutes, updatedAt
 class FirebaseBackend implements GuardianBackend {
   FirebaseBackend({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _db = firestore ?? FirebaseFirestore.instance;
+    : _auth = auth ?? FirebaseAuth.instance,
+      _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
@@ -25,7 +29,8 @@ class FirebaseBackend implements GuardianBackend {
   String? get currentUid => _auth.currentUser?.uid;
 
   String _requireUid() =>
-      currentUid ?? (throw const AuthException('Você precisa entrar primeiro.'));
+      currentUid ??
+      (throw const AuthException('Você precisa entrar primeiro.'));
 
   @override
   Stream<String?> authStateChanges() =>
@@ -43,12 +48,20 @@ class FirebaseBackend implements GuardianBackend {
   }
 
   @override
-  Future<String> registerParent(String email, String password) => _auth0(() =>
-      _auth.createUserWithEmailAndPassword(email: email.trim(), password: password));
+  Future<String> registerParent(String email, String password) => _auth0(
+    () => _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    ),
+  );
 
   @override
-  Future<String> signInParent(String email, String password) => _auth0(() =>
-      _auth.signInWithEmailAndPassword(email: email.trim(), password: password));
+  Future<String> signInParent(String email, String password) => _auth0(
+    () => _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    ),
+  );
 
   @override
   Future<String> signInChild() async {
@@ -61,59 +74,114 @@ class FirebaseBackend implements GuardianBackend {
   Future<void> signOut() => _auth.signOut();
 
   static String _authMessage(FirebaseAuthException e) => switch (e.code) {
-        'invalid-email' => 'E-mail inválido.',
-        'user-not-found' ||
-        'wrong-password' ||
-        'invalid-credential' =>
-          'E-mail ou senha incorretos.',
-        'email-already-in-use' => 'Já existe uma conta com esse e-mail.',
-        'weak-password' => 'A senha precisa ter pelo menos 6 caracteres.',
-        'network-request-failed' => 'Sem conexão com a internet.',
-        'too-many-requests' => 'Muitas tentativas. Aguarde um pouco.',
-        'operation-not-allowed' =>
-          'Esse tipo de login não está ativado no Firebase do projeto.',
-        _ => 'Não foi possível entrar (${e.code}).',
-      };
+    'invalid-email' => 'E-mail inválido.',
+    'user-not-found' ||
+    'wrong-password' ||
+    'invalid-credential' => 'E-mail ou senha incorretos.',
+    'email-already-in-use' => 'Já existe uma conta com esse e-mail.',
+    'weak-password' => 'A senha precisa ter pelo menos 6 caracteres.',
+    'network-request-failed' => 'Sem conexão com a internet.',
+    'too-many-requests' => 'Muitas tentativas. Aguarde um pouco.',
+    'operation-not-allowed' =>
+      'Esse tipo de login não está ativado no Firebase do projeto.',
+    _ => 'Não foi possível entrar (${e.code}).',
+  };
 
   // ---- App do responsável ----
 
-  @override
-  Future<PairingCode> createPairingCode() async {
-    final uid = _requireUid();
-    final expires = DateTime.now().add(pairingCodeTtl);
-    for (var attempt = 0; attempt < 5; attempt++) {
-      final code = generatePairingCode();
-      final ref = _db.collection('pairings').doc(code);
-      // A transação garante que o código só vira documento se ainda não existir.
-      final bool created;
-      try {
-        created = await _db.runTransaction<bool>((tx) async {
-          final snap = await tx.get(ref);
-          if (snap.exists) return false;
-          tx.set(ref, {
-            'parentUid': uid,
-            'parentLabel': maskEmail(_auth.currentUser?.email),
-            'expiresAt': Timestamp.fromDate(expires),
-            'used': false,
-          });
-          return true;
-        });
-      } on FirebaseException catch (e) {
-        // As regras comparam a validade com o relógio do servidor.
-        if (e.code == 'permission-denied') {
-          throw const PairingException(
-              'O servidor recusou o código. Confira a data e a hora do aparelho.');
-        }
-        if (e.code == 'unavailable') {
-          throw const PairingException('Sem conexão com a internet.');
-        }
-        rethrow;
-      }
-      if (created) {
-        return PairingCode(code: code, parentUid: uid, expiresAt: expires);
-      }
+  /// Lê o pedido e confere se ainda pode ser usado.
+  Future<Map<String, dynamic>> _readOpenRequest(
+    DocumentReference<Map<String, dynamic>> ref,
+  ) async {
+    final snap = await ref.get();
+    final data = snap.data();
+    if (!snap.exists || data == null) {
+      throw const PairingException(
+        'Código não encontrado. Confira e tente de novo.',
+      );
     }
-    throw const PairingException('Não foi possível gerar um código. Tente de novo.');
+    if (data['used'] == true) {
+      throw const PairingException(
+        'Esse código já foi usado. Peça para gerar outro no aparelho do filho.',
+      );
+    }
+    final expires = (data['expiresAt'] as Timestamp).toDate();
+    if (!DateTime.now().isBefore(expires)) {
+      throw const PairingException(
+        'Esse código expirou. Peça para gerar outro no aparelho do filho.',
+      );
+    }
+    return data;
+  }
+
+  PairingException _pairError(FirebaseException e, String denied) {
+    if (e.code == 'permission-denied') return PairingException(denied);
+    if (e.code == 'unavailable') {
+      return const PairingException('Sem conexão com a internet.');
+    }
+    return PairingException('Erro ao falar com o servidor (${e.code}).');
+  }
+
+  @override
+  Future<PairRequestPreview> previewPairRequest(String code) async {
+    _requireUid();
+    final normalized = normalizePairingCode(code);
+    if (!isValidPairingCode(normalized)) {
+      throw const PairingException('O código tem 8 letras e números.');
+    }
+    try {
+      final data = await _readOpenRequest(
+        _db.collection('pairRequests').doc(normalized),
+      );
+      return PairRequestPreview(
+        code: normalized,
+        deviceName: (data['name'] as String?) ?? 'Dispositivo',
+        platform: DevicePlatform.parse(data['platform'] as String?),
+        expiresAt: (data['expiresAt'] as Timestamp).toDate(),
+      );
+    } on FirebaseException catch (e) {
+      throw _pairError(e, 'Não foi possível ler esse código.');
+    }
+  }
+
+  @override
+  Future<PairedDevice> approvePairRequest(
+    String code, {
+    String? deviceName,
+  }) async {
+    final uid = _requireUid();
+    final normalized = normalizePairingCode(code);
+    if (!isValidPairingCode(normalized)) {
+      throw const PairingException('O código tem 8 letras e números.');
+    }
+    final requestRef = _db.collection('pairRequests').doc(normalized);
+    try {
+      final data = await _readOpenRequest(requestRef);
+      final deviceId = data['deviceId'] as String;
+      final deviceRef = _db.collection('devices').doc(deviceId);
+      final name = (deviceName ?? '').trim();
+
+      // Os dois documentos mudam juntos: ou o aparelho é vinculado e o
+      // pedido é queimado, ou nada acontece.
+      final batch = _db.batch()
+        ..update(requestRef, {'used': true, 'parentUid': uid})
+        ..set(deviceRef, {
+          'parentUid': uid,
+          'parentLabel': maskEmail(_auth.currentUser?.email),
+          'name': name.isEmpty ? data['name'] : name,
+          'platform': data['platform'],
+          'pairingCode': normalized,
+          'pairedAt': FieldValue.serverTimestamp(),
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      await batch.commit();
+      return _deviceFrom(await deviceRef.get());
+    } on FirebaseException catch (e) {
+      throw _pairError(
+        e,
+        'Não foi possível vincular. Gere um novo código no aparelho do filho.',
+      );
+    }
   }
 
   @override
@@ -124,10 +192,10 @@ class FirebaseBackend implements GuardianBackend {
         .where('parentUid', isEqualTo: uid)
         .snapshots()
         .map((q) {
-      final list = q.docs.map(_deviceFrom).toList()
-        ..sort((a, b) => a.pairedAt.compareTo(b.pairedAt));
-      return list;
-    });
+          final list = q.docs.map(_deviceFrom).toList()
+            ..sort((a, b) => a.pairedAt.compareTo(b.pairedAt));
+          return list;
+        });
   }
 
   @override
@@ -157,8 +225,11 @@ class FirebaseBackend implements GuardianBackend {
 
   @override
   Future<void> setRule(String deviceId, AppRule rule) {
-    final ref =
-        _db.collection('devices').doc(deviceId).collection('rules').doc(rule.appId);
+    final ref = _db
+        .collection('devices')
+        .doc(deviceId)
+        .collection('rules')
+        .doc(rule.appId);
     if (rule.isDefault) return ref.delete();
     return ref.set({
       ...rule.toMap(),
@@ -167,14 +238,16 @@ class FirebaseBackend implements GuardianBackend {
   }
 
   @override
-  Stream<List<UsageEntry>> watchUsage(String deviceId, {required String sinceDay}) =>
-      _db
-          .collection('devices')
-          .doc(deviceId)
-          .collection('usage')
-          .where('day', isGreaterThanOrEqualTo: sinceDay)
-          .snapshots()
-          .map((q) {
+  Stream<List<UsageEntry>> watchUsage(
+    String deviceId, {
+    required String sinceDay,
+  }) => _db
+      .collection('devices')
+      .doc(deviceId)
+      .collection('usage')
+      .where('day', isGreaterThanOrEqualTo: sinceDay)
+      .snapshots()
+      .map((q) {
         final list = q.docs.map((d) => UsageEntry.fromMap(d.data())).toList()
           ..sort((a, b) {
             final byDay = a.day.compareTo(b.day);
@@ -185,92 +258,64 @@ class FirebaseBackend implements GuardianBackend {
 
   // ---- App do filho ----
 
-  /// Lê o código e confere se ainda pode ser usado.
-  Future<Map<String, dynamic>> _readOpenPairing(
-      DocumentReference<Map<String, dynamic>> ref) async {
-    final snap = await ref.get();
-    final data = snap.data();
-    if (!snap.exists || data == null) {
-      throw const PairingException('Código não encontrado. Confira e tente de novo.');
-    }
-    if (data['used'] == true) {
-      throw const PairingException(
-          'Esse código já foi usado. Peça um novo ao responsável.');
-    }
-    final expires = (data['expiresAt'] as Timestamp).toDate();
-    if (!DateTime.now().isBefore(expires)) {
-      throw const PairingException('Esse código expirou. Peça um novo ao responsável.');
-    }
-    return data;
-  }
+  /// Código do último pedido deste aparelho (para cancelar ao gerar outro).
+  String? _lastRequest;
 
   @override
-  Future<PairingPreview> previewPairing(String code) async {
-    _requireUid();
-    final normalized = normalizePairingCode(code);
-    if (!isValidPairingCode(normalized)) {
-      throw const PairingException('O código tem 8 letras e números.');
-    }
-    try {
-      final data = await _readOpenPairing(_db.collection('pairings').doc(normalized));
-      return PairingPreview(
-        parentLabel: (data['parentLabel'] as String?) ?? 'um responsável',
-        expiresAt: (data['expiresAt'] as Timestamp).toDate(),
-      );
-    } on FirebaseException catch (e) {
-      if (e.code == 'unavailable') {
-        throw const PairingException('Sem conexão com a internet.');
-      }
-      if (e.code == 'permission-denied') {
-        throw const PairingException('Não foi possível ler esse código.');
-      }
-      rethrow;
-    }
-  }
-
-  @override
-  Future<PairedDevice> claimPairing({
-    required String code,
+  Future<PairRequest> createPairRequest({
     required String deviceName,
     required DevicePlatform platform,
   }) async {
     final uid = _requireUid();
-    final normalized = normalizePairingCode(code);
-    if (!isValidPairingCode(normalized)) {
-      throw const PairingException('O código tem 8 letras e números.');
-    }
-    final pairingRef = _db.collection('pairings').doc(normalized);
-    final deviceRef = _db.collection('devices').doc(uid);
-
-    try {
-      final data = await _readOpenPairing(pairingRef);
-      final parentUid = data['parentUid'] as String;
-
-      // Os dois documentos mudam juntos: ou o aparelho é vinculado e o
-      // código é queimado, ou nada acontece.
-      final batch = _db.batch()
-        ..update(pairingRef, {'used': true, 'deviceId': uid})
-        ..set(deviceRef, {
-          'parentUid': parentUid,
-          'name': deviceName,
-          'platform': platform.name,
-          'pairingCode': normalized,
-          'pairedAt': FieldValue.serverTimestamp(),
-          'lastSeen': FieldValue.serverTimestamp(),
+    final expires = DateTime.now().add(pairingCodeTtl);
+    for (var attempt = 0; attempt < 5; attempt++) {
+      final code = generatePairingCode();
+      final ref = _db.collection('pairRequests').doc(code);
+      // A transação garante que o código só vira documento se ainda não existir.
+      final bool created;
+      try {
+        created = await _db.runTransaction<bool>((tx) async {
+          final snap = await tx.get(ref);
+          if (snap.exists) return false;
+          tx.set(ref, {
+            'deviceId': uid,
+            'name': deviceName,
+            'platform': platform.name,
+            'expiresAt': Timestamp.fromDate(expires),
+            'used': false,
+          });
+          return true;
         });
-      await batch.commit();
-    } on FirebaseException catch (e) {
-      if (e.code == 'permission-denied') {
-        throw const PairingException(
-            'Não foi possível usar esse código. Peça um novo ao responsável.');
+      } on FirebaseException catch (e) {
+        // As regras comparam a validade com o relógio do servidor.
+        throw _pairError(
+          e,
+          'O servidor recusou o código. Confira a data e a hora do aparelho.',
+        );
       }
-      if (e.code == 'unavailable') {
-        throw const PairingException('Sem conexão com a internet.');
+      if (created) {
+        final previous = _lastRequest;
+        _lastRequest = code;
+        if (previous != null) unawaited(cancelPairRequest(previous));
+        return PairRequest(code: code, deviceId: uid, expiresAt: expires);
       }
-      rethrow;
     }
-    final created = await deviceRef.get();
-    return _deviceFrom(created);
+    throw const PairingException(
+      'Não foi possível gerar um código. Tente de novo.',
+    );
+  }
+
+  @override
+  Future<void> cancelPairRequest(String code) async {
+    try {
+      await _db
+          .collection('pairRequests')
+          .doc(normalizePairingCode(code))
+          .delete();
+    } catch (_) {
+      // Melhor esforço: o pedido expira sozinho em 10 minutos.
+    }
+    if (_lastRequest == code) _lastRequest = null;
   }
 
   @override
@@ -347,7 +392,9 @@ class FirebaseBackend implements GuardianBackend {
       }
       await batch.commit();
     }
-    changed.forEach((appId, value) => _lastUsage['${day}_${safeId(appId)}'] = value);
+    changed.forEach(
+      (appId, value) => _lastUsage['${day}_${safeId(appId)}'] = value,
+    );
   }
 
   @override
@@ -357,21 +404,23 @@ class FirebaseBackend implements GuardianBackend {
   Stream<Map<String, AppRule>> watchOwnRules() => _rulesStream(_requireUid());
 
   @override
-  Future<void> touch() => _db
-      .collection('devices')
-      .doc(_requireUid())
-      .update({'lastSeen': FieldValue.serverTimestamp()});
+  Future<void> touch() => _db.collection('devices').doc(_requireUid()).update({
+    'lastSeen': FieldValue.serverTimestamp(),
+  });
 
   // ---- auxiliares ----
 
   Stream<List<InstalledApp>> _appsStream(String deviceId) => _db
-          .collection('devices')
-          .doc(deviceId)
-          .collection('apps')
-          .snapshots()
-          .map((q) {
-        final list = q.docs.map((d) => InstalledApp.fromMap(d.id, d.data())).toList()
-          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      .collection('devices')
+      .doc(deviceId)
+      .collection('apps')
+      .snapshots()
+      .map((q) {
+        final list =
+            q.docs.map((d) => InstalledApp.fromMap(d.id, d.data())).toList()
+              ..sort(
+                (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+              );
         return list;
       });
 
@@ -380,7 +429,9 @@ class FirebaseBackend implements GuardianBackend {
       .doc(deviceId)
       .collection('rules')
       .snapshots()
-      .map((q) => {for (final d in q.docs) d.id: AppRule.fromMap(d.id, d.data())});
+      .map(
+        (q) => {for (final d in q.docs) d.id: AppRule.fromMap(d.id, d.data())},
+      );
 
   PairedDevice _deviceFrom(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data()!;
@@ -392,6 +443,7 @@ class FirebaseBackend implements GuardianBackend {
       // serverTimestamp ainda pendente aparece como null no cache local.
       pairedAt: (d['pairedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       lastSeen: (d['lastSeen'] as Timestamp?)?.toDate(),
+      parentLabel: d['parentLabel'] as String?,
     );
   }
 }

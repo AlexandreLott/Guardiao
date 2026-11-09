@@ -13,13 +13,22 @@ abstract class GuardianBackend {
   Future<String> registerParent(String email, String password);
   Future<String> signInParent(String email, String password);
 
-  /// O aparelho do filho entra de forma anônima; quem o identifica é o
-  /// código de pareamento, não uma senha.
+  /// O aparelho do filho entra de forma anônima; o que o liga a um responsável
+  /// é o pedido de vínculo (QR), não uma senha.
   Future<String> signInChild();
   Future<void> signOut();
 
   // ---- App do responsável ----
-  Future<PairingCode> createPairingCode();
+
+  /// Mostra o aparelho que gerou o [code] (lido do QR ou digitado), sem
+  /// vinculá-lo. Lança [PairingException] se o código não existe, já foi
+  /// usado ou expirou.
+  Future<PairRequestPreview> previewPairRequest(String code);
+
+  /// Vincula ao responsável o aparelho dono do [code]. Pode ser chamado várias
+  /// vezes, com códigos de aparelhos diferentes: não há limite de aparelhos.
+  /// [deviceName] troca o nome sugerido pelo aparelho.
+  Future<PairedDevice> approvePairRequest(String code, {String? deviceName});
   Stream<List<PairedDevice>> watchDevices();
   Future<void> removeDevice(String deviceId);
   Stream<List<InstalledApp>> watchApps(String deviceId);
@@ -27,19 +36,22 @@ abstract class GuardianBackend {
   Future<void> setRule(String deviceId, AppRule rule);
 
   /// Tempo de uso por aplicativo a partir do dia [sinceDay] (`2026-11-08`).
-  Stream<List<UsageEntry>> watchUsage(String deviceId, {required String sinceDay});
+  Stream<List<UsageEntry>> watchUsage(
+    String deviceId, {
+    required String sinceDay,
+  });
 
   // ---- App do filho ----
 
-  /// Mostra a quem pertence um código antes de aceitá-lo.
-  /// Lança [PairingException] se o código não existe, já foi usado ou expirou.
-  Future<PairingPreview> previewPairing(String code);
-
-  Future<PairedDevice> claimPairing({
-    required String code,
+  /// Gera o código (e o QR) que o responsável vai escanear. Cada chamada
+  /// cancela o pedido anterior deste aparelho.
+  Future<PairRequest> createPairRequest({
     required String deviceName,
     required DevicePlatform platform,
   });
+
+  /// Apaga um pedido que não vai mais ser usado (melhor esforço).
+  Future<void> cancelPairRequest(String code);
 
   /// `null` enquanto o aparelho não está vinculado (ou foi desvinculado).
   Stream<PairedDevice?> watchOwnDevice();

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
-import '../nearby/nearby.dart';
-import 'add_device_sheet.dart';
+import '../qr/qr_scanner.dart';
+import 'add_device_screen.dart';
 import 'device_screen.dart';
 
 class DevicesScreen extends StatefulWidget {
@@ -10,12 +10,12 @@ class DevicesScreen extends StatefulWidget {
     super.key,
     required this.backend,
     required this.onChangeRole,
-    required this.nearby,
+    required this.scanner,
     this.isDemo = false,
   });
 
   final GuardianBackend backend;
-  final NearbyPairing nearby;
+  final QrScanner scanner;
   final VoidCallback onChangeRole;
   final bool isDemo;
 
@@ -24,20 +24,18 @@ class DevicesScreen extends StatefulWidget {
 }
 
 class _DevicesScreenState extends State<DevicesScreen> {
-  late final Stream<List<PairedDevice>> _devices = widget.backend.watchDevices();
+  late final Stream<List<PairedDevice>> _devices = widget.backend
+      .watchDevices();
 
-  Future<void> _add(List<PairedDevice> current) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => AddDeviceSheet(
+  Future<void> _add() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => AddDeviceScreen(
         backend: widget.backend,
-        knownDeviceIds: {for (final d in current) d.id},
-        nearby: widget.nearby,
+        scanner: widget.scanner,
+        isDemo: widget.isDemo,
       ),
-    );
-  }
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -76,38 +74,44 @@ class _DevicesScreenState extends State<DevicesScreen> {
           ),
           floatingActionButton: FloatingActionButton.extended(
             key: const Key('addDeviceButton'),
-            onPressed: () => _add(devices),
+            onPressed: _add,
             icon: const Icon(Icons.add),
             label: const Text('Adicionar aparelho'),
           ),
           body: SafeArea(
-            child: Builder(builder: (context) {
-              if (snap.hasError) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Notice('Não foi possível carregar os aparelhos. ${snap.error}',
-                      isError: true),
-                );
-              }
-              if (!snap.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (devices.isEmpty) return const _EmptyState();
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                itemCount: devices.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, i) => _DeviceTile(
-                  device: devices[i],
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => DeviceScreen(
-                      backend: widget.backend,
-                      device: devices[i],
+            child: Builder(
+              builder: (context) {
+                if (snap.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Notice(
+                      'Não foi possível carregar os aparelhos. ${snap.error}',
+                      isError: true,
                     ),
-                  )),
-                ),
-              );
-            }),
+                  );
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (devices.isEmpty) return const _EmptyState();
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                  itemCount: devices.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) => _DeviceTile(
+                    device: devices[i],
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => DeviceScreen(
+                          backend: widget.backend,
+                          device: devices[i],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         );
       },
@@ -127,14 +131,19 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.devices_other, size: 64, color: Theme.of(context).colorScheme.outline),
+            Icon(
+              Icons.devices_other,
+              size: 64,
+              color: Theme.of(context).colorScheme.outline,
+            ),
             const SizedBox(height: 16),
             Text('Nenhum aparelho ainda', style: text.titleLarge),
             const SizedBox(height: 8),
             Text(
               'Instale o Guardião Gamer no celular ou no computador do filho '
-              'e escolha "Este aparelho é do filho". Depois toque em '
-              '"Adicionar aparelho" aqui para vincular os dois.',
+              'e escolha "Este aparelho é do filho": a tela dele mostra um QR. '
+              'Depois toque em "Adicionar aparelho" aqui e escaneie o QR. '
+              'Você pode vincular quantos aparelhos quiser.',
               textAlign: TextAlign.center,
               style: text.bodyMedium,
             ),
@@ -159,14 +168,21 @@ class _DeviceTile extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: Icon(
-          device.platform == DevicePlatform.windows ? Icons.computer : Icons.smartphone,
+          device.platform == DevicePlatform.windows
+              ? Icons.computer
+              : Icons.smartphone,
           size: 32,
         ),
         title: Text(device.name),
-        subtitle: Text('${device.platform.label} · ${lastSeenLabel(device.lastSeen, DateTime.now())}'),
-        trailing: Icon(Icons.circle,
-            size: 12, color: online ? scheme.secondary : scheme.outlineVariant,
-            semanticLabel: online ? 'Online' : 'Offline'),
+        subtitle: Text(
+          '${device.platform.label} · ${lastSeenLabel(device.lastSeen, DateTime.now())}',
+        ),
+        trailing: Icon(
+          Icons.circle,
+          size: 12,
+          color: online ? scheme.secondary : scheme.outlineVariant,
+          semanticLabel: online ? 'Online' : 'Offline',
+        ),
       ),
     );
   }

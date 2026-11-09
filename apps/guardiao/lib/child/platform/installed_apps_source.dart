@@ -28,7 +28,7 @@ abstract class InstalledAppsSource {
 /// Só aparecem apps com ícone de lançamento, como no menu do celular.
 class AndroidAppsSource implements InstalledAppsSource {
   AndroidAppsSource([MethodChannel? channel])
-      : _channel = channel ?? const MethodChannel('br.edu.guardiaogamer/device');
+    : _channel = channel ?? const MethodChannel('br.edu.guardiaogamer/device');
 
   final MethodChannel _channel;
 
@@ -43,14 +43,18 @@ class AndroidAppsSource implements InstalledAppsSource {
 
   @override
   Future<List<InstalledApp>> list() async {
-    final raw = await _channel.invokeListMethod<Map<Object?, Object?>>('listInstalledApps');
+    final raw = await _channel.invokeListMethod<Map<Object?, Object?>>(
+      'listInstalledApps',
+    );
     return parseAndroidApps(raw ?? const []);
   }
 }
 
 /// Converte a resposta do canal em modelos, sem repetições e sem o próprio app.
-List<InstalledApp> parseAndroidApps(List<Map<Object?, Object?>> raw,
-    {String ownPackage = 'br.edu.guardiaogamer.guardiao'}) {
+List<InstalledApp> parseAndroidApps(
+  List<Map<Object?, Object?>> raw, {
+  String ownPackage = 'br.edu.guardiaogamer.guardiao',
+}) {
   final byPackage = <String, InstalledApp>{};
   for (final item in raw) {
     final pkg = (item['packageName'] as String?)?.trim();
@@ -69,8 +73,9 @@ List<InstalledApp> parseAndroidApps(List<Map<Object?, Object?>> raw,
 
 /// Lê os programas instalados no registro do Windows (chaves "Uninstall").
 class WindowsAppsSource implements InstalledAppsSource {
-  WindowsAppsSource({Future<ProcessResult> Function(String, List<String>)? runner})
-      : _run = runner ?? Process.run;
+  WindowsAppsSource({
+    Future<ProcessResult> Function(String, List<String>)? runner,
+  }) : _run = runner ?? Process.run;
 
   final Future<ProcessResult> Function(String, List<String>) _run;
 
@@ -105,7 +110,9 @@ Get-ItemProperty $paths -ErrorAction SilentlyContinue |
       _script,
     ]);
     if (result.exitCode != 0) {
-      throw StateError('Não foi possível ler os programas instalados (${result.exitCode}).');
+      throw StateError(
+        'Não foi possível ler os programas instalados (${result.exitCode}).',
+      );
     }
     return parseWindowsPrograms(result.stdout.toString());
   }
@@ -174,9 +181,9 @@ class DemoAppsSource implements InstalledAppsSource {
 
   @override
   Future<List<InstalledApp>> list() async => const [
-        InstalledApp(id: 'demo.roblox', name: 'Roblox'),
-        InstalledApp(id: 'demo.minecraft', name: 'Minecraft'),
-        InstalledApp(id: 'demo.freefire', name: 'Free Fire'),
-        InstalledApp(id: 'demo.chrome', name: 'Chrome'),
-      ];
+    InstalledApp(id: 'demo.roblox', name: 'Roblox'),
+    InstalledApp(id: 'demo.minecraft', name: 'Minecraft'),
+    InstalledApp(id: 'demo.freefire', name: 'Free Fire'),
+    InstalledApp(id: 'demo.chrome', name: 'Chrome'),
+  ];
 }

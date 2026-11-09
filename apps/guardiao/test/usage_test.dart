@@ -31,13 +31,20 @@ class _FakeProbe implements SystemProbe {
 void main() {
   group('quais apps são vigiados', () {
     const apps = [
-      InstalledApp(id: 'com.roblox.client', name: 'Roblox', packageName: 'com.roblox.client'),
+      InstalledApp(
+        id: 'com.roblox.client',
+        name: 'Roblox',
+        packageName: 'com.roblox.client',
+      ),
       InstalledApp(id: 'win_x', name: 'Jogo', packageName: 'Jogo.EXE'),
       InstalledApp(id: 'win_y', name: 'Sem exe'),
       InstalledApp(id: 'com.chrome', name: 'Chrome', packageName: 'com.chrome'),
     ];
     const rules = {
-      'com.roblox.client': AppRule(appId: 'com.roblox.client', dailyLimitMinutes: 60),
+      'com.roblox.client': AppRule(
+        appId: 'com.roblox.client',
+        dailyLimitMinutes: 60,
+      ),
       'win_x': AppRule(appId: 'win_x', blocked: true),
       'win_y': AppRule(appId: 'win_y', dailyLimitMinutes: 30),
       'com.chrome': AppRule(appId: 'com.chrome'), // regra padrão: nada a vigiar
@@ -45,7 +52,11 @@ void main() {
 
     test('no Android usa o nome do pacote', () {
       final list = buildMonitored(apps, rules, DevicePlatform.android);
-      expect(list.map((a) => a.key), ['com.roblox.client', 'Jogo.EXE', 'win_y']);
+      expect(list.map((a) => a.key), [
+        'com.roblox.client',
+        'Jogo.EXE',
+        'win_y',
+      ]);
       expect(list.first.limitMinutes, 60);
     });
 
@@ -61,11 +72,8 @@ void main() {
     late DateTime now;
     late MemoryLedgerStore store;
 
-    WindowsUsageMonitor make() => WindowsUsageMonitor(
-          probe: probe,
-          store: store,
-          clock: () => now,
-        );
+    WindowsUsageMonitor make() =>
+        WindowsUsageMonitor(probe: probe, store: store, clock: () => now);
 
     setUp(() {
       probe = _FakeProbe();
@@ -73,7 +81,11 @@ void main() {
       store = MemoryLedgerStore();
     });
 
-    Future<void> run(WindowsUsageMonitor m, int polls, {int stepSeconds = 2}) async {
+    Future<void> run(
+      WindowsUsageMonitor m,
+      int polls, {
+      int stepSeconds = 2,
+    }) async {
       for (var i = 0; i < polls; i++) {
         now = now.add(Duration(seconds: stepSeconds));
         await m.poll();
@@ -81,7 +93,11 @@ void main() {
     }
 
     const game = MonitoredApp(
-        appId: 'g', key: 'jogo.exe', name: 'Jogo', limitMinutes: 2);
+      appId: 'g',
+      key: 'jogo.exe',
+      name: 'Jogo',
+      limitMinutes: 2,
+    );
 
     test('conta o tempo do programa que está na frente', () async {
       final m = make();
@@ -118,7 +134,12 @@ void main() {
     test('programa bloqueado é encerrado na primeira olhada', () async {
       final m = make();
       await m.start([
-        const MonitoredApp(appId: 'b', key: 'bloqueado.exe', name: 'B', blocked: true),
+        const MonitoredApp(
+          appId: 'b',
+          key: 'bloqueado.exe',
+          name: 'B',
+          blocked: true,
+        ),
       ]);
       probe.exe = 'bloqueado.exe';
       await run(m, 1);
@@ -129,7 +150,12 @@ void main() {
     test('nunca encerra o próprio Guardião', () async {
       final m = make();
       await m.start([
-        const MonitoredApp(appId: 'g', key: 'guardiao.exe', name: 'G', blocked: true),
+        const MonitoredApp(
+          appId: 'g',
+          key: 'guardiao.exe',
+          name: 'G',
+          blocked: true,
+        ),
       ]);
       probe.exe = 'guardiao.exe';
       await run(m, 5);
@@ -183,33 +209,43 @@ void main() {
       calls.clear();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
-        calls.add(call);
-        switch (call.method) {
-          case 'permissions':
-            return {'usageAccess': false, 'overlay': true, 'notifications': false};
-          case 'usageToday':
-            return {'com.roblox.client': 42};
-        }
-        return null;
-      });
+            calls.add(call);
+            switch (call.method) {
+              case 'permissions':
+                return {
+                  'usageAccess': false,
+                  'overlay': true,
+                  'notifications': false,
+                };
+              case 'usageToday':
+                return {'com.roblox.client': 42};
+            }
+            return null;
+          });
     });
 
-    tearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, null));
+    tearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
 
     test('lista o que falta liberar', () async {
       final missing = await AndroidUsageMonitor().missingPermissions();
-      expect(missing, {MonitorPermission.usageAccess, MonitorPermission.notifications});
+      expect(missing, {
+        MonitorPermission.usageAccess,
+        MonitorPermission.notifications,
+      });
     });
 
     test('manda as regras em JSON e lê o uso', () async {
       final m = AndroidUsageMonitor();
       await m.start(const [
         MonitoredApp(
-            appId: 'com.roblox.client',
-            key: 'com.roblox.client',
-            name: 'Roblox',
-            limitMinutes: 60),
+          appId: 'com.roblox.client',
+          key: 'com.roblox.client',
+          name: 'Roblox',
+          limitMinutes: 60,
+        ),
       ]);
       final sent = jsonDecode(calls.single.arguments['apps'] as String) as List;
       expect(sent.single, {
@@ -226,8 +262,11 @@ void main() {
       await m.request(MonitorPermission.usageAccess);
       await m.request(MonitorPermission.overlay);
       await m.request(MonitorPermission.notifications);
-      expect(calls.map((c) => c.method),
-          ['openUsageAccessSettings', 'openOverlaySettings', 'requestNotifications']);
+      expect(calls.map((c) => c.method), [
+        'openUsageAccessSettings',
+        'openOverlaySettings',
+        'requestNotifications',
+      ]);
     });
   });
 
@@ -251,13 +290,10 @@ void main() {
     });
 
     test('usageOfDay separa o dia pedido', () {
-      final used = usageOfDay(
-        [
-          const UsageEntry(day: '2026-10-26', appId: 'a', minutes: 5),
-          const UsageEntry(day: '2026-10-25', appId: 'a', minutes: 99),
-        ],
-        '2026-10-26',
-      );
+      final used = usageOfDay([
+        const UsageEntry(day: '2026-10-26', appId: 'a', minutes: 5),
+        const UsageEntry(day: '2026-10-25', appId: 'a', minutes: 99),
+      ], '2026-10-26');
       expect(used, {'a': 5});
     });
   });
@@ -277,12 +313,11 @@ void main() {
     });
 
     Future<PairedDevice> pairChild(WidgetTester tester) async {
-      final code = await parent.createPairingCode();
       await tester.pumpWidget(
-          appFor(childBackend, role: DeviceRole.child, monitor: monitor));
+        appFor(childBackend, role: DeviceRole.child, monitor: monitor),
+      );
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('codeField')), code.code);
-      await tester.tap(find.byKey(const Key('claimButton')));
+      await parent.approvePairRequest(shownPairingCode(tester));
       await tester.pumpAndSettle();
       return (await tester.runAsync(() => parent.watchDevices().first))!.single;
     }
@@ -292,37 +327,50 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('mostra o tempo usado e o restante, e o responsável vê o mesmo', (tester) async {
-      final device = await pairChild(tester);
-      await parent.setRule(device.id,
-          const AppRule(appId: 'demo.roblox', dailyLimitMinutes: 90));
-      await tester.pump();
-      await tester.pump();
+    testWidgets(
+      'mostra o tempo usado e o restante, e o responsável vê o mesmo',
+      (tester) async {
+        final device = await pairChild(tester);
+        await parent.setRule(
+          device.id,
+          const AppRule(appId: 'demo.roblox', dailyLimitMinutes: 90),
+        );
+        await tester.pump();
+        await tester.pump();
 
-      expect(monitor.started.single.key, 'demo.roblox');
-      expect(monitor.started.single.limitMinutes, 90);
-      expect(find.text('Usou 0 min de 1 h 30 min hoje'), findsOneWidget);
+        expect(monitor.started.single.key, 'demo.roblox');
+        expect(monitor.started.single.limitMinutes, 90);
+        expect(find.text('Usou 0 min de 1 h 30 min hoje'), findsOneWidget);
 
-      monitor.simulate('demo.roblox', 30);
-      monitor.simulate('demo.chrome', 12);
-      await tickMinute(tester);
+        monitor.simulate('demo.roblox', 30);
+        monitor.simulate('demo.chrome', 12);
+        await tickMinute(tester);
 
-      expect(find.text('Usou 30 min de 1 h 30 min hoje'), findsOneWidget);
-      expect(find.text('1 h restantes'), findsOneWidget);
-      expect(find.text('Hoje: 12 min'), findsOneWidget); // app sem limite
+        expect(find.text('Usou 30 min de 1 h 30 min hoje'), findsOneWidget);
+        expect(find.text('1 h restantes'), findsOneWidget);
+        expect(find.text('Hoje: 12 min'), findsOneWidget); // app sem limite
 
-      final reported = (await tester.runAsync(() => parent
-          .watchUsage(device.id, sinceDay: dayKey(DateTime.now()))
-          .first))!;
-      expect({for (final e in reported) e.appId: e.minutes},
-          {'demo.roblox': 30, 'demo.chrome': 12});
-      await closeApp(tester);
-    });
+        final reported = (await tester.runAsync(
+          () => parent
+              .watchUsage(device.id, sinceDay: dayKey(DateTime.now()))
+              .first,
+        ))!;
+        expect(
+          {for (final e in reported) e.appId: e.minutes},
+          {'demo.roblox': 30, 'demo.chrome': 12},
+        );
+        await closeApp(tester);
+      },
+    );
 
-    testWidgets('limite esgotado vira "Bloqueado" na tela do filho', (tester) async {
+    testWidgets('limite esgotado vira "Bloqueado" na tela do filho', (
+      tester,
+    ) async {
       final device = await pairChild(tester);
       await parent.setRule(
-          device.id, const AppRule(appId: 'demo.roblox', dailyLimitMinutes: 30));
+        device.id,
+        const AppRule(appId: 'demo.roblox', dailyLimitMinutes: 30),
+      );
       await tester.pump();
       monitor.simulate('demo.roblox', 30);
       await tickMinute(tester);
@@ -330,11 +378,12 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('pede as permissões que faltam e some quando liberadas', (tester) async {
-      monitor = DemoUsageMonitor(missing: {
-        MonitorPermission.usageAccess,
-        MonitorPermission.overlay,
-      });
+    testWidgets('pede as permissões que faltam e some quando liberadas', (
+      tester,
+    ) async {
+      monitor = DemoUsageMonitor(
+        missing: {MonitorPermission.usageAccess, MonitorPermission.overlay},
+      );
       await pairChild(tester);
       await tester.pump();
       expect(find.byKey(const Key('permissionsCard')), findsOneWidget);
@@ -354,14 +403,17 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('sem medidor no aparelho, avisa que o tempo não diminui', (tester) async {
-      final code = await parent.createPairingCode();
+    testWidgets('sem medidor no aparelho, avisa que o tempo não diminui', (
+      tester,
+    ) async {
       await tester.pumpWidget(appFor(childBackend, role: DeviceRole.child));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('codeField')), code.code);
-      await tester.tap(find.byKey(const Key('claimButton')));
+      await parent.approvePairRequest(shownPairingCode(tester));
       await tester.pumpAndSettle();
-      expect(find.textContaining('ainda não mede o tempo de uso'), findsOneWidget);
+      expect(
+        find.textContaining('ainda não mede o tempo de uso'),
+        findsOneWidget,
+      );
       await closeApp(tester);
     });
   });

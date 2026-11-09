@@ -1,23 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:guardiao_core/guardiao_core.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../nearby/nearby.dart';
 import '../platform/installed_apps_source.dart';
-import 'nearby_receive_sheet.dart';
 
+/// Tela do aparelho do filho antes de ser vinculado: mostra o QR (e o código
+/// escrito) para o responsável ler no aparelho dele. Vale para celular e PC.
 class PairingScreen extends StatefulWidget {
   const PairingScreen({
     super.key,
     required this.backend,
     required this.source,
     required this.onChangeRole,
-    required this.nearby,
     this.isDemo = false,
   });
 
   final GuardianBackend backend;
-  final NearbyPairing nearby;
   final InstalledAppsSource source;
   final VoidCallback onChangeRole;
   final bool isDemo;
@@ -27,43 +27,29 @@ class PairingScreen extends StatefulWidget {
 }
 
 class _PairingScreenState extends State<PairingScreen> {
-  final _code = TextEditingController();
   final _name = TextEditingController();
-  bool _busy = false;
+  PairRequest? _request;
   String? _error;
+  bool _busy = false;
+  Timer? _tick;
+  Duration _left = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    widget.source.deviceName().then((n) {
-      if (mounted && _name.text.isEmpty) _name.text = n;
-    });
+    _start();
   }
 
-  @override
-  void dispose() {
-    _code.dispose();
-    _name.dispose();
-    super.dispose();
+  Future<void> _start() async {
+    final detected = await widget.source.deviceName();
+    if (!mounted) return;
+    if (_name.text.isEmpty) _name.text = detected;
+    await _generate();
   }
 
-  Future<void> _receiveByBluetooth() async {
-    final code = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => NearbyReceiveSheet(backend: widget.backend, nearby: widget.nearby),
-    );
-    if (code == null || !mounted) return;
-    _code.text = formatPairingCode(code);
-    await _submit();
-  }
-
-  Future<void> _submit() async {
-    if (!isValidPairingCode(_code.text)) {
-      setState(() => _error = 'O código tem 8 letras e números, como K7M2-9QXA.');
-      return;
-    }
+  /// Gera um código novo (o anterior é cancelado pelo backend).
+  Future<void> _generate() async {
+    if (_busy) return;
     final name = _name.text.trim();
     if (name.isEmpty) {
       setState(() => _error = 'Dê um nome para este aparelho.');
@@ -74,12 +60,16 @@ class _PairingScreenState extends State<PairingScreen> {
       _error = null;
     });
     try {
-      await widget.backend.claimPairing(
-        code: _code.text,
+      final request = await widget.backend.createPairRequest(
         deviceName: name,
         platform: widget.source.platform,
       );
-      // A tela muda sozinha: o portão observa o documento do aparelho.
+      if (!mounted) {
+        unawaited(widget.backend.cancelPairRequest(request.code));
+        return;
+      }
+      setState(() => _request = request);
+      _startCountdown(request.expiresAt);
     } on PairingException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (e) {
@@ -89,9 +79,45 @@ class _PairingScreenState extends State<PairingScreen> {
     }
   }
 
+  void _startCountdown(DateTime expiresAt) {
+    _tick?.cancel();
+    void update() {
+      final left = expiresAt.difference(DateTime.now());
+      setState(() => _left = left.isNegative ? Duration.zero : left);
+    }
+
+    update();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      update();
+      // O código venceu: troca por um novo, sem o usuário precisar fazer nada.
+      if (_left == Duration.zero && !_busy) _generate();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    final request = _request;
+    // Depois do vínculo (ou ao sair), o código não serve mais para nada.
+    if (request != null) {
+      unawaited(widget.backend.cancelPairRequest(request.code));
+    }
+    _name.dispose();
+    super.dispose();
+  }
+
+  String get _countdown {
+    final m = _left.inMinutes;
+    final s = (_left.inSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final request = _request;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -102,36 +128,78 @@ class _PairingScreenState extends State<PairingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.shield_moon_outlined,
-                      size: 56, color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    Icons.shield_moon_outlined,
+                    size: 56,
+                    color: scheme.primary,
+                  ),
                   const SizedBox(height: 16),
                   Text('Vincular este aparelho', style: text.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
-                    'Peça para o responsável abrir o app dele, tocar em '
-                    '"Adicionar aparelho" e digitar aqui o código que aparecer.',
+                    'No celular do responsável, abra o Guardião Gamer, toque em '
+                    '"Adicionar aparelho" e escaneie este QR. Se não der para '
+                    'escanear, digite o código que aparece abaixo dele.',
                     style: text.bodyMedium,
                   ),
-                  const SizedBox(height: 24),
-                  TextField(
-                    key: const Key('codeField'),
-                    controller: _code,
-                    enabled: !_busy,
-                    textCapitalization: TextCapitalization.characters,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    maxLength: 9,
-                    style: text.headlineSmall?.copyWith(letterSpacing: 4),
-                    textAlign: TextAlign.center,
-                    inputFormatters: [_CodeFormatter()],
-                    decoration: const InputDecoration(
-                      labelText: 'Código do responsável',
-                      hintText: 'XXXX-XXXX',
-                      counterText: '',
+                  const SizedBox(height: 20),
+                  if (request == null)
+                    const SizedBox(
+                      height: 240,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else ...[
+                    Center(
+                      child: Semantics(
+                        label:
+                            'QR de vínculo. Código '
+                            '${request.code.split('').join(' ')}',
+                        child: Container(
+                          key: const Key('pairingQr'),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: QrImageView(
+                            // A chave leva o texto do QR, para os testes conferirem.
+                            key: ValueKey(pairingQrPayload(request.code)),
+                            data: pairingQrPayload(request.code),
+                            size: 216,
+                            backgroundColor: Colors.white,
+                            errorCorrectionLevel: QrErrorCorrectLevel.M,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: Colors.black,
+                            ),
+                            dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.square,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    onSubmitted: (_) => _submit(),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                        formatPairingCode(request.code),
+                        key: const Key('pairingCode'),
+                        style: text.headlineMedium?.copyWith(
+                          letterSpacing: 6,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Vale por mais $_countdown',
+                      key: const Key('countdown'),
+                      textAlign: TextAlign.center,
+                      style: text.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
                   TextField(
                     key: const Key('nameField'),
                     controller: _name,
@@ -139,13 +207,16 @@ class _PairingScreenState extends State<PairingScreen> {
                     maxLength: 80,
                     decoration: const InputDecoration(
                       labelText: 'Nome deste aparelho',
+                      helperText: 'Aparece na lista do responsável.',
                       counterText: '',
                     ),
+                    onSubmitted: (_) => _generate(),
                   ),
                   if (widget.isDemo) ...[
                     const SizedBox(height: 12),
                     Notice(
-                      'Modo demonstração, sem internet. Use o código '
+                      'Modo demonstração, sem internet. Para ver o vínculo, '
+                      'entre como responsável e digite o código '
                       '${formatPairingCode(demoPairingCode)}.',
                     ),
                   ],
@@ -153,27 +224,16 @@ class _PairingScreenState extends State<PairingScreen> {
                     const SizedBox(height: 12),
                     Notice(_error!, isError: true),
                   ],
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    key: const Key('claimButton'),
-                    onPressed: _busy ? null : _submit,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Vincular'),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    key: const Key('newCodeButton'),
+                    onPressed: _busy ? null : _generate,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Gerar novo código'),
                   ),
-                  if (widget.nearby.supported)
-                    OutlinedButton.icon(
-                      key: const Key('nearbyReceiveButton'),
-                      onPressed: _busy ? null : _receiveByBluetooth,
-                      icon: const Icon(Icons.bluetooth),
-                      label: const Text('Receber código por Bluetooth'),
-                    ),
                   TextButton(
                     key: const Key('changeRoleButton'),
-                    onPressed: _busy ? null : widget.onChangeRole,
+                    onPressed: widget.onChangeRole,
                     child: const Text('Este aparelho é do responsável? Voltar'),
                   ),
                 ],
@@ -182,21 +242,6 @@ class _PairingScreenState extends State<PairingScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Deixa o texto em maiúsculas, remove o que não é do código e põe o traço
-/// no meio ("k7m29qxa" vira "K7M2-9QXA").
-class _CodeFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var raw = normalizePairingCode(newValue.text);
-    if (raw.length > pairingCodeLength) raw = raw.substring(0, pairingCodeLength);
-    final shown = raw.length > 4 ? '${raw.substring(0, 4)}-${raw.substring(4)}' : raw;
-    return TextEditingValue(
-      text: shown,
-      selection: TextSelection.collapsed(offset: shown.length),
     );
   }
 }

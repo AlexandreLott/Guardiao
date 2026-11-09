@@ -26,15 +26,30 @@ final class _LastInputInfo extends Struct {
 
 typedef _GetForegroundWindowC = Pointer<Void> Function();
 typedef _GetForegroundWindowD = Pointer<Void> Function();
-typedef _GetWindowThreadProcessIdC = Uint32 Function(Pointer<Void>, Pointer<Uint32>);
-typedef _GetWindowThreadProcessIdD = int Function(Pointer<Void>, Pointer<Uint32>);
+typedef _GetWindowThreadProcessIdC = Uint32 Function(
+  Pointer<Void>,
+  Pointer<Uint32>,
+);
+typedef _GetWindowThreadProcessIdD = int Function(
+  Pointer<Void>,
+  Pointer<Uint32>,
+);
 typedef _GetLastInputInfoC = Int32 Function(Pointer<_LastInputInfo>);
 typedef _GetLastInputInfoD = int Function(Pointer<_LastInputInfo>);
 typedef _OpenProcessC = Pointer<Void> Function(Uint32, Int32, Uint32);
 typedef _OpenProcessD = Pointer<Void> Function(int, int, int);
 typedef _QueryImageNameC = Int32 Function(
-    Pointer<Void>, Uint32, Pointer<Utf16>, Pointer<Uint32>);
-typedef _QueryImageNameD = int Function(Pointer<Void>, int, Pointer<Utf16>, Pointer<Uint32>);
+  Pointer<Void>,
+  Uint32,
+  Pointer<Utf16>,
+  Pointer<Uint32>,
+);
+typedef _QueryImageNameD = int Function(
+  Pointer<Void>,
+  int,
+  Pointer<Utf16>,
+  Pointer<Uint32>,
+);
 typedef _CloseHandleC = Int32 Function(Pointer<Void>);
 typedef _CloseHandleD = int Function(Pointer<Void>);
 typedef _GetTickCountC = Uint32 Function();
@@ -45,17 +60,30 @@ class WindowsProbe implements SystemProbe {
   WindowsProbe() {
     final user32 = DynamicLibrary.open('user32.dll');
     final kernel32 = DynamicLibrary.open('kernel32.dll');
-    _foregroundWindow =
-        user32.lookupFunction<_GetForegroundWindowC, _GetForegroundWindowD>('GetForegroundWindow');
+    _foregroundWindow = user32
+        .lookupFunction<_GetForegroundWindowC, _GetForegroundWindowD>(
+          'GetForegroundWindow',
+        );
     _threadProcessId = user32
         .lookupFunction<_GetWindowThreadProcessIdC, _GetWindowThreadProcessIdD>(
-            'GetWindowThreadProcessId');
-    _lastInput = user32.lookupFunction<_GetLastInputInfoC, _GetLastInputInfoD>('GetLastInputInfo');
-    _openProcess = kernel32.lookupFunction<_OpenProcessC, _OpenProcessD>('OpenProcess');
-    _queryImageName =
-        kernel32.lookupFunction<_QueryImageNameC, _QueryImageNameD>('QueryFullProcessImageNameW');
-    _closeHandle = kernel32.lookupFunction<_CloseHandleC, _CloseHandleD>('CloseHandle');
-    _tickCount = kernel32.lookupFunction<_GetTickCountC, _GetTickCountD>('GetTickCount');
+          'GetWindowThreadProcessId',
+        );
+    _lastInput = user32.lookupFunction<_GetLastInputInfoC, _GetLastInputInfoD>(
+      'GetLastInputInfo',
+    );
+    _openProcess = kernel32.lookupFunction<_OpenProcessC, _OpenProcessD>(
+      'OpenProcess',
+    );
+    _queryImageName = kernel32
+        .lookupFunction<_QueryImageNameC, _QueryImageNameD>(
+          'QueryFullProcessImageNameW',
+        );
+    _closeHandle = kernel32.lookupFunction<_CloseHandleC, _CloseHandleD>(
+      'CloseHandle',
+    );
+    _tickCount = kernel32.lookupFunction<_GetTickCountC, _GetTickCountD>(
+      'GetTickCount',
+    );
   }
 
   late final _GetForegroundWindowD _foregroundWindow;
@@ -113,7 +141,9 @@ class WindowsProbe implements SystemProbe {
   @override
   Future<void> kill(String exe) async {
     // Só aceita um nome de arquivo simples; nada de caminhos ou opções.
-    if (!RegExp(r'^[\w .\-()]+\.exe$', caseSensitive: false).hasMatch(exe)) return;
+    if (!RegExp(r'^[\w .\-()]+\.exe$', caseSensitive: false).hasMatch(exe)) {
+      return;
+    }
     await Process.run('taskkill', ['/IM', exe, '/F']);
   }
 }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'pairing.dart';
 
 import 'models.dart';
 
@@ -12,7 +15,9 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final letter = app.name.trim().isEmpty ? '?' : app.name.trim()[0].toUpperCase();
+    final letter = app.name.trim().isEmpty
+        ? '?'
+        : app.name.trim()[0].toUpperCase();
     final hue = (app.id.hashCode.abs() % 360).toDouble();
     final dark = Theme.of(context).brightness == Brightness.dark;
     final bg = HSLColor.fromAHSL(1, hue, 0.45, dark ? 0.30 : 0.82).toColor();
@@ -22,9 +27,18 @@ class AppAvatar extends StatelessWidget {
         width: size,
         height: size,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(size * 0.3)),
-        child: Text(letter,
-            style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: size * 0.45)),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(size * 0.3),
+        ),
+        child: Text(
+          letter,
+          style: TextStyle(
+            color: fg,
+            fontWeight: FontWeight.w700,
+            fontSize: size * 0.45,
+          ),
+        ),
       ),
     );
   }
@@ -58,16 +72,47 @@ class Notice extends StatelessWidget {
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon ?? (isError ? Icons.error_outline : Icons.info_outline), color: fg, size: 20),
+            Icon(
+              icon ?? (isError ? Icons.error_outline : Icons.info_outline),
+              color: fg,
+              size: 20,
+            ),
             const SizedBox(width: 10),
-            Expanded(child: Text(message, style: TextStyle(color: fg))),
+            Expanded(
+              child: Text(message, style: TextStyle(color: fg)),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Deixa o texto em maiúsculas, remove o que não é do código e põe o traço
+/// no meio ("k7m29qxa" vira "K7M2-9QXA").
+class PairingCodeFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var raw = normalizePairingCode(newValue.text);
+    if (raw.length > pairingCodeLength) {
+      raw = raw.substring(0, pairingCodeLength);
+    }
+    final shown = raw.length > 4
+        ? '${raw.substring(0, 4)}-${raw.substring(4)}'
+        : raw;
+    return TextEditingValue(
+      text: shown,
+      selection: TextSelection.collapsed(offset: shown.length),
     );
   }
 }

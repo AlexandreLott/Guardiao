@@ -17,7 +17,8 @@ class SharedPrefsLedgerStore implements UsageLedgerStore {
   static const _key = 'usage_ledger';
 
   @override
-  Future<String?> read() async => (await SharedPreferences.getInstance()).getString(_key);
+  Future<String?> read() async =>
+      (await SharedPreferences.getInstance()).getString(_key);
 
   @override
   Future<void> write(String json) async =>
@@ -45,11 +46,13 @@ class WindowsUsageMonitor implements UsageMonitor {
     this.tick = const Duration(seconds: 2),
     this.idleAfter = const Duration(minutes: 2),
     this.ownExe = 'guardiao.exe',
-  })  : _store = store ?? MemoryLedgerStore(),
-        _clock = clock ?? DateTime.now;
+  }) : _store = store ?? MemoryLedgerStore(),
+       _clock = clock ?? DateTime.now;
 
-  factory WindowsUsageMonitor.system() =>
-      WindowsUsageMonitor(probe: WindowsProbe(), store: SharedPrefsLedgerStore());
+  factory WindowsUsageMonitor.system() => WindowsUsageMonitor(
+    probe: WindowsProbe(),
+    store: SharedPrefsLedgerStore(),
+  );
 
   final SystemProbe probe;
   final UsageLedgerStore _store;
@@ -84,8 +87,9 @@ class WindowsUsageMonitor implements UsageMonitor {
       final data = jsonDecode(raw) as Map<String, dynamic>;
       if (data['day'] == dayKey(_clock())) {
         _day = data['day'] as String;
-        (data['millis'] as Map<String, dynamic>? ?? const {})
-            .forEach((k, v) => _millis[k] = (v as num).toInt());
+        (data['millis'] as Map<String, dynamic>? ?? const {}).forEach(
+          (k, v) => _millis[k] = (v as num).toInt(),
+        );
       }
     } catch (_) {
       // Arquivo estragado: começa do zero.
@@ -136,7 +140,8 @@ class WindowsUsageMonitor implements UsageMonitor {
     }
   }
 
-  Future<void> _save() => _store.write(jsonEncode({'day': _day, 'millis': _millis}));
+  Future<void> _save() =>
+      _store.write(jsonEncode({'day': _day, 'millis': _millis}));
 
   @override
   Future<Map<String, int>> usageByKey() async {

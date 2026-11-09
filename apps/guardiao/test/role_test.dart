@@ -13,7 +13,9 @@ void main() {
     expect(DeviceRole.parse(null), isNull);
   });
 
-  testWidgets('primeiro acesso mostra a escolha e guarda a função', (tester) async {
+  testWidgets('primeiro acesso mostra a escolha e guarda a função', (
+    tester,
+  ) async {
     final store = MemoryRoleStore();
     final backend = MemoryBackend(MemoryCloud());
     await tester.pumpWidget(appFor(backend, store: store));
@@ -28,7 +30,7 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('escolher "filho" abre o pedido de código', (tester) async {
+  testWidgets('escolher "filho" abre o QR de vínculo', (tester) async {
     final store = MemoryRoleStore();
     final backend = MemoryBackend(MemoryCloud());
     await tester.pumpWidget(appFor(backend, store: store));
@@ -50,10 +52,14 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('dá para voltar e escolher outra função antes de vincular', (tester) async {
+  testWidgets('dá para voltar e escolher outra função antes de vincular', (
+    tester,
+  ) async {
     final store = MemoryRoleStore(DeviceRole.child);
     final backend = MemoryBackend(MemoryCloud());
-    await tester.pumpWidget(appFor(backend, role: DeviceRole.child, store: store));
+    await tester.pumpWidget(
+      appFor(backend, role: DeviceRole.child, store: store),
+    );
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byKey(const Key('changeRoleButton')));
@@ -74,7 +80,9 @@ void main() {
     final backend = MemoryBackend(cloud);
     await backend.registerParent('mae@exemplo.com', 'segredo1');
     final store = MemoryRoleStore(DeviceRole.parent);
-    await tester.pumpWidget(appFor(backend, role: DeviceRole.parent, store: store));
+    await tester.pumpWidget(
+      appFor(backend, role: DeviceRole.parent, store: store),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('accountMenu')));

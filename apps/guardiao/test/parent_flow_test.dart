@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 import 'package:guardiao/role/role.dart';
+
 import 'helpers.dart';
 
 void main() {
@@ -13,7 +14,9 @@ void main() {
   }
 
   group('conta', () {
-    testWidgets('mostra o login, recusa senha curta e e-mail inválido', (tester) async {
+    testWidgets('mostra o login, recusa senha curta e e-mail inválido', (
+      tester,
+    ) async {
       final backend = MemoryBackend(MemoryCloud());
       await tester.pumpWidget(appFor(backend, role: DeviceRole.parent));
       await tester.pumpAndSettle();
@@ -26,7 +29,9 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('cria a conta e cai na lista vazia de aparelhos', (tester) async {
+    testWidgets('cria a conta e cai na lista vazia de aparelhos', (
+      tester,
+    ) async {
       final backend = MemoryBackend(MemoryCloud());
       await tester.pumpWidget(appFor(backend, role: DeviceRole.parent));
       await tester.pumpAndSettle();
@@ -73,13 +78,19 @@ void main() {
       expect(setup.isDemo, isTrue);
       // Sai da conta usada para montar os dados e entra pelo login, como na vida real.
       await setup.backend.signOut();
-      await tester.pumpWidget(appFor(setup.backend, role: DeviceRole.parent, isDemo: true));
+      await tester.pumpWidget(
+        appFor(setup.backend, role: DeviceRole.parent, isDemo: true),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('submitButton'))); // credenciais já preenchidas
+      await tester.tap(
+        find.byKey(const Key('submitButton')),
+      ); // credenciais já preenchidas
       await tester.pumpAndSettle();
     }
 
-    testWidgets('lista o aparelho, os apps e as regras já existentes', (tester) async {
+    testWidgets('lista o aparelho, os apps e as regras já existentes', (
+      tester,
+    ) async {
       await openDemo(tester);
       expect(find.text('Celular do Pedro (exemplo)'), findsOneWidget);
       await tester.tap(find.text('Celular do Pedro (exemplo)'));
@@ -113,7 +124,9 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('define um limite diário e o aplicativo mostra a regra', (tester) async {
+    testWidgets('define um limite diário e o aplicativo mostra a regra', (
+      tester,
+    ) async {
       await openDemo(tester);
       await tester.tap(find.text('Celular do Pedro (exemplo)'));
       await tester.pumpAndSettle();
@@ -141,7 +154,9 @@ void main() {
         find.text('Chrome'),
         200,
         scrollable: find.descendant(
-            of: find.byType(ListView), matching: find.byType(Scrollable)),
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        ),
       );
       await tester.tap(find.text('Chrome'));
       await tester.pumpAndSettle();
@@ -159,7 +174,9 @@ void main() {
         find.text('Chrome'),
         200,
         scrollable: find.descendant(
-            of: find.byType(ListView), matching: find.byType(Scrollable)),
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        ),
       );
       await tester.tap(find.text('Chrome'));
       await tester.pumpAndSettle();
@@ -174,7 +191,9 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('remover o aparelho pede confirmação e volta para a lista', (tester) async {
+    testWidgets('remover o aparelho pede confirmação e volta para a lista', (
+      tester,
+    ) async {
       await openDemo(tester);
       await tester.tap(find.text('Celular do Pedro (exemplo)'));
       await tester.pumpAndSettle();
@@ -197,47 +216,251 @@ void main() {
     });
   });
 
-  testWidgets('adicionar aparelho mostra o código e avisa quando o filho vincula',
+  group('vincular aparelhos de filhos', () {
+    late MemoryCloud cloud;
+    late MemoryBackend parent;
+
+    setUp(() async {
+      cloud = MemoryCloud();
+      parent = MemoryBackend(cloud);
+      await parent.registerParent('mae@exemplo.com', 'segredo1');
+    });
+
+    Future<PairRequest> childRequest(
+      String name,
+      DevicePlatform platform,
+    ) async {
+      final child = MemoryBackend(cloud);
+      await child.signInChild();
+      return child.createPairRequest(deviceName: name, platform: platform);
+    }
+
+    Future<void> openAdd(WidgetTester tester, {FakeScanner? scanner}) async {
+      await tester.pumpWidget(
+        appFor(parent, role: DeviceRole.parent, scanner: scanner),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('addDeviceButton')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> typeCode(WidgetTester tester, String code) async {
+      await tester.enterText(find.byKey(const Key('codeField')), code);
+      await tester.ensureVisible(find.byKey(const Key('codeContinueButton')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('codeContinueButton')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('escaneia o QR, confere o aparelho e vincula', (tester) async {
+      final request = await childRequest(
+        'Celular do Pedro',
+        DevicePlatform.android,
+      );
+      final scanner = FakeScanner();
+      await openAdd(tester, scanner: scanner);
+
+      await tester.tap(find.byKey(const Key('scanButton')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('fakeCamera')), findsOneWidget);
+      scanner.scan(pairingQrPayload(request.code));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Vincular este aparelho?'), findsOneWidget);
+      expect(
+        find.text('Android · confira se é o aparelho do seu filho'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('nameField')))
+            .controller!
+            .text,
+        'Celular do Pedro',
+      );
+      await tester.tap(find.byKey(const Key('approveButton')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Celular do Pedro foi vinculado!'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('doneButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Celular do Pedro'), findsOneWidget);
+      expect(find.text('Android · Online agora'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('sem câmera (computador), vincula digitando o código', (
+      tester,
+    ) async {
+      final request = await childRequest(
+        'Notebook do Pedro',
+        DevicePlatform.windows,
+      );
+      await openAdd(tester); // leitor sem suporte
+      expect(find.byKey(const Key('scanButton')), findsNothing);
+
+      await typeCode(tester, request.code.toLowerCase());
+      expect(
+        find.text('Windows · confira se é o aparelho do seu filho'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('approveButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Notebook do Pedro foi vinculado!'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('doneButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Windows · Online agora'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('dá para trocar o nome antes de vincular', (tester) async {
+      final request = await childRequest('Galaxy A15', DevicePlatform.android);
+      await openAdd(tester);
+      await typeCode(tester, request.code);
+      await tester.enterText(
+        find.byKey(const Key('nameField')),
+        'Celular da Ana',
+      );
+      await tester.tap(find.byKey(const Key('approveButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Celular da Ana foi vinculado!'), findsOneWidget);
+      expect(
+        (await tester.runAsync(() => parent.watchDevices().first))!.single.name,
+        'Celular da Ana',
+      );
+      await closeApp(tester);
+    });
+
+    testWidgets('vincula vários aparelhos, um depois do outro', (tester) async {
+      final phone = await childRequest(
+        'Celular do Pedro',
+        DevicePlatform.android,
+      );
+      final notebook = await childRequest(
+        'Notebook da Ana',
+        DevicePlatform.windows,
+      );
+      await openAdd(tester);
+
+      await typeCode(tester, phone.code);
+      await tester.tap(find.byKey(const Key('approveButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Celular do Pedro foi vinculado!'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('addAnotherButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Vincular o aparelho do seu filho'), findsOneWidget);
+      await typeCode(tester, notebook.code);
+      await tester.tap(find.byKey(const Key('approveButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Notebook da Ana foi vinculado!'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('doneButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Celular do Pedro'), findsOneWidget);
+      expect(find.text('Notebook da Ana'), findsOneWidget);
+      expect(
+        (await tester.runAsync(() => parent.watchDevices().first))!,
+        hasLength(2),
+      );
+      await closeApp(tester);
+    });
+
+    testWidgets('"Não é esse" volta sem vincular', (tester) async {
+      final request = await childRequest(
+        'Celular do Pedro',
+        DevicePlatform.android,
+      );
+      await openAdd(tester);
+      await typeCode(tester, request.code);
+      await tester.tap(find.byKey(const Key('backButton')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('codeField')), findsOneWidget);
+      expect(
+        (await tester.runAsync(() => parent.watchDevices().first))!,
+        isEmpty,
+      );
+      await closeApp(tester);
+    });
+
+    testWidgets(
+      'mostra erro para código curto, desconhecido, QR alheio e código usado',
       (tester) async {
-    final cloud = MemoryCloud();
-    final parent = MemoryBackend(cloud);
-    await parent.registerParent('mae@exemplo.com', 'segredo1');
-    await tester.pumpWidget(appFor(parent, role: DeviceRole.parent));
-    await tester.pumpAndSettle();
+        final request = await childRequest(
+          'Celular do Pedro',
+          DevicePlatform.android,
+        );
+        final scanner = FakeScanner();
+        await openAdd(tester, scanner: scanner);
 
-    await tester.tap(find.byKey(const Key('addDeviceButton')));
-    await tester.pumpAndSettle();
-    final codeText = tester.widget<Text>(find.byKey(const Key('pairingCode'))).data!;
-    expect(codeText, matches(RegExp(r'^[A-Z2-9]{4}-[A-Z2-9]{4}$')));
-    expect(find.textContaining('Vale por mais'), findsOneWidget);
+        await typeCode(tester, 'ab12');
+        expect(find.textContaining('8 letras e números'), findsOneWidget);
 
-    // O filho digita o código em outro aparelho.
-    final child = MemoryBackend(cloud);
-    await child.signInChild();
-    await child.claimPairing(
-        code: codeText, deviceName: 'Notebook do Pedro', platform: DevicePlatform.windows);
-    await tester.pumpAndSettle();
+        await typeCode(tester, 'AAAAAAAA');
+        expect(find.textContaining('Código não encontrado'), findsOneWidget);
 
-    expect(find.text('Notebook do Pedro foi vinculado!'), findsOneWidget);
-    await tester.tap(find.text('Pronto'));
-    await tester.pumpAndSettle();
-    expect(find.text('Notebook do Pedro'), findsOneWidget);
-    expect(find.text('Windows · Online agora'), findsOneWidget);
-    await closeApp(tester);
-  });
+        await tester.tap(find.byKey(const Key('scanButton')));
+        await tester.pumpAndSettle();
+        scanner.scan('https://exemplo.com/qualquer-coisa');
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('não é de um aparelho do Guardião Gamer'),
+          findsOneWidget,
+        );
 
-  testWidgets('"Novo código" troca o código mostrado', (tester) async {
-    final parent = MemoryBackend(MemoryCloud());
-    await parent.registerParent('mae@exemplo.com', 'segredo1');
-    await tester.pumpWidget(appFor(parent, role: DeviceRole.parent));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('addDeviceButton')));
-    await tester.pumpAndSettle();
-    final first = tester.widget<Text>(find.byKey(const Key('pairingCode'))).data;
-    await tester.tap(find.byKey(const Key('newCodeButton')));
-    await tester.pumpAndSettle();
-    final second = tester.widget<Text>(find.byKey(const Key('pairingCode'))).data;
-    expect(second, isNot(first));
-    await closeApp(tester);
+        await parent.approvePairRequest(
+          request.code,
+        ); // outro caminho já usou o código
+        await typeCode(tester, request.code);
+        expect(find.textContaining('já foi usado'), findsOneWidget);
+        await closeApp(tester);
+      },
+    );
+
+    testWidgets('câmera sem permissão leva para a digitação com aviso', (
+      tester,
+    ) async {
+      final scanner = FakeScanner();
+      await openAdd(tester, scanner: scanner);
+      await tester.tap(find.byKey(const Key('scanButton')));
+      await tester.pumpAndSettle();
+      scanner.fail('Sem a permissão da câmera.');
+      await tester.pumpAndSettle();
+      expect(find.text('Sem a permissão da câmera.'), findsOneWidget);
+      expect(find.byKey(const Key('codeField')), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets(
+      'no modo demonstração, o código de exemplo vincula o notebook',
+      (tester) async {
+        final setup = (await tester.runAsync(() => createBackend()))!;
+        await setup.backend.signOut();
+        await tester.pumpWidget(
+          appFor(setup.backend, role: DeviceRole.parent, isDemo: true),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('submitButton')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('addDeviceButton')));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining(formatPairingCode(demoPairingCode)),
+          findsOneWidget,
+        );
+        await typeCode(tester, demoPairingCode);
+        await tester.tap(find.byKey(const Key('approveButton')));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Notebook do Pedro (exemplo) foi vinculado!'),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('doneButton')));
+        await tester.pumpAndSettle();
+        expect(find.text('Celular do Pedro (exemplo)'), findsOneWidget);
+        expect(find.text('Notebook do Pedro (exemplo)'), findsOneWidget);
+        await closeApp(tester);
+      },
+    );
   });
 }

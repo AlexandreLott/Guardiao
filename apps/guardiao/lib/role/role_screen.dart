@@ -22,10 +22,17 @@ class RoleScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.shield_moon_outlined, size: 56, color: scheme.primary),
+                  Icon(
+                    Icons.shield_moon_outlined,
+                    size: 56,
+                    color: scheme.primary,
+                  ),
                   const SizedBox(height: 16),
-                  Text('Guardião Gamer',
-                      style: text.headlineMedium, textAlign: TextAlign.center),
+                  Text(
+                    'Guardião Gamer',
+                    style: text.headlineMedium,
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Este aparelho é de quem?',

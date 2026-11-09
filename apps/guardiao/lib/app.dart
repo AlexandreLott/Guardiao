@@ -4,8 +4,8 @@ import 'package:guardiao_core/guardiao_core.dart';
 import 'child/child_flow.dart';
 import 'child/platform/installed_apps_source.dart';
 import 'child/usage/usage_monitor.dart';
-import 'nearby/nearby.dart';
 import 'parent/parent_flow.dart';
+import 'qr/qr_scanner.dart';
 import 'role/role.dart';
 import 'role/role_screen.dart';
 
@@ -17,7 +17,7 @@ class GuardiaoApp extends StatefulWidget {
     required this.backend,
     required this.roleStore,
     required this.source,
-    required this.nearby,
+    required this.scanner,
     required this.monitor,
     this.initialRole,
     this.isDemo = false,
@@ -26,7 +26,7 @@ class GuardiaoApp extends StatefulWidget {
   final GuardianBackend backend;
   final RoleStore roleStore;
   final InstalledAppsSource source;
-  final NearbyPairing nearby;
+  final QrScanner scanner;
   final UsageMonitor monitor;
   final DeviceRole? initialRole;
   final bool isDemo;
@@ -61,21 +61,20 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
       home: switch (_role) {
         null => RoleScreen(onPick: _pick),
         DeviceRole.parent => ParentFlow(
-            key: const ValueKey('parent'),
-            backend: widget.backend,
-            nearby: widget.nearby,
-            isDemo: widget.isDemo,
-            onChangeRole: _changeRole,
-          ),
+          key: const ValueKey('parent'),
+          backend: widget.backend,
+          scanner: widget.scanner,
+          isDemo: widget.isDemo,
+          onChangeRole: _changeRole,
+        ),
         DeviceRole.child => ChildGate(
-            key: const ValueKey('child'),
-            backend: widget.backend,
-            source: widget.source,
-            nearby: widget.nearby,
-            monitor: widget.monitor,
-            isDemo: widget.isDemo,
-            onChangeRole: _changeRole,
-          ),
+          key: const ValueKey('child'),
+          backend: widget.backend,
+          source: widget.source,
+          monitor: widget.monitor,
+          isDemo: widget.isDemo,
+          onChangeRole: _changeRole,
+        ),
       },
     );
   }

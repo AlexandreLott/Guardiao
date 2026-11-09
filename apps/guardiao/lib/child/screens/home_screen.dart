@@ -50,13 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
-    _usage = UsageController(
-      backend: widget.backend,
-      monitor: widget.monitor,
-      platform: widget.source.platform,
-    )..addListener(() {
-        if (mounted) setState(() {});
-      });
+    _usage =
+        UsageController(
+          backend: widget.backend,
+          monitor: widget.monitor,
+          platform: widget.source.platform,
+        )..addListener(() {
+          if (mounted) setState(() {});
+        });
     _appsSub = widget.backend.watchOwnApps().listen((apps) {
       _apps = apps;
       _usage.update(_apps, _rules);
@@ -117,10 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.hourglass_empty,
           )
         else if (_usage.missing.isNotEmpty)
-          _PermissionsCard(
-            missing: _usage.missing,
-            onRequest: _usage.request,
-          ),
+          _PermissionsCard(missing: _usage.missing, onRequest: _usage.request),
         if (_syncError != null) ...[
           const SizedBox(height: 8),
           Notice(_syncError!, isError: true),
@@ -176,6 +174,15 @@ class _HomeScreenState extends State<HomeScreen> {
           style: text.bodySmall,
           textAlign: TextAlign.center,
         ),
+        if (widget.device.parentLabel != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Responsável: ${widget.device.parentLabel}',
+            key: const Key('parentLabel'),
+            style: text.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ],
     );
   }
@@ -215,8 +222,10 @@ class _PermissionsCard extends StatelessWidget {
           children: [
             Text('Falta liberar no Android', style: text.titleMedium),
             const SizedBox(height: 4),
-            Text('Para contar o tempo e bloquear, o app precisa destas permissões:',
-                style: text.bodySmall),
+            Text(
+              'Para contar o tempo e bloquear, o app precisa destas permissões:',
+              style: text.bodySmall,
+            ),
             for (final p in MonitorPermission.values)
               if (missing.contains(p)) ...[
                 const SizedBox(height: 12),
@@ -239,7 +248,11 @@ class _PermissionsCard extends StatelessWidget {
 }
 
 class _LimitedTile extends StatelessWidget {
-  const _LimitedTile({required this.app, required this.rule, required this.used});
+  const _LimitedTile({
+    required this.app,
+    required this.rule,
+    required this.used,
+  });
 
   final InstalledApp app;
   final AppRule rule;
@@ -255,9 +268,11 @@ class _LimitedTile extends StatelessWidget {
     final subtitle = rule.blocked
         ? 'Bloqueado pelo responsável'
         : (limit == null
-            ? 'Usou ${formatMinutes(used)} hoje'
-            : 'Usou ${formatMinutes(used)} de ${formatMinutes(limit)} hoje');
-    final progress = (limit == null || limit == 0) ? 0.0 : (used / limit).clamp(0.0, 1.0);
+              ? 'Usou ${formatMinutes(used)} hoje'
+              : 'Usou ${formatMinutes(used)} de ${formatMinutes(limit)} hoje');
+    final progress = (limit == null || limit == 0)
+        ? 0.0
+        : (used / limit).clamp(0.0, 1.0);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -274,22 +289,34 @@ class _LimitedTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(app.name, style: Theme.of(context).textTheme.titleMedium),
-                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        app.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
                 Chip(
-                  label: Text(blocked ? 'Bloqueado' : '${formatMinutes(left)} restantes'),
-                  backgroundColor:
-                      blocked ? scheme.errorContainer : scheme.secondaryContainer,
+                  label: Text(
+                    blocked ? 'Bloqueado' : '${formatMinutes(left)} restantes',
+                  ),
+                  backgroundColor: blocked
+                      ? scheme.errorContainer
+                      : scheme.secondaryContainer,
                   side: BorderSide.none,
                 ),
               ],
             ),
             if (!rule.blocked && limit != null) ...[
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progress, borderRadius: BorderRadius.circular(4)),
+              LinearProgressIndicator(
+                value: progress,
+                borderRadius: BorderRadius.circular(4),
+              ),
             ],
           ],
         ),

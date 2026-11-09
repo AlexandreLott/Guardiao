@@ -28,7 +28,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _email = TextEditingController(text: widget.isDemo ? 'demo@guardiaogamer.app' : '');
+    _email = TextEditingController(
+      text: widget.isDemo ? 'demo@guardiaogamer.app' : '',
+    );
     _password = TextEditingController(text: widget.isDemo ? 'demo1234' : '');
   }
 
@@ -83,8 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.shield_outlined,
-                        size: 56, color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 56,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(height: 16),
                     Text('Guardião Gamer', style: text.headlineMedium),
                     const SizedBox(height: 4),
@@ -110,21 +115,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       enabled: !_busy,
                       obscureText: _hidePassword,
                       autofillHints: [
-                        _creating ? AutofillHints.newPassword : AutofillHints.password
+                        _creating
+                            ? AutofillHints.newPassword
+                            : AutofillHints.password,
                       ],
                       onSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
                         labelText: 'Senha',
                         suffixIcon: IconButton(
-                          tooltip: _hidePassword ? 'Mostrar senha' : 'Esconder senha',
-                          icon: Icon(_hidePassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _hidePassword = !_hidePassword),
+                          tooltip: _hidePassword
+                              ? 'Mostrar senha'
+                              : 'Esconder senha',
+                          icon: Icon(
+                            _hidePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () =>
+                              setState(() => _hidePassword = !_hidePassword),
                         ),
                       ),
                     ),
                     if (widget.isDemo) ...[
                       const SizedBox(height: 12),
-                      const Notice('Modo demonstração, sem internet: os dados são de exemplo.'),
+                      const Notice(
+                        'Modo demonstração, sem internet: os dados são de exemplo.',
+                      ),
                     ],
                     if (_error != null) ...[
                       const SizedBox(height: 12),
@@ -138,7 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : Text(_creating ? 'Criar conta' : 'Entrar'),
                     ),
                     TextButton(
@@ -146,12 +163,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _busy
                           ? null
                           : () => setState(() {
-                                _creating = !_creating;
-                                _error = null;
-                              }),
-                      child: Text(_creating
-                          ? 'Já tenho conta. Entrar'
-                          : 'Primeira vez aqui? Criar conta'),
+                              _creating = !_creating;
+                              _error = null;
+                            }),
+                      child: Text(
+                        _creating
+                            ? 'Já tenho conta. Entrar'
+                            : 'Primeira vez aqui? Criar conta',
+                      ),
                     ),
                     TextButton(
                       key: const Key('changeRoleButton'),

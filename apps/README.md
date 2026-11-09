@@ -6,8 +6,8 @@ Controle parental para jogos no celular e no computador (Projeto A3, UC Explora�
 
 | Função | Quem escolhe | O que o app faz |
 | --- | --- | --- |
-| **Sou o responsável** | Pai, mãe ou responsável | Cria a conta, gera o código de pareamento (ou envia por Bluetooth), vê os apps instalados, define limite diário ou bloqueio e acompanha o tempo de uso da última semana |
-| **Este aparelho é do filho** | A criança (ou o responsável, ao configurar o aparelho dela) | Vincula com o código, envia a lista de apps, **mede o tempo de uso e bloqueia** o app quando o limite acaba |
+| **Sou o responsável** | Pai, mãe ou responsável | Cria a conta, **lê o QR (ou digita o código) que o aparelho do filho mostra**, vincula quantos aparelhos quiser, vê os apps instalados, define limite diário ou bloqueio e acompanha o tempo de uso da última semana |
+| **Este aparelho é do filho** | A criança (ou o responsável, ao configurar o aparelho dela) | **Mostra o QR de vínculo** (celular ou computador), envia a lista de apps, **mede o tempo de uso e bloqueia** o app quando o limite acaba |
 
 A escolha fica guardada no aparelho e pode ser trocada pelo menu da conta (isso sai da conta antes, para um aparelho nunca ficar com o login do outro lado).
 
@@ -24,7 +24,7 @@ Funciona e está testado:
 
 - Escolha da função do aparelho no primeiro acesso, com opção de voltar e trocar.
 - Conta do responsável (e-mail e senha) e login anônimo do aparelho do filho.
-- Pareamento por código de 8 caracteres (vale 10 minutos, uso único) **ou por Bluetooth** (Android): o filho fica visível, o responsável toca no aparelho e o código é enviado; o filho confirma vendo quem está pedindo. O vínculo em si é feito pelo Firebase, então não é preciso domínio nem servidor próprio.
+- Pareamento por **QR gerado pelo aparelho do filho** (celular ou computador) com código de 8 caracteres de reserva (vale 10 minutos, uso único). O responsável lê o QR com a câmera (Android) ou digita o código (Windows), confere o aparelho e vincula. **Um responsável pode vincular vários aparelhos de filhos.** Não precisa de domínio nem de servidor próprio: o vínculo é feito pelo Firebase.
 - Lista de apps instalados (Android: PackageManager; Windows: registro do sistema).
 - **Tempo de uso real**: Android pelas estatísticas de uso do sistema; Windows pelo programa em primeiro plano (não conta quando o computador está parado).
 - **Bloqueio de verdade**: no Android um serviço cobre o app com uma tela de “tempo esgotado” e volta ao início; no Windows o programa é encerrado. Os limites ficam salvos no aparelho, então valem mesmo sem internet.
@@ -35,8 +35,8 @@ Limites conhecidos (veja `docs/ARQUITETURA.md`):
 
 - O tempo de uso só chega ao responsável quando o app do filho está aberto (o bloqueio, não: ele roda em segundo plano).
 - Nada impede a criança de desinstalar o app (falta o modo administrador do aparelho).
-- Bluetooth: só entre dois Androids; o Windows não participa.
-- Bluetooth e bloqueio nativo foram compilados e testados por simulação, mas **precisam ser provados em celulares de verdade** (veja o roteiro em `docs/ARQUITETURA.md`).
+- Leitura do QR pela câmera só no Android/iOS; no Windows o responsável digita o código (o filho no Windows mostra o QR normalmente).
+- Câmera/QR e bloqueio nativo foram compilados e testados por simulação, mas **precisam ser provados em celulares de verdade** (veja o roteiro em `docs/ARQUITETURA.md`).
 
 ## Rodar sem Firebase (modo demonstração)
 
@@ -45,7 +45,8 @@ Sem chaves do Firebase o app abre com dados de exemplo, na memória do próprio 
 ```
 cd apps/guardiao && flutter run
 # responsável: demo@guardiaogamer.app / demo1234
-# filho: código DEMX-2345
+# filho: escolha "filho" e mostre o QR; o responsável de exemplo já tem um aparelho vinculado
+# (para vincular o notebook de exemplo, no responsável digite o código DEMX-2345)
 ```
 
 ## Rodar com Firebase (aparelhos conversando)
@@ -66,7 +67,7 @@ As chaves ficam fora do código (nada secreto no repositório).
 
 ```
 cd packages/guardiao_core && flutter test     # modelos, pareamento, backend em memória, uso
-cd apps/guardiao && flutter test              # telas, Bluetooth (simulado), medição de uso
+cd apps/guardiao && flutter test              # telas, QR (câmera simulada), medição de uso
 cd firebase/tests && npm install && npm test  # regras do Firestore (emulador)
 ```
 

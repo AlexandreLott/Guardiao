@@ -5,6 +5,10 @@ rules_version = '2';
 // Quem é quem:
 //  - Responsável: conta com e-mail e senha (provedor "password").
 //  - Filho: login anônimo; o uid dele é o id do documento em /devices.
+//
+// Vínculo: o aparelho do filho gera um código (QR) em /pairRequests; o
+// responsável o lê e, num único lote, queima o pedido e cria o aparelho dele
+// em /devices. Um responsável pode vincular quantos aparelhos quiser.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -20,37 +24,52 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/devices/$(deviceId)).data;
     }
 
+    function isAnonymous() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function pairRequest(code) {
+      return get(/databases/$(database)/documents/pairRequests/$(code)).data;
+    }
+
+    function pairRequestAfter(code) {
+      return getAfter(/databases/$(database)/documents/pairRequests/$(code)).data;
+    }
+
     function isParentOf(deviceId) {
       return isParentAccount() && deviceDoc(deviceId).parentUid == request.auth.uid;
     }
 
-    // ---------- Códigos de pareamento ----------
-    match /pairings/{code} {
-      // Qualquer aparelho logado lê UM código por vez (não há listagem).
+    // ---------- Pedidos de vínculo (gerados pelo aparelho do filho) ----------
+    match /pairRequests/{code} {
+      // Qualquer conta logada lê UM pedido por vez (não há listagem).
       // O código tem 8 caracteres e vale 10 minutos.
       allow get: if signedIn();
 
-      // O responsável cria o código em nome dele.
-      allow create: if isParentAccount()
-        && request.resource.data.keys().hasOnly(['parentUid', 'parentLabel', 'expiresAt', 'used'])
-        && (!('parentLabel' in request.resource.data)
-            || (request.resource.data.parentLabel is string
-                && request.resource.data.parentLabel.size() <= 80))
-        && request.resource.data.parentUid == request.auth.uid
+      // O aparelho do filho cria o pedido em nome dele.
+      allow create: if isAnonymous()
+        && request.resource.data.keys().hasOnly(['deviceId', 'name', 'platform', 'expiresAt', 'used'])
+        && request.resource.data.deviceId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.platform in ['android', 'windows', 'other']
         && request.resource.data.used == false
         && request.resource.data.expiresAt is timestamp
         && request.resource.data.expiresAt > request.time
         && request.resource.data.expiresAt <= request.time + duration.value(15, 'm');
 
-      // O aparelho do filho "queima" o código uma única vez, antes de expirar.
-      allow update: if signedIn()
+      // O responsável "queima" o pedido uma única vez, antes de expirar,
+      // registrando o próprio uid.
+      allow update: if isParentAccount()
         && resource.data.used == false
         && request.time < resource.data.expiresAt
         && request.resource.data.used == true
-        && request.resource.data.deviceId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'deviceId']);
+        && request.resource.data.parentUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'parentUid']);
 
-      allow delete: if isParentAccount() && resource.data.parentUid == request.auth.uid;
+      // Só o aparelho que gerou o código pode cancelá-lo.
+      allow delete: if signedIn() && resource.data.deviceId == request.auth.uid;
     }
 
     // ---------- Dispositivos ----------
@@ -58,22 +77,25 @@ service cloud.firestore {
       allow read: if signedIn()
         && (request.auth.uid == deviceId || resource.data.parentUid == request.auth.uid);
 
-      // Vínculo: o aparelho cria o próprio documento apontando para o dono do
-      // código, no mesmo lote que marca o código como usado.
-      allow create: if signedIn()
-        && request.auth.uid == deviceId
+      // Vínculo: o RESPONSÁVEL cria o documento do aparelho, no mesmo lote
+      // que queima o pedido de vínculo gerado por ele (o filho).
+      allow create: if isParentAccount()
         && request.resource.data.keys().hasOnly(
-             ['parentUid', 'name', 'platform', 'pairingCode', 'pairedAt', 'lastSeen'])
-        && request.resource.data.platform in ['android', 'windows', 'other']
+             ['parentUid', 'parentLabel', 'name', 'platform', 'pairingCode', 'pairedAt', 'lastSeen'])
+        && request.resource.data.parentUid == request.auth.uid
+        && (!('parentLabel' in request.resource.data)
+            || (request.resource.data.parentLabel is string
+                && request.resource.data.parentLabel.size() <= 80))
         && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 80
-        && get(/databases/$(database)/documents/pairings/$(request.resource.data.pairingCode)).data.used == false
-        && get(/databases/$(database)/documents/pairings/$(request.resource.data.pairingCode)).data.parentUid
-             == request.resource.data.parentUid
-        && request.time < get(/databases/$(database)/documents/pairings/$(request.resource.data.pairingCode)).data.expiresAt
-        && getAfter(/databases/$(database)/documents/pairings/$(request.resource.data.pairingCode)).data.used == true
-        && getAfter(/databases/$(database)/documents/pairings/$(request.resource.data.pairingCode)).data.deviceId
-             == request.auth.uid;
+        && request.resource.data.platform in ['android', 'windows', 'other']
+        && pairRequest(request.resource.data.pairingCode).deviceId == deviceId
+        && pairRequest(request.resource.data.pairingCode).used == false
+        && request.time < pairRequest(request.resource.data.pairingCode).expiresAt
+        && pairRequest(request.resource.data.pairingCode).platform == request.resource.data.platform
+        && pairRequestAfter(request.resource.data.pairingCode).used == true
+        && pairRequestAfter(request.resource.data.pairingCode).parentUid == request.auth.uid;
 
       // O aparelho só atualiza "lastSeen" (batimento); o responsável só o nome.
       allow update: if signedIn() && (

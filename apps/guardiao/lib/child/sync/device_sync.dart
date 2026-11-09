@@ -7,9 +7,12 @@ import '../platform/installed_apps_source.dart';
 /// Mantém a nuvem em dia com o que há no aparelho: lista de apps e
 /// "estou ativo". Roda enquanto o app do filho está aberto.
 class DeviceSync {
-  DeviceSync(this.backend, this.source,
-      {this.appsEvery = const Duration(hours: 6),
-      this.heartbeatEvery = const Duration(minutes: 10)});
+  DeviceSync(
+    this.backend,
+    this.source, {
+    this.appsEvery = const Duration(hours: 6),
+    this.heartbeatEvery = const Duration(minutes: 10),
+  });
 
   final GuardianBackend backend;
   final InstalledAppsSource source;

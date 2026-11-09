@@ -48,18 +48,18 @@ No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para
 
 ## 4. Testar o pareamento
 
-1. No primeiro aparelho, escolha **Sou o responsável**, crie a conta e toque em **Adicionar aparelho**: aparece um código como `K7M2-9QXA`.
-2. No segundo aparelho, escolha **Este aparelho é do filho** e digite o código, ou use **Receber código por Bluetooth** (os dois precisam ser Android; veja `ARQUITETURA.md`).
-3. O responsável vê o aparelho entrar na lista e, em segundos, a lista de aplicativos.
+1. No aparelho do filho (celular ou computador), escolha **Este aparelho é do filho**: aparece um **QR** e, embaixo, o código de reserva, como `K7M2-9QXA` (vale 10 minutos).
+2. No aparelho do responsável, escolha **Sou o responsável**, crie a conta e toque em **Adicionar aparelho**. Aponte a câmera para o QR (ou digite o código, no Windows), confira o nome do aparelho e toque em **Vincular**. Repita para cada aparelho de filho.
+3. O filho avança sozinho para a tela principal; o responsável vê o aparelho na lista e, em segundos, a lista de aplicativos.
 4. No filho (Android), libere as três permissões que o app pede (acesso ao uso, aparecer sobre outros apps, avisos).
 5. No app do responsável, toque em um aplicativo, defina um limite ou bloqueio e confira no aparelho do filho. Depois de usar o app, o tempo aparece no responsável em até 30 segundos.
 
 ## Problemas comuns
 
 - **"Esse tipo de login não está ativado"**: ative E-mail/senha e Anônimo no passo 1.
-- **"Não foi possível usar esse código"**: o código expira em 10 minutos e vale uma vez. Gere outro. Se persistir, confira se as regras do passo 1 foram publicadas.
-- **"Missing or insufficient permissions" ao ver o uso**: as regras do passo 1 mudaram (nova coleção `usage`). Cole de novo o conteúdo atual de `firebase/firestore.rules` e publique.
-- **Bluetooth não acha o aparelho**: confira se o Bluetooth está ligado nos dois, se a permissão foi concedida e se o filho está na tela “Receber código por Bluetooth”.
+- **"O código expirou" / "já foi usado"**: o código vale 10 minutos e uma vez. No aparelho do filho o QR se renova sozinho; toque em *Gerar novo código* se precisar. Se persistir, confira se as regras do passo 1 foram publicadas.
+- **"Missing or insufficient permissions" ao ver o uso**: as regras do passo 1 mudaram (a coleção `pairRequests` e as regras de vínculo mudaram). Cole de novo o conteúdo atual de `firebase/firestore.rules` e publique.
+- **A câmera não abre ao ler o QR**: conceda a permissão de câmera ao app; sem câmera (ou no Windows) digite o código de reserva que aparece embaixo do QR.
 - **O bloqueio não aparece no Android**: abra o app do filho e confira se o cartão de permissões sumiu. Em alguns celulares (Xiaomi, Samsung) também é preciso tirar o app da economia de bateria.
 - **A lista de apps não chega**: abra o app do filho com internet; ele envia a lista ao abrir e a cada 6 horas.
 
@@ -68,3 +68,7 @@ No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para
 - Ativar o **App Check** para impedir o uso da API por apps de terceiros.
 - Definir alertas de orçamento no Google Cloud.
 - Assinar o app com chave própria (hoje o build de release usa a chave de debug).
+
+## Opcional: apagar pedidos de vínculo antigos
+
+O app já apaga o pedido de vínculo ao sair da tela, mas se o aplicativo for fechado à força o documento fica em `pairRequests`. Ele deixa de valer em 10 minutos. Para limpar sozinho, em **Firestore → TTL**, crie uma política na coleção `pairRequests` usando o campo `expiresAt`.

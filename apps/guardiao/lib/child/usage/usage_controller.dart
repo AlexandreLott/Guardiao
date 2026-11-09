@@ -68,7 +68,9 @@ class UsageController extends ChangeNotifier {
       missing = await monitor.missingPermissions();
       final hasAccess = !missing.contains(MonitorPermission.usageAccess);
       final wanted = buildMonitored(_apps, _rules, platform);
-      if (_pushed == null || !listEquals(_pushed, wanted) || (hasAccess && !_pushedWithAccess)) {
+      if (_pushed == null ||
+          !listEquals(_pushed, wanted) ||
+          (hasAccess && !_pushedWithAccess)) {
         await monitor.start(wanted);
         _pushed = wanted;
         _pushedWithAccess = hasAccess;

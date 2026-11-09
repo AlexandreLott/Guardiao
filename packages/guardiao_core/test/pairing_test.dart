@@ -25,7 +25,31 @@ void main() {
       expect(formatPairingCode('k7m29qxa'), 'K7M2-9QXA');
       expect(isValidPairingCode('k7m2-9qxa'), isTrue);
       expect(isValidPairingCode('K7M2-9QX'), isFalse);
-      expect(isValidPairingCode('K7M2-9Q0A'), isFalse); // 0 não existe no alfabeto
+      expect(
+        isValidPairingCode('K7M2-9Q0A'),
+        isFalse,
+      ); // 0 não existe no alfabeto
+    });
+  });
+
+  group('QR do pareamento', () {
+    test('ida e volta pelo texto do QR', () {
+      final payload = pairingQrPayload('k7m2-9qxa');
+      expect(payload, 'guardiao://pair?code=K7M29QXA');
+      expect(parsePairingQr(payload), 'K7M29QXA');
+    });
+
+    test('aceita o código puro, digitado com traço e em minúsculas', () {
+      expect(parsePairingQr(' k7m2-9qxa '), 'K7M29QXA');
+    });
+
+    test('recusa QR de outras coisas', () {
+      expect(parsePairingQr(null), isNull);
+      expect(parsePairingQr(''), isNull);
+      expect(parsePairingQr('https://exemplo.com/?code=K7M29QXA'), isNull);
+      expect(parsePairingQr('guardiao://outra?code=K7M29QXA'), isNull);
+      expect(parsePairingQr('guardiao://pair?code=K7M29Q0A'), isNull);
+      expect(parsePairingQr('guardiao://pair'), isNull);
     });
   });
 

@@ -18,7 +18,9 @@ ThemeData guardiaoTheme(Brightness brightness) {
       foregroundColor: scheme.onSurface,
       centerTitle: false,
     ),
-    inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+    inputDecorationTheme: const InputDecorationTheme(
+      border: OutlineInputBorder(),
+    ),
     cardTheme: CardThemeData(
       elevation: 0,
       color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
-import '../nearby/nearby.dart';
+import '../qr/qr_scanner.dart';
 import 'devices_screen.dart';
 import 'login_screen.dart';
 
@@ -11,12 +11,12 @@ class ParentFlow extends StatelessWidget {
     super.key,
     required this.backend,
     required this.onChangeRole,
-    required this.nearby,
+    required this.scanner,
     this.isDemo = false,
   });
 
   final GuardianBackend backend;
-  final NearbyPairing nearby;
+  final QrScanner scanner;
   final VoidCallback onChangeRole;
   final bool isDemo;
 
@@ -26,7 +26,9 @@ class ParentFlow extends StatelessWidget {
       stream: backend.authStateChanges(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         if (snap.data == null) {
           return LoginScreen(
@@ -38,7 +40,7 @@ class ParentFlow extends StatelessWidget {
         return DevicesScreen(
           key: ValueKey(snap.data),
           backend: backend,
-          nearby: nearby,
+          scanner: scanner,
           isDemo: isDemo,
           onChangeRole: onChangeRole,
         );

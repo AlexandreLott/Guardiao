@@ -24,7 +24,9 @@ class AppConfig {
   static const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
   static const appId = String.fromEnvironment('FIREBASE_APP_ID');
   static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
-  static const senderId = String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
+  static const senderId = String.fromEnvironment(
+    'FIREBASE_MESSAGING_SENDER_ID',
+  );
 
   static bool get firebaseConfigured =>
       apiKey.isNotEmpty && appId.isNotEmpty && projectId.isNotEmpty;
@@ -32,11 +34,11 @@ class AppConfig {
   static bool get useFirebase => backend != 'memory' && firebaseConfigured;
 
   static FirebaseOptions get firebaseOptions => FirebaseOptions(
-        apiKey: apiKey,
-        appId: appId,
-        projectId: projectId,
-        messagingSenderId: senderId,
-      );
+    apiKey: apiKey,
+    appId: appId,
+    projectId: projectId,
+    messagingSenderId: senderId,
+  );
 }
 
 /// Resultado da inicialização: o backend e se ele é de demonstração.
@@ -46,7 +48,8 @@ class BackendSetup {
   final bool isDemo;
 }
 
-/// Código fixo usado no modo demonstração para vincular um aparelho do filho.
+/// Código fixo do modo demonstração: simula um segundo aparelho de filho
+/// (um notebook) esperando para ser vinculado pelo responsável.
 const demoPairingCode = 'DEMX2345';
 
 /// Conta do responsável usada no modo demonstração.
@@ -66,47 +69,94 @@ Future<BackendSetup> createBackend() async {
 }
 
 /// Dados de exemplo: um responsável com um aparelho já vinculado (cheio de
-/// apps, com algumas regras) e um código livre para vincular outro aparelho.
+/// apps, com algumas regras) e um segundo aparelho esperando o vínculo.
 Future<void> _seedDemo(MemoryCloud cloud) async {
   final parent = MemoryBackend(cloud);
   await parent.registerParent(demoParentEmail, demoParentPassword);
-  final code = await parent.createPairingCode();
   final child = MemoryBackend(cloud);
   await child.signInChild();
-  await child.claimPairing(
-    code: code.code,
+  final request = await child.createPairRequest(
     deviceName: 'Celular do Pedro (exemplo)',
     platform: DevicePlatform.android,
   );
+  await parent.approvePairRequest(request.code);
   await child.syncInstalledApps(const [
-    InstalledApp(id: 'com.roblox.client', name: 'Roblox', packageName: 'com.roblox.client'),
-    InstalledApp(id: 'com.dts.freefireth', name: 'Free Fire', packageName: 'com.dts.freefireth'),
-    InstalledApp(id: 'com.mojang.minecraftpe', name: 'Minecraft', packageName: 'com.mojang.minecraftpe'),
-    InstalledApp(id: 'com.epicgames.fortnite', name: 'Fortnite', packageName: 'com.epicgames.fortnite'),
-    InstalledApp(id: 'com.android.chrome', name: 'Chrome', packageName: 'com.android.chrome'),
-    InstalledApp(id: 'com.whatsapp', name: 'WhatsApp', packageName: 'com.whatsapp'),
-    InstalledApp(id: 'com.google.android.youtube', name: 'YouTube', packageName: 'com.google.android.youtube'),
+    InstalledApp(
+      id: 'com.roblox.client',
+      name: 'Roblox',
+      packageName: 'com.roblox.client',
+    ),
+    InstalledApp(
+      id: 'com.dts.freefireth',
+      name: 'Free Fire',
+      packageName: 'com.dts.freefireth',
+    ),
+    InstalledApp(
+      id: 'com.mojang.minecraftpe',
+      name: 'Minecraft',
+      packageName: 'com.mojang.minecraftpe',
+    ),
+    InstalledApp(
+      id: 'com.epicgames.fortnite',
+      name: 'Fortnite',
+      packageName: 'com.epicgames.fortnite',
+    ),
+    InstalledApp(
+      id: 'com.android.chrome',
+      name: 'Chrome',
+      packageName: 'com.android.chrome',
+    ),
+    InstalledApp(
+      id: 'com.whatsapp',
+      name: 'WhatsApp',
+      packageName: 'com.whatsapp',
+    ),
+    InstalledApp(
+      id: 'com.google.android.youtube',
+      name: 'YouTube',
+      packageName: 'com.google.android.youtube',
+    ),
   ]);
-  await parent.setRule(child.currentUid!,
-      const AppRule(appId: 'com.roblox.client', dailyLimitMinutes: 60));
   await parent.setRule(
-      child.currentUid!, const AppRule(appId: 'com.dts.freefireth', blocked: true));
+    child.currentUid!,
+    const AppRule(appId: 'com.roblox.client', dailyLimitMinutes: 60),
+  );
+  await parent.setRule(
+    child.currentUid!,
+    const AppRule(appId: 'com.dts.freefireth', blocked: true),
+  );
   // Uma semana de uso de exemplo, para o painel do responsável não ficar vazio.
   final today = cloud.now();
   const week = [
     {'com.roblox.client': 95, 'com.mojang.minecraftpe': 40, 'com.whatsapp': 20},
-    {'com.roblox.client': 70, 'com.mojang.minecraftpe': 55, 'com.android.chrome': 25},
-    {'com.roblox.client': 120, 'com.epicgames.fortnite': 30, 'com.whatsapp': 15},
+    {
+      'com.roblox.client': 70,
+      'com.mojang.minecraftpe': 55,
+      'com.android.chrome': 25,
+    },
+    {
+      'com.roblox.client': 120,
+      'com.epicgames.fortnite': 30,
+      'com.whatsapp': 15,
+    },
     {'com.roblox.client': 55, 'com.google.android.youtube': 45},
     {'com.roblox.client': 80, 'com.mojang.minecraftpe': 60, 'com.whatsapp': 10},
     {'com.roblox.client': 60, 'com.mojang.minecraftpe': 35},
     {'com.roblox.client': 45, 'com.mojang.minecraftpe': 20, 'com.whatsapp': 12},
   ];
   for (var i = 0; i < week.length; i++) {
-    final day = dayKey(DateTime(today.year, today.month, today.day - (week.length - 1 - i)));
+    final day = dayKey(
+      DateTime(today.year, today.month, today.day - (week.length - 1 - i)),
+    );
     await child.reportUsage(day, week[i]);
   }
-  // Segundo código, fixo, para quem quiser vincular o próprio aparelho.
-  cloud.addPairing(demoPairingCode, parent.currentUid!,
-      cloud.now().add(const Duration(days: 1)));
+  // Segundo aparelho (notebook), com código fixo, para demonstrar que o
+  // responsável vincula mais de um aparelho.
+  cloud.addPairRequest(
+    demoPairingCode,
+    deviceId: 'demo-notebook',
+    deviceName: 'Notebook do Pedro (exemplo)',
+    platform: DevicePlatform.windows,
+    expiresAt: cloud.now().add(const Duration(days: 1)),
+  );
 }
