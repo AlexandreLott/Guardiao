@@ -5,6 +5,9 @@
 📲 **[Alpha instalável (celular e PC)](https://alexandrelott.github.io/guardiao-gamer-alpha/)** · 📖 **[Guia de instalação](docs/GUIA-DE-INSTALACAO.md)** · 📄 **[Documentação completa em PDF](docs/Guardiao-Gamer-Documentacao.pdf)** · 📚 Diário técnico online: [GitBook](https://bet-blocker.gitbook.io/bet-blocker-docs/)
 
 
+🤖 **[Baixar o APK para Android](https://github.com/AlexandreLott/Bet-Blocker/releases/latest)** — o arquivo `guardiao-gamer.apk` fica na Release mais recente (o repositório é privado: abra o link logado no GitHub). Como gerar e instalar: [README do app](apps/README.md#instalar-no-android-apk).
+
+
 ## Aplicativo (código-fonte)
 
 O aplicativo real do Guardião Gamer é **um só app Flutter para Android e Windows** (pasta [apps/guardiao](apps/guardiao)), com dados na nuvem pelo Firebase. No primeiro acesso o aparelho escolhe se é do **responsável** ou do **filho**.
