@@ -1,4 +1,4 @@
-# Guardião Gamer — Controle Parental para Jogos 🎮
+# Guardião — Controle Parental
 
 **Controle parental para jogos eletrônicos, no computador e no celular** — Projeto A3, UC Exploração Digital e Fundamentos Tecnológicos.
 
