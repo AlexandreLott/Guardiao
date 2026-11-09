@@ -49,12 +49,12 @@ Este repositório espelha o diário técnico do projeto (GitBook), conforme pede
 
 ## 2. Integrantes do grupo
 
-* Alexandre Lott de Alcântara Bizarria - 326116123 - alexandre.lott10@gmail.com
-* Christian Lorran da Silva Batista - 32622936 - Christianlorransen@gmail.com
-* Lucas Pires Franco - 32628258 - lucasfranco21112007@gmail.com
-* Luiz Philipe Alves dos Santos - 326212120 - luizphilipecontato@gmail.com
-* Rafael Felipe de Paula - 326213249 - rafaeldepaula663@gmail.com.br
-* Victor Gabriel Dutra de Abreu - 32624533 - victorestudante922@gmail.com
+* Alexandre Lott de Alcântara Bizarria
+* Christian Lorran da Silva Batista
+* Lucas Pires Franco
+* Luiz Philipe Alves dos Santos
+* Rafael Felipe de Paula
+* Victor Gabriel Dutra de Abreu
 
 ## 3. Problema ou oportunidade identificada
 
