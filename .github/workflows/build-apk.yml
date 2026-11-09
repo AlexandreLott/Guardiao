@@ -1,0 +1,59 @@
+name: Compilar APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir os segredos do Firebase
+        env:
+          K1: ${{ secrets.FIREBASE_API_KEY }}
+          K2: ${{ secrets.FIREBASE_APP_ID }}
+          K3: ${{ secrets.FIREBASE_PROJECT_ID }}
+          K4: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        run: |
+          for v in K1 K2 K3 K4; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Falta cadastrar os 4 segredos do Firebase em Settings > Secrets and variables > Actions (veja docs/CONFIGURAR-FIREBASE.md, passo 5)."
+              exit 1
+            fi
+          done
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.8"
+          channel: stable
+          cache: true
+
+      - name: Compilar
+        working-directory: apps/guardiao
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/guardiao-gamer.apk"
+
+      - name: Publicar na Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-${{ github.run_number }}" guardiao-gamer.apk \
+            --title "Guardião Gamer (APK #${{ github.run_number }})" \
+            --notes "APK para Android compilado de ${GITHUB_SHA::7}. Instale ao baixar pelo celular; se já houver uma versão instalada, desinstale antes." \
+            --latest
