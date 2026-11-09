@@ -1,8 +1,22 @@
-# Guardião Gamer 🎮
+# Guardião Gamer — Controle Parental para Jogos 🎮
 
 **Controle parental para jogos eletrônicos, no computador e no celular** — Projeto A3, UC Exploração Digital e Fundamentos Tecnológicos.
 
 📲 **[Alpha instalável (celular e PC)](https://alexandrelott.github.io/guardiao-gamer-alpha/)** · 📖 **[Guia de instalação](docs/GUIA-DE-INSTALACAO.md)** · 📄 **[Documentação completa em PDF](docs/Guardiao-Gamer-Documentacao.pdf)** · 📚 Diário técnico online: [GitBook](https://bet-blocker.gitbook.io/bet-blocker-docs/)
+
+
+## Aplicativo (código-fonte)
+
+O aplicativo real do Guardião Gamer é **um só app Flutter para Android e Windows** (pasta [apps/guardiao](apps/guardiao)), com dados na nuvem pelo Firebase. No primeiro acesso o aparelho escolhe se é do **responsável** ou do **filho**.
+
+- **Vínculo por QR gerado pelo aparelho do filho** (celular ou computador): o responsável lê o QR com a câmera (ou digita o código de 8 caracteres), confere o aparelho e vincula. Um responsável pode vincular **vários aparelhos de filhos**. Não precisa de domínio nem de servidor próprio.
+- Lista de apps instalados, **tempo de uso real** e **bloqueio de verdade** ao estourar o limite diário (Android e Windows).
+- O responsável acompanha o uso de hoje e dos últimos 7 dias; o filho vê quanto já usou e quanto resta.
+- Regras de segurança do Firestore testadas no emulador (45 testes), mais testes automáticos do app e do código compartilhado.
+
+Limites conhecidos: o QR pela câmera e o bloqueio nativo foram testados só por simulação (falta provar em celulares de verdade), o uso só chega ao responsável com o app do filho aberto e não há proteção contra desinstalação.
+
+Para rodar e configurar: [README do app](apps/README.md) · [Arquitetura](docs/ARQUITETURA.md) · [Configurar o Firebase](docs/CONFIGURAR-FIREBASE.md). O alpha instalável acima continua sendo o protótipo web de demonstração.
 
 > Este README espelha o diário técnico do projeto no GitBook. O repositório mantém o nome original (`Bet-Blocker`) por causa do projeto anterior e é **privado**. O alpha instalável fica em um repositório público separado, [guardiao-gamer-alpha](https://github.com/AlexandreLott/guardiao-gamer-alpha), que tem o GitHub Pages ligado.
 
