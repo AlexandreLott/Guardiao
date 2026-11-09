@@ -55,6 +55,8 @@ Os testes em `firebase/tests/rules.test.mjs` cobrem cada linha dessa tabela, inc
 - **Android**: um canal de plataforma (`MainActivity.kt`) consulta o `PackageManager` por apps com ícone de lançamento, os mesmos do menu do celular. Usa `<queries>` no manifesto e dispensa a permissão `QUERY_ALL_PACKAGES`, que a Google Play restringe.
 - **Windows**: o app lê as chaves "Uninstall" do registro por PowerShell e descarta atualizações e redistribuíveis. O executável vem do `DisplayIcon` quando existe; é por ele que o uso é medido.
 
+- **Ícones**: o Android desenha o ícone de cada app em 96×96 px, comprime em WebP e envia em base64 junto com o app (campo `icon`; ícones acima de ~30 mil caracteres são ignorados). O Windows não envia ícone e mostra a letra inicial.
+
 A sincronização roda ao abrir o app e a cada 6 horas e só grava o que mudou. Um sinal de vida (`lastSeen`) é enviado a cada 10 minutos.
 
 ## Tempo de uso e bloqueio
@@ -72,6 +74,10 @@ As regras (`rules/*`) chegam ao aparelho do filho pelo Firestore e são **copiad
 - Ao estourar o limite (ou se o programa está bloqueado), encerra o processo com `taskkill` (apenas nomes simples de `.exe`; nunca o próprio Guardião).
 
 **Envio ao responsável**: a cada 30 s, enquanto o app do filho está aberto, os minutos de hoje por app vão para `usage/{dia}_{app}` (só o que mudou). O responsável vê o total de hoje, a média e as barras dos últimos 7 dias e o uso de cada app.
+
+## Atualização dentro do app (Android)
+
+`lib/update/` consulta a API pública do GitHub (`releases/latest`) ao abrir o app e a cada 6 horas. A etiqueta `apk-N` vira o número da versão (`versionCode`); se for maior que o instalado, aparece a barra **Atualizar**. O app baixa o `guardiao-gamer.apk` para o cache, confere tamanho e SHA-256 informados pelo GitHub e entrega o arquivo ao instalador do Android por `FileProvider` (o usuário confirma; o Android exige isso). Requer a permissão “instalar apps desconhecidos” para o próprio app e que o APK novo seja assinado com a mesma chave (`KEYSTORE_*` no workflow). No Windows não há atualização automática.
 
 ## Roteiro para provar em celulares de verdade
 

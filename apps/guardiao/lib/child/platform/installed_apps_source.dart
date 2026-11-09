@@ -50,6 +50,12 @@ class AndroidAppsSource implements InstalledAppsSource {
   }
 }
 
+/// Aceita o ícone só se for texto base64 de tamanho razoável.
+String? _cleanIcon(Object? raw) {
+  if (raw is! String || raw.isEmpty || raw.length > 40000) return null;
+  return raw;
+}
+
 /// Converte a resposta do canal em modelos, sem repetições e sem o próprio app.
 List<InstalledApp> parseAndroidApps(
   List<Map<Object?, Object?>> raw, {
@@ -64,6 +70,7 @@ List<InstalledApp> parseAndroidApps(
       id: safeId(pkg),
       name: (name == null || name.isEmpty) ? pkg : name,
       packageName: pkg,
+      icon: _cleanIcon(item['icon']),
     );
   }
   return byPackage.values.toList();

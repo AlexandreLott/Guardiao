@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -5,13 +7,29 @@ import 'pairing.dart';
 
 import 'models.dart';
 
-/// Letra inicial em um círculo colorido, usada no lugar do ícone do app
-/// (os ícones reais entram em uma próxima versão).
+/// Ícone do app (o mesmo do menu do celular do filho). Sem ícone, mostra a
+/// letra inicial em um círculo colorido.
 class AppAvatar extends StatelessWidget {
   const AppAvatar(this.app, {super.key, this.size = 40});
 
   final InstalledApp app;
   final double size;
+
+  // Decodificar o base64 a cada desenho de lista pesaria; guarda o resultado.
+  static final Map<String, Uint8List?> _decoded = {};
+
+  static Uint8List? _bytes(InstalledApp app) {
+    final icon = app.icon;
+    if (icon == null || icon.isEmpty) return null;
+    final key = '${app.id}:${icon.length}:${icon.hashCode}';
+    return _decoded.putIfAbsent(key, () {
+      try {
+        return base64Decode(icon);
+      } on FormatException {
+        return null;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,24 +40,38 @@ class AppAvatar extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final bg = HSLColor.fromAHSL(1, hue, 0.45, dark ? 0.30 : 0.82).toColor();
     final fg = HSLColor.fromAHSL(1, hue, 0.55, dark ? 0.85 : 0.25).toColor();
-    return ExcludeSemantics(
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(size * 0.3),
-        ),
-        child: Text(
-          letter,
-          style: TextStyle(
-            color: fg,
-            fontWeight: FontWeight.w700,
-            fontSize: size * 0.45,
-          ),
+    final bytes = _bytes(app);
+    final radius = BorderRadius.circular(size * 0.3);
+    final fallback = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: bg, borderRadius: radius),
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: fg,
+          fontWeight: FontWeight.w700,
+          fontSize: size * 0.45,
         ),
       ),
+    );
+    return ExcludeSemantics(
+      child: bytes == null
+          ? fallback
+          : ClipRRect(
+              borderRadius: radius,
+              child: Image.memory(
+                bytes,
+                key: const Key('appIcon'),
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (_, _, _) => fallback,
+              ),
+            ),
     );
   }
 }

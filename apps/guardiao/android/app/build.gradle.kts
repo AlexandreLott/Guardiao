@@ -30,11 +30,30 @@ android {
         versionName = flutter.versionName
     }
 
+    // Chave de assinatura fixa: o Android só aceita atualizar um app por cima
+    // se o novo APK foi assinado com a mesma chave. Ela vem do ambiente (a
+    // compilação do GitHub); nunca fica no repositório.
+    val keystorePath = System.getenv("KEYSTORE_PATH")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("guardiao") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEYSTORE_ALIAS") ?: "guardiao"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sem a chave (compilação local), assina com a de testes para o
+            // `flutter run --release` funcionar.
+            signingConfig = if (keystorePath != null) {
+                signingConfigs.getByName("guardiao")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

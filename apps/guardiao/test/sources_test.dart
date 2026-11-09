@@ -25,6 +25,16 @@ void main() {
       },
     );
 
+    test('guarda o ícone só quando é um texto de tamanho razoável', () {
+      final apps = parseAndroidApps([
+        {'packageName': 'com.a', 'name': 'A', 'icon': 'AAAA'},
+        {'packageName': 'com.b', 'name': 'B', 'icon': ''},
+        {'packageName': 'com.c', 'name': 'C', 'icon': 'x' * 50000},
+        {'packageName': 'com.d', 'name': 'D'},
+      ]);
+      expect(apps.map((a) => a.icon), ['AAAA', null, null, null]);
+    });
+
     test('lê o canal de plataforma', () async {
       const channel = MethodChannel('br.edu.guardiaogamer/device');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

@@ -6,11 +6,18 @@ import 'child/platform/installed_apps_source.dart';
 import 'child/usage/usage_monitor.dart';
 import 'qr/qr_scanner.dart';
 import 'role/role.dart';
+import 'update/update_controller.dart';
+import 'update/update_installer.dart';
+import 'update/update_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final setup = await createBackend();
   final roleStore = SharedPrefsRoleStore();
+  final updates = UpdateController(
+    source: GithubUpdateSource(),
+    installer: UpdateInstaller.detect(),
+  )..begin();
   runApp(
     GuardiaoApp(
       backend: setup.backend,
@@ -20,6 +27,7 @@ Future<void> main() async {
       scanner: QrScanner.detect(),
       initialRole: await roleStore.read(),
       isDemo: setup.isDemo,
+      updates: updates,
     ),
   );
 }

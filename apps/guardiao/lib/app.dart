@@ -8,6 +8,8 @@ import 'parent/parent_flow.dart';
 import 'qr/qr_scanner.dart';
 import 'role/role.dart';
 import 'role/role_screen.dart';
+import 'update/update_bar.dart';
+import 'update/update_controller.dart';
 
 /// O app inteiro: escolhe a função do aparelho no primeiro acesso e depois
 /// abre o lado do responsável ou o do filho.
@@ -21,6 +23,7 @@ class GuardiaoApp extends StatefulWidget {
     required this.monitor,
     this.initialRole,
     this.isDemo = false,
+    this.updates,
   });
 
   final GuardianBackend backend;
@@ -30,6 +33,9 @@ class GuardiaoApp extends StatefulWidget {
   final UsageMonitor monitor;
   final DeviceRole? initialRole;
   final bool isDemo;
+
+  /// Aviso e instalação de versões novas (só no Android).
+  final UpdateController? updates;
 
   @override
   State<GuardiaoApp> createState() => _GuardiaoAppState();
@@ -58,6 +64,8 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
       debugShowCheckedModeBanner: false,
       theme: guardiaoTheme(Brightness.light),
       darkTheme: guardiaoTheme(Brightness.dark),
+      builder: (context, child) =>
+          UpdateHost(controller: widget.updates, child: child!),
       home: switch (_role) {
         null => RoleScreen(onPick: _pick),
         DeviceRole.parent => ParentFlow(

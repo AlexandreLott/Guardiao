@@ -346,7 +346,8 @@ class FirebaseBackend implements GuardianBackend {
       final before = current[entry.key];
       if (before != null &&
           before.name == app.name &&
-          before.packageName == app.packageName) {
+          before.packageName == app.packageName &&
+          before.icon == app.icon) {
         continue;
       }
       final ref = col.doc(entry.key);

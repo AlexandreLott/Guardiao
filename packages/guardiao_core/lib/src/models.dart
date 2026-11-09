@@ -24,23 +24,34 @@ String safeId(String raw) {
 
 /// Um aplicativo instalado no aparelho do filho.
 class InstalledApp {
-  const InstalledApp({required this.id, required this.name, this.packageName});
+  const InstalledApp({
+    required this.id,
+    required this.name,
+    this.packageName,
+    this.icon,
+  });
 
   /// Identificador estável (pacote no Android, chave do registro no Windows).
   final String id;
   final String name;
   final String? packageName;
 
+  /// Ícone pequeno do app (imagem WebP/PNG em base64), quando o aparelho
+  /// consegue enviá-lo. `null` → o app mostra a letra inicial.
+  final String? icon;
+
   factory InstalledApp.fromMap(String id, Map<String, dynamic> data) =>
       InstalledApp(
         id: id,
         name: (data['name'] as String?) ?? id,
         packageName: data['packageName'] as String?,
+        icon: data['icon'] as String?,
       );
 
   Map<String, dynamic> toMap() => {
     'name': name,
     if (packageName != null) 'packageName': packageName,
+    if (icon != null) 'icon': icon,
   };
 
   @override
@@ -48,10 +59,11 @@ class InstalledApp {
       other is InstalledApp &&
       other.id == id &&
       other.name == name &&
-      other.packageName == packageName;
+      other.packageName == packageName &&
+      other.icon == icon;
 
   @override
-  int get hashCode => Object.hash(id, name, packageName);
+  int get hashCode => Object.hash(id, name, packageName, icon);
 }
 
 /// Regra definida pelo responsável para um aplicativo.

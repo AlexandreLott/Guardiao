@@ -58,7 +58,7 @@ No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para
 
 O repositório tem o workflow **Compilar APK** (`.github/workflows/build-apk.yml`), que compila o app com as suas chaves e publica o `guardiao-gamer.apk` numa Release.
 
-1. No GitHub, abra o repositório → **Settings → Secrets and variables → Actions → New repository secret** e crie quatro segredos:
+1. No GitHub, abra o repositório → **Settings → Secrets and variables → Actions → New repository secret** e crie seis segredos:
 
 | Nome | Valor |
 | --- | --- |
@@ -66,11 +66,13 @@ O repositório tem o workflow **Compilar APK** (`.github/workflows/build-apk.yml
 | `FIREBASE_APP_ID` | App ID do app **Android** (`1:247599409292:android:...`) |
 | `FIREBASE_PROJECT_ID` | `guardiao-gamer` |
 | `FIREBASE_MESSAGING_SENDER_ID` | `247599409292` |
+| `KEYSTORE_BASE64` | arquivo `guardiao.jks` convertido para base64 (a chave de assinatura do app) |
+| `KEYSTORE_PASSWORD` | senha da chave (apelido `guardiao`) |
 
 2. Abra **Actions → Compilar APK → Run workflow**. Leva uns 8 minutos.
-3. O arquivo aparece em **Releases** (`/releases/latest`). Baixe pelo celular, logado no GitHub.
+3. O arquivo aparece em **Releases** (`/releases/latest`). Baixe pelo celular.
 
-Sem os segredos o workflow para com um aviso. O APK usa a chave de testes do Android; ao instalar uma versão nova, desinstale a anterior.
+Sem os segredos o workflow para com um aviso. A chave de assinatura é o que permite ao Android aceitar uma versão nova por cima da antiga (e a atualização dentro do app): guarde o `.jks` e a senha em local seguro e nunca os coloque no repositório. Se a chave mudar, é preciso desinstalar o app e instalar de novo. A numeração vem da execução do workflow: a Release `apk-N` tem versão `N`, e o app só oferece atualizar quando `N` é maior que a instalada.
 
 ## Problemas comuns
 

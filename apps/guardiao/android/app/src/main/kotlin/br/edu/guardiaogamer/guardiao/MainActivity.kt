@@ -2,9 +2,16 @@ package br.edu.guardiaogamer.guardiao
 
 import android.Manifest
 import android.content.Intent
+import androidx.core.content.FileProvider
+import java.io.File
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.provider.Settings
+import android.util.Base64
+import java.io.ByteArrayOutputStream
 import android.content.pm.ResolveInfo
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
@@ -26,6 +33,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         configureMonitor(flutterEngine)
+        configureUpdates(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -34,6 +42,69 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    // ------------------------------------------------- atualização do app
+
+    private fun configureUpdates(flutterEngine: FlutterEngine) {
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UPDATE)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "version" -> result.success(versionInfo())
+                    "updateDir" -> {
+                        val dir = File(cacheDir, "updates")
+                        dir.mkdirs()
+                        // Apaga APKs de atualizações anteriores.
+                        dir.listFiles()?.forEach { it.delete() }
+                        result.success(dir.absolutePath)
+                    }
+                    "canInstall" -> result.success(canInstallPackages())
+                    "openInstallSettings" -> {
+                        openSettings(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, withPackage = true)
+                        result.success(null)
+                    }
+                    "install" -> installApk(call.argument<String>("path"), result)
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun versionInfo(): Map<String, Any?> {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            info.versionCode.toLong()
+        }
+        return mapOf("versionCode" to code, "versionName" to (info.versionName ?: ""))
+    }
+
+    private fun canInstallPackages(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()
+
+    /** Abre o instalador do sistema com um APK da pasta de atualizações. */
+    private fun installApk(path: String?, result: MethodChannel.Result) {
+        if (path == null) {
+            result.error("BAD_ARGS", "path é obrigatório", null)
+            return
+        }
+        try {
+            val dir = File(cacheDir, "updates").canonicalFile
+            val file = File(path).canonicalFile
+            if (file.parentFile != dir || !file.isFile) {
+                result.error("BAD_FILE", "Arquivo fora da pasta de atualizações.", null)
+                return
+            }
+            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("INSTALL_FAILED", e.message, null)
+        }
     }
 
     // ------------------------------------------------------- tempo de uso
@@ -175,12 +246,44 @@ class MainActivity : FlutterActivity() {
                 pm.queryIntentActivities(intent, 0)
             }
         return resolved
-            .map { mapOf(
-                "packageName" to it.activityInfo.packageName,
-                "name" to it.loadLabel(pm).toString(),
-            ) }
+            .map {
+                val map = mutableMapOf(
+                    "packageName" to it.activityInfo.packageName,
+                    "name" to it.loadLabel(pm).toString(),
+                )
+                iconBase64(it, pm)?.let { icon -> map["icon"] = icon }
+                map
+            }
             .distinctBy { it["packageName"] }
             .sortedBy { it["name"]?.lowercase() }
+    }
+
+    /**
+     * Ícone do app em 96x96, WebP com perda, em base64 (uns 2 a 4 KB). Serve
+     * para o responsável ver o mesmo ícone do menu do celular do filho. Se algo
+     * falhar, devolve `null` e o responsável vê a letra inicial.
+     */
+    private fun iconBase64(info: ResolveInfo, pm: PackageManager): String? {
+        return try {
+            val drawable: Drawable = info.loadIcon(pm)
+            val bitmap = Bitmap.createBitmap(ICON_SIZE, ICON_SIZE, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, ICON_SIZE, ICON_SIZE)
+            drawable.draw(canvas)
+            val out = ByteArrayOutputStream()
+            val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Bitmap.CompressFormat.WEBP_LOSSY
+            } else {
+                @Suppress("DEPRECATION")
+                Bitmap.CompressFormat.WEBP
+            }
+            bitmap.compress(format, 80, out)
+            bitmap.recycle()
+            val text = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+            if (text.length > 30_000) null else text
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private fun deviceName(): String {
@@ -192,6 +295,8 @@ class MainActivity : FlutterActivity() {
     companion object {
         const val CHANNEL = "br.edu.guardiaogamer/device"
         const val MONITOR = "br.edu.guardiaogamer/monitor"
+        const val UPDATE = "br.edu.guardiaogamer/update"
         const val REQUEST_NOTIFICATIONS = 4712
+        private const val ICON_SIZE = 96
     }
 }
