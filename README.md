@@ -5,25 +5,26 @@
 📲 **[Alpha instalável (celular e PC)](https://alexandrelott.github.io/guardiao-gamer-alpha/)** · 📖 **[Guia de instalação](docs/GUIA-DE-INSTALACAO.md)** · 📄 **[Documentação completa em PDF](docs/Guardiao-Gamer-Documentacao.pdf)** · 📚 Diário técnico online: [GitBook](https://bet-blocker.gitbook.io/bet-blocker-docs/)
 
 
-🤖 **[Baixar o APK para Android](https://github.com/AlexandreLott/Bet-Blocker/releases/latest)** — o arquivo `guardiao-gamer.apk` fica na Release mais recente (o repositório agora é público: o link abre sem login; depois da primeira instalação, o app avisa quando há versão nova e se atualiza sozinho). Como gerar e instalar: [README do app](apps/README.md#instalar-no-android-apk).
+🤖 **[Baixar o APK para Android](https://github.com/AlexandreLott/Guardiao/releases/latest)** — o arquivo `guardiao.apk` fica na Release mais recente (o repositório agora é público: o link abre sem login; depois da primeira instalação, o app avisa quando há versão nova e se atualiza sozinho). Como gerar e instalar: [README do app](apps/README.md#instalar-no-android-apk).
 
 
 ## Aplicativo (código-fonte)
 
-O aplicativo real do Guardião Gamer é **um só app Flutter para Android e Windows** (pasta [apps/guardiao](apps/guardiao)), com dados na nuvem pelo Firebase. No primeiro acesso o aparelho escolhe se é do **responsável** ou do **filho**.
+O aplicativo real do Guardião é **um só app Flutter para Android e Windows** (pasta [apps/guardiao](apps/guardiao)), com dados na nuvem pelo Firebase. No primeiro acesso o aparelho escolhe se é do **responsável** ou do **filho**.
 
 - **Vínculo por QR gerado pelo aparelho do filho** (celular ou computador): o responsável lê o QR com a câmera (ou digita o código de 8 caracteres), confere o aparelho e vincula. Um responsável pode vincular **vários aparelhos de filhos**. Não precisa de domínio nem de servidor próprio.
 - Lista de apps instalados, **tempo de uso real** e **bloqueio de verdade** ao estourar o limite diário (Android e Windows).
 - O responsável acompanha o uso de hoje e dos últimos 7 dias; o filho vê quanto já usou e quanto resta.
-- Regras de segurança do Firestore testadas no emulador (45 testes), mais testes automáticos do app e do código compartilhado.
+- Regras de segurança do Firestore testadas no emulador (53 testes), mais testes automáticos do app e do código compartilhado.
 - Ícone real de cada app do filho aparece na lista do responsável (Android).
+- **Aviso de tentativa de burla:** o responsável é notificado quando o filho retira uma permissão (acesso ao uso, sobreposição, notificações), desativa a proteção contra desinstalação ou para o serviço de acompanhamento, e o aparelho que fica 45 minutos sem sinal é destacado como "sem comunicação" (indício de desinstalação). A verificação roda em segundo plano nos dois aparelhos a cada ~15 minutos, sem custo (sem Cloud Functions), e o app do filho pede o **administrador do dispositivo**, o que faz o Android exigir a desativação dele antes de desinstalar.
 - Atualização dentro do app (Android): o app avisa quando há versão nova, baixa o APK da Release, confere a integridade e abre o instalador; não precisa baixar o APK por fora.
 
-Limites conhecidos: o QR pela câmera e o bloqueio nativo foram testados só por simulação (falta provar em celulares de verdade), o uso só chega ao responsável com o app do filho aberto e não há proteção contra desinstalação.
+Limites conhecidos: o QR pela câmera e o bloqueio nativo foram testados só por simulação (falta provar em celulares de verdade), o uso só chega ao responsável com o app do filho aberto, e o aviso de burla chega com atraso de cerca de 15 a 30 minutos. A desinstalação não pode ser comunicada pelo próprio aparelho: ela é detectada pela desativação prévia do administrador ou pela ausência de sinal por 45 minutos, e só vale depois que o filho ativa a "Proteção contra desinstalação" no app.
 
 Para rodar e configurar: [README do app](apps/README.md) · [Arquitetura](docs/ARQUITETURA.md) · [Configurar o Firebase](docs/CONFIGURAR-FIREBASE.md). O alpha instalável acima continua sendo o protótipo web de demonstração.
 
-> Este README espelha o diário técnico do projeto no GitBook. O repositório mantém o nome original (`Bet-Blocker`) por causa do projeto anterior e agora é **público**. O alpha instalável fica em um repositório público separado, [guardiao-gamer-alpha](https://github.com/AlexandreLott/guardiao-gamer-alpha), que tem o GitHub Pages ligado.
+> Este README espelha o diário técnico do projeto no GitBook. O repositório foi renomeado para `Guardiao` (o nome original era `Bet-Blocker`, do projeto anterior) e é **público**. O alpha instalável fica em um repositório público separado, [guardiao-gamer-alpha](https://github.com/AlexandreLott/guardiao-gamer-alpha), que tem o GitHub Pages ligado.
 
 ## Sobre o projeto
 
@@ -43,7 +44,7 @@ Este repositório espelha o diário técnico do projeto (GitBook), conforme pede
 
 ## 1. Nome do projeto
 
-**Nome (proposto, a confirmar com o grupo):** Guardião Gamer — Controle Parental para Jogos
+**Nome (atualizado):** Guardião — Controle Parental (o nome proposto na época era "Guardião Gamer")
 
 **Frase curta:** Ferramenta que ajuda pais e responsáveis a definir e aplicar limites de tempo de tela para jogos eletrônicos no computador e no celular dos filhos, com relatório de uso e um painel de acompanhamento.
 
@@ -188,7 +189,7 @@ _(a preencher ao final do projeto — síntese dos resultados alcançados)_
 ## Próximos passos
 
 * Validar coletivamente com o grupo se topam seguir com o novo tema (controle parental de jogos);
-* Confirmar o nome final do produto (proposto: "Guardião Gamer");
+* Nome final do produto: definido como "Guardião" (a proposta original era "Guardião Gamer");
 * Instalar e testar o alpha nos aparelhos reais que serão levados à demonstração (guia de instalação);
 * Enviar o pacote ao repositório e ligar o GitHub Pages (passo 0 do guia);
 * Dividir responsabilidades para a próxima etapa (sincronização remota real, bloqueio por classificação indicativa);
@@ -369,10 +370,10 @@ Auditoria feita em **24/10/2026** sobre o GitBook, o protótipo e os arquivos do
 
 ## Pontos em aberto para o grupo decidir
 
-* **Nome do produto:** "Guardião Gamer" ainda é proposta e precisa ser confirmado pelo grupo.
+* **Nome do produto:** na época da auditoria, "Guardião Gamer" ainda era proposta; o nome foi definido depois como "Guardião".
 * **Tema:** o grupo ainda precisa validar coletivamente a mudança de tema.
 * **Repositório principal agora público:** o README traz nomes, RAs e e-mails dos integrantes; o grupo precisa decidir se mantém esses dados à vista ou se os retira do README.
-* **Nome do repositório e do site:** continuam como "Bet-Blocker" (e `bet-blocker-docs`). Renomear muda o endereço do GitHub Pages, então vale deixar para depois da demonstração.
+* **Nome do repositório e do site:** na época continuavam como "Bet-Blocker" (e `bet-blocker-docs`). O repositório do aplicativo já foi renomeado para `Guardiao`; o site do GitBook segue com o endereço antigo.
 * **Projeto Flutter antigo (Bet Blocker):** obsoleto e nunca compilado por completo. Não foi incluído no repositório.
 * **Protótipo no Claude Artifact:** o link é privado e só abre na conta de quem o publicou. Para o grupo e a banca, use o link do alpha.
 * **Dados da proposta:** as fontes foram consultadas em 30/09/2026; vale reconferir os links antes da entrega oficial.
@@ -398,3 +399,5 @@ Tabela viva para registrar cada uso relevante de IA durante o desenvolvimento do
 _05/11/2026–09/11/2026 — App real, pareamento por QR, APK e atualização dentro do app (Claude). Finalidade: escrever e testar o código do aplicativo Flutter (pareamento por QR, bloqueio no Android/Windows, ícones dos apps, atualização dentro do app), as regras do Firestore, o workflow que compila o APK e a documentação. Resultado: app com testes automáticos, APK assinado publicado em Release e documentação em `docs/`. Revisão: o grupo precisa testar em celulares reais e revisar o código; o bloqueio de um app foi confirmado funcionando em um celular pelo integrante que testou.
 
 (adicionem uma linha por uso relevante — ferramenta, finalidade, prompt, resultado e o que precisou ser corrigido)_
+
+**09/11/2026 — Aviso de tentativa de burla (Claude).** Finalidade: avisar o responsável quando o filho retirar permissões do app, desativar a proteção ou desinstalar o aplicativo. Prompt: "Quando o apk do filho foi desinstalado do celular não teve nenhum aviso ao aparelho responsável, preciso que avise qualquer tentativa de burlar, seja retirando as permissões ou desinstalando". Resultado: modelo de dados (situação das proteções e avisos), regras do Firestore (53 testes), verificação em segundo plano com WorkManager e notificações locais nos dois aparelhos, administrador do dispositivo no Android, telas de alerta para o responsável, testes automáticos e atualização da documentação; aplicativo compilado e publicado como Release `apk-4`. Revisão: o grupo deve validar em dois celulares reais (retirar a permissão, desativar o administrador e desinstalar), pois só houve testes automáticos e compilação; o aviso tem atraso de 15 a 30 minutos e a desinstalação só é detectada pelo administrador ou pela falta de sinal por 45 minutos.
