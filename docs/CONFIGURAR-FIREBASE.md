@@ -54,6 +54,24 @@ No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para
 4. No filho (Android), libere as três permissões que o app pede (acesso ao uso, aparecer sobre outros apps, avisos).
 5. No app do responsável, toque em um aplicativo, defina um limite ou bloqueio e confira no aparelho do filho. Depois de usar o app, o tempo aparece no responsável em até 30 segundos.
 
+## 5. APK para instalar no Android (GitHub Actions)
+
+O repositório tem o workflow **Compilar APK** (`.github/workflows/build-apk.yml`), que compila o app com as suas chaves e publica o `guardiao-gamer.apk` numa Release.
+
+1. No GitHub, abra o repositório → **Settings → Secrets and variables → Actions → New repository secret** e crie quatro segredos:
+
+| Nome | Valor |
+| --- | --- |
+| `FIREBASE_API_KEY` | chave de API do app registrado |
+| `FIREBASE_APP_ID` | App ID do app **Android** (`1:247599409292:android:...`) |
+| `FIREBASE_PROJECT_ID` | `guardiao-gamer` |
+| `FIREBASE_MESSAGING_SENDER_ID` | `247599409292` |
+
+2. Abra **Actions → Compilar APK → Run workflow**. Leva uns 8 minutos.
+3. O arquivo aparece em **Releases** (`/releases/latest`). Baixe pelo celular, logado no GitHub.
+
+Sem os segredos o workflow para com um aviso. O APK usa a chave de testes do Android; ao instalar uma versão nova, desinstale a anterior.
+
 ## Problemas comuns
 
 - **"Esse tipo de login não está ativado"**: ative E-mail/senha e Anônimo no passo 1.
