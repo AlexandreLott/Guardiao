@@ -1,0 +1,36 @@
+# Temporário: aplica o pacote code-update3.zip e se apaga em seguida.
+name: unpack-update3
+on:
+  push:
+    paths:
+      - '.github/workflows/unpack-update3.yml'
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar pacote
+        run: |
+          set -euo pipefail
+          test -f code-update3.zip
+          mkdir /tmp/x
+          unzip -q code-update3.zip -d /tmp/x
+          rm -rf apps/guardiao packages/guardiao_core firebase docs
+          cp -r /tmp/x/apps/guardiao apps/guardiao
+          cp /tmp/x/apps/README.md apps/README.md
+          cp -r /tmp/x/packages/guardiao_core packages/guardiao_core
+          cp -r /tmp/x/firebase firebase
+          cp -r /tmp/x/docs docs
+          cp /tmp/x/.gitignore .gitignore
+          rm code-update3.zip
+          echo "arquivos em apps/guardiao: $(find apps/guardiao -type f | wc -l)"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q --cached .github/workflows/unpack-update3.yml || true
+          git add -A -- . ':!.github/workflows/unpack-update3.yml'
+          git commit -m "Aviso de tentativa de burla: permissoes, administrador do dispositivo e ausencia de sinal" || echo "nada a commitar"
+          git push
