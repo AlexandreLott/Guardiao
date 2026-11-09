@@ -5,7 +5,7 @@
 📲 **[Alpha instalável (celular e PC)](https://alexandrelott.github.io/guardiao-gamer-alpha/)** · 📖 **[Guia de instalação](docs/GUIA-DE-INSTALACAO.md)** · 📄 **[Documentação completa em PDF](docs/Guardiao-Gamer-Documentacao.pdf)** · 📚 Diário técnico online: [GitBook](https://bet-blocker.gitbook.io/bet-blocker-docs/)
 
 
-🤖 **[Baixar o APK para Android](https://github.com/AlexandreLott/Bet-Blocker/releases/latest)** — o arquivo `guardiao-gamer.apk` fica na Release mais recente (o repositório é privado: abra o link logado no GitHub). Como gerar e instalar: [README do app](apps/README.md#instalar-no-android-apk).
+🤖 **[Baixar o APK para Android](https://github.com/AlexandreLott/Bet-Blocker/releases/latest)** — o arquivo `guardiao-gamer.apk` fica na Release mais recente (o repositório agora é público: o link abre sem login; depois da primeira instalação, o app avisa quando há versão nova e se atualiza sozinho). Como gerar e instalar: [README do app](apps/README.md#instalar-no-android-apk).
 
 
 ## Aplicativo (código-fonte)
@@ -16,12 +16,14 @@ O aplicativo real do Guardião Gamer é **um só app Flutter para Android e Wind
 - Lista de apps instalados, **tempo de uso real** e **bloqueio de verdade** ao estourar o limite diário (Android e Windows).
 - O responsável acompanha o uso de hoje e dos últimos 7 dias; o filho vê quanto já usou e quanto resta.
 - Regras de segurança do Firestore testadas no emulador (45 testes), mais testes automáticos do app e do código compartilhado.
+- Ícone real de cada app do filho aparece na lista do responsável (Android).
+- Atualização dentro do app (Android): o app avisa quando há versão nova, baixa o APK da Release, confere a integridade e abre o instalador; não precisa baixar o APK por fora.
 
 Limites conhecidos: o QR pela câmera e o bloqueio nativo foram testados só por simulação (falta provar em celulares de verdade), o uso só chega ao responsável com o app do filho aberto e não há proteção contra desinstalação.
 
 Para rodar e configurar: [README do app](apps/README.md) · [Arquitetura](docs/ARQUITETURA.md) · [Configurar o Firebase](docs/CONFIGURAR-FIREBASE.md). O alpha instalável acima continua sendo o protótipo web de demonstração.
 
-> Este README espelha o diário técnico do projeto no GitBook. O repositório mantém o nome original (`Bet-Blocker`) por causa do projeto anterior e é **privado**. O alpha instalável fica em um repositório público separado, [guardiao-gamer-alpha](https://github.com/AlexandreLott/guardiao-gamer-alpha), que tem o GitHub Pages ligado.
+> Este README espelha o diário técnico do projeto no GitBook. O repositório mantém o nome original (`Bet-Blocker`) por causa do projeto anterior e agora é **público**. O alpha instalável fica em um repositório público separado, [guardiao-gamer-alpha](https://github.com/AlexandreLott/guardiao-gamer-alpha), que tem o GitHub Pages ligado.
 
 ## Sobre o projeto
 
@@ -252,7 +254,7 @@ Não há nada para preparar antes da demonstração: basta abrir o endereço no 
 
 Para publicar uma versão nova do alpha, abra o repositório público, clique em **Add file → Upload files**, envie os arquivos novos com os mesmos nomes e confirme com **Commit changes**. O Pages atualiza em 1 a 3 minutos.
 
-> **Nota:** O repositório principal do projeto (Bet-Blocker) é privado, e o GitHub Pages não funciona em repositório privado no plano gratuito. Por isso o alpha mora no repositório separado. Se o link não abrir, use os caminhos 2, 3 ou 4.
+> **Nota:** O alpha mora num repositório separado, criado quando o repositório principal ainda era privado. Se o link não abrir, use os caminhos 2, 3 ou 4.
 
 
 ## Android (Chrome)
@@ -369,7 +371,7 @@ Auditoria feita em **24/10/2026** sobre o GitBook, o protótipo e os arquivos do
 
 * **Nome do produto:** "Guardião Gamer" ainda é proposta e precisa ser confirmado pelo grupo.
 * **Tema:** o grupo ainda precisa validar coletivamente a mudança de tema.
-* **Repositório principal privado:** o README traz nomes, RAs e e-mails dos integrantes, então ele deve continuar privado (ou ser revisado antes de qualquer publicação).
+* **Repositório principal agora público:** o README traz nomes, RAs e e-mails dos integrantes; o grupo precisa decidir se mantém esses dados à vista ou se os retira do README.
 * **Nome do repositório e do site:** continuam como "Bet-Blocker" (e `bet-blocker-docs`). Renomear muda o endereço do GitHub Pages, então vale deixar para depois da demonstração.
 * **Projeto Flutter antigo (Bet Blocker):** obsoleto e nunca compilado por completo. Não foi incluído no repositório.
 * **Protótipo no Claude Artifact:** o link é privado e só abre na conta de quem o publicou. Para o grupo e a banca, use o link do alpha.
@@ -393,4 +395,6 @@ Tabela viva para registrar cada uso relevante de IA durante o desenvolvimento do
 
 **24/10/2026 — Auditoria e alpha instalável (Claude).** Finalidade: auditar GitBook, protótipo e arquivos do projeto; transformar o protótipo em um alpha instalável (PWA) para a demonstração no celular e no PC; escrever o guia de instalação; atualizar GitBook, README e PDF. Prompt: "Audite tudo e me passe como instalar o alpha no meu celular ou pc para demonstração, atualize o gitbook e o github do projeto". Resultado: dez pontos do protótipo corrigidos ou melhorados (ícones offline, botão +, gráfico, texto sem tratamento, dados não salvos, entre outros); pacote com manifesto, ícones e cache offline; kit offline para Windows; repositório público só do alpha com GitHub Pages; guia de instalação e roteiro de demonstração; página de auditoria; README e PDF atualizados. Revisão: testado só em navegador com tela de celular simulada, então o grupo precisa testar nos aparelhos reais; arquivos enviados ao GitHub pelo navegador do usuário (já logado) e criado um repositório público separado para o link do alpha.
 
-_(adicionem uma linha por uso relevante — ferramenta, finalidade, prompt, resultado e o que precisou ser corrigido)_
+_05/11/2026–09/11/2026 — App real, pareamento por QR, APK e atualização dentro do app (Claude). Finalidade: escrever e testar o código do aplicativo Flutter (pareamento por QR, bloqueio no Android/Windows, ícones dos apps, atualização dentro do app), as regras do Firestore, o workflow que compila o APK e a documentação. Resultado: app com testes automáticos, APK assinado publicado em Release e documentação em `docs/`. Revisão: o grupo precisa testar em celulares reais e revisar o código; o bloqueio de um app foi confirmado funcionando em um celular pelo integrante que testou.
+
+(adicionem uma linha por uso relevante — ferramenta, finalidade, prompt, resultado e o que precisou ser corrigido)_
