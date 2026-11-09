@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-Um único aplicativo (`apps/guardiao`). A função do aparelho (responsável ou filho) é escolhida no primeiro acesso e guardada localmente; o resto do app muda conforme ela.
+O Guardião é um único aplicativo (`apps/guardiao`). A função do aparelho (responsável ou filho) é escolhida no primeiro acesso e armazenada localmente; as demais telas variam conforme essa escolha.
 
 ```
  Aparelho do filho (Android/Windows)        Firebase                         Aparelho do responsável (Android/Windows)
@@ -21,7 +21,7 @@ Um responsável pode ter **vários aparelhos de filhos** (cada um é um document
 O código compartilhado fica em `packages/guardiao_core`:
 
 - `GuardianBackend` é a interface usada pelo app. Tem duas implementações: `FirebaseBackend` (produção) e `MemoryBackend` (testes e modo demonstração).
-- O app nunca fala com o Firestore diretamente, então dá para testar todas as telas sem internet.
+- O aplicativo nunca acessa o Firestore diretamente, o que permite testar todas as telas sem conexão com a internet.
 
 ## Escolha da função
 
@@ -36,7 +36,7 @@ O código compartilhado fica em `packages/guardiao_core`:
 5. O aparelho do filho observa o próprio documento (`watchOwnDevice`) e avança sozinho para a tela principal, onde aparece “Responsável: ma***@gmail.com”.
 6. As regras de segurança conferem as duas pontas do lote: o pedido existe, não foi usado, não expirou, pertence ao aparelho indicado e a plataforma bate. Se algo falhar, nada é gravado.
 
-Não é preciso domínio nem servidor próprio: o QR carrega só o código; quem faz o vínculo é o Firebase. Um responsável vincula quantos aparelhos quiser repetindo o processo. A leitura do QR por câmera não existe no Windows; lá o responsável digita o código (o filho no Windows mostra o QR normalmente).
+Não há necessidade de domínio nem de servidor próprio: o QR contém apenas o código, e o vínculo é efetuado pelo Firebase. Um responsável pode vincular quantos aparelhos desejar repetindo o processo. A leitura do QR por câmera não está disponível no Windows; nessa plataforma, o responsável informa o código (o aparelho do filho no Windows exibe o QR normalmente).
 
 ## Quem pode o quê (regras do Firestore)
 
@@ -77,24 +77,24 @@ As regras (`rules/*`) chegam ao aparelho do filho pelo Firestore e são **copiad
 
 ## Atualização dentro do app (Android)
 
-`lib/update/` consulta a API pública do GitHub (`releases/latest`) ao abrir o app e a cada 6 horas. A etiqueta `apk-N` vira o número da versão (`versionCode`); se for maior que o instalado, aparece a barra **Atualizar**. O app baixa o `guardiao-gamer.apk` para o cache, confere tamanho e SHA-256 informados pelo GitHub e entrega o arquivo ao instalador do Android por `FileProvider` (o usuário confirma; o Android exige isso). Requer a permissão “instalar apps desconhecidos” para o próprio app e que o APK novo seja assinado com a mesma chave (`KEYSTORE_*` no workflow). No Windows não há atualização automática.
+`lib/update/` consulta a API pública do GitHub (`releases/latest`) ao abrir o app e a cada 6 horas. A etiqueta `apk-N` vira o número da versão (`versionCode`); se for maior que o instalado, é exibida a barra de aviso com o botão **Atualizar**. O aplicativo baixa o `guardiao.apk` para o cache, confere tamanho e SHA-256 informados pelo GitHub e entrega o arquivo ao instalador do Android por `FileProvider` (a confirmação do usuário é exigida pelo Android). Requer a permissão “instalar apps desconhecidos” para o próprio app e que o APK novo seja assinado com a mesma chave (`KEYSTORE_*` no workflow). No Windows, não há atualização automática.
 
-## Roteiro para provar em celulares de verdade
+## Roteiro de validação em dispositivos reais
 
-Nada disso roda no ambiente de desenvolvimento automático (sem câmera, sem Android físico); os testes automáticos usam simulações. Antes de apresentar, conferir com dois Androids (ou um Android e um notebook):
+Os testes automáticos utilizam simulações (sem câmera nem Android físico). Antes da apresentação, recomenda-se validar o fluxo com dois aparelhos Android (ou um Android e um notebook):
 
-1. Instalar nos dois, escolher *responsável* em um e *filho* no outro, e criar conta no primeiro.
-2. Filho: aparece o QR. Responsável: *Adicionar aparelho → Ler QR* (liberar a câmera), apontar para o QR e tocar em *Vincular*. Conferir que o filho avança sozinho. Repetir com um segundo aparelho de filho (por exemplo o notebook) para provar o vínculo múltiplo.
-3. No filho, liberar *acesso ao uso* e *aparecer sobre outros apps*.
-4. No responsável, definir 1 minuto de limite em um jogo instalado. Abrir o jogo no filho: depois de 1 minuto de uso a tela de bloqueio aparece e o aparelho volta ao início.
-5. No filho, abrir o Guardião: em até 30 s o responsável vê o uso de hoje.
+1. Instalar o aplicativo nos dois aparelhos, selecionar *responsável* em um e *filho* no outro e criar a conta no primeiro.
+2. No filho, o QR é exibido. No responsável, acessar *Adicionar aparelho → Escanear QR* (conceder a câmera), apontar para o QR e tocar em *Vincular*. Verificar que o aparelho do filho avança automaticamente. Repetir com um segundo aparelho de filho (por exemplo, o notebook) para validar o vínculo múltiplo.
+3. No filho, conceder *acesso ao uso* e *sobreposição a outros aplicativos*.
+4. No responsável, definir limite de 1 minuto para um jogo instalado. Abrir o jogo no filho: após 1 minuto de uso, a tela de bloqueio deve aparecer e o aparelho deve retornar ao início.
+5. Com o Guardião aberto no filho, o responsável deve visualizar o uso do dia em até 30 s.
 
 ## Decisões e limites conhecidos
 
-- **Login anônimo no filho**: a criança não precisa de senha, mas o aparelho só ganha acesso depois de usar um código válido.
-- **Windows**: o Firebase usa a configuração de um app web; está documentado em `CONFIGURAR-FIREBASE.md`.
-- **Ícones dos apps** não são enviados (pesariam no Firestore). O app mostra a letra inicial colorida.
-- **Uso só chega ao responsável com o app do filho aberto**: o bloqueio local não depende disso, mas o relatório sim. Enviar em segundo plano exigiria rodar o Flutter no serviço (WorkManager), previsto para depois.
-- **Desinstalação**: nada impede a criança de desinstalar o app ou de revogar as permissões. No Android isso exige o modo administrador do aparelho, previsto para depois.
-- **Dois jogos ao mesmo tempo** (tela dividida): o Android informa um só em primeiro plano; o outro não é contado.
-- **Encerrar no Windows** pode perder o progresso do jogo; um aviso antes do encerramento é uma melhoria natural.
+- **Autenticação anônima no filho**: a criança não precisa de senha, mas o aparelho só obtém acesso aos dados após o uso de um código válido.
+- **Windows**: o Firebase utiliza a configuração de um aplicativo web, conforme documentado em `CONFIGURAR-FIREBASE.md`.
+- **Ícones dos aplicativos**: enviados apenas pelo Android, reduzidos para 96×96 px e comprimidos, para limitar o volume no Firestore. No Windows, o aplicativo exibe a inicial do nome.
+- **Envio do uso condicionado ao aplicativo aberto**: o bloqueio local não depende disso, mas o relatório sim. O envio em segundo plano exigiria executar o Flutter no serviço (WorkManager), o que está previsto para uma etapa futura.
+- **Desinstalação**: nada impede a criança de desinstalar o aplicativo ou revogar as permissões. No Android, isso exigiria o modo de administrador do dispositivo, previsto para uma etapa futura.
+- **Dois jogos simultâneos** (tela dividida): o Android informa apenas um aplicativo em primeiro plano; o outro não é contabilizado.
+- **Encerramento no Windows**: o processo é finalizado de imediato e o progresso do jogo pode ser perdido; um aviso prévio é uma melhoria prevista.

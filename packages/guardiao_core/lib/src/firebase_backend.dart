@@ -301,7 +301,7 @@ class FirebaseBackend implements GuardianBackend {
       }
     }
     throw const PairingException(
-      'Não foi possível gerar um código. Tente de novo.',
+      'Não foi possível gerar um código. Tente novamente.',
     );
   }
 

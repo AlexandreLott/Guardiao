@@ -137,9 +137,9 @@ class _PairingScreenState extends State<PairingScreen> {
                   Text('Vincular este aparelho', style: text.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
-                    'No celular do responsável, abra o Guardião Gamer, toque em '
-                    '"Adicionar aparelho" e escaneie este QR. Se não der para '
-                    'escanear, digite o código que aparece abaixo dele.',
+                    'No aparelho do responsável, abra o Guardião, toque em '
+                    '"Adicionar aparelho" e escaneie este QR. Caso não seja '
+                    'possível, informe o código exibido abaixo dele.',
                     style: text.bodyMedium,
                   ),
                   const SizedBox(height: 20),

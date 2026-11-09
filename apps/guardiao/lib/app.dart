@@ -60,7 +60,7 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guardião Gamer',
+      title: 'Guardião',
       debugShowCheckedModeBanner: false,
       theme: guardiaoTheme(Brightness.light),
       darkTheme: guardiaoTheme(Brightness.dark),

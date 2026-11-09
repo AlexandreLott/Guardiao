@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _email = TextEditingController(
-      text: widget.isDemo ? 'demo@guardiaogamer.app' : '',
+      text: widget.isDemo ? 'demo@guardiao.app' : '',
     );
     _password = TextEditingController(text: widget.isDemo ? 'demo1234' : '');
   }
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(height: 16),
-                    Text('Guardião Gamer', style: text.headlineMedium),
+                    Text('Guardião', style: text.headlineMedium),
                     const SizedBox(height: 4),
                     Text(
                       _creating

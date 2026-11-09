@@ -404,7 +404,7 @@ void main() {
         scanner.scan('https://exemplo.com/qualquer-coisa');
         await tester.pumpAndSettle();
         expect(
-          find.textContaining('não é de um aparelho do Guardião Gamer'),
+          find.textContaining('não é de um aparelho do Guardião'),
           findsOneWidget,
         );
 

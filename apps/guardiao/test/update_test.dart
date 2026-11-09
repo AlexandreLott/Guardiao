@@ -8,7 +8,7 @@ import 'package:guardiao/update/update_source.dart';
 
 AppUpdate update(int build) => AppUpdate(
   build: build,
-  apkUrl: 'https://exemplo.com/guardiao-gamer.apk',
+  apkUrl: 'https://exemplo.com/guardiao.apk',
   sizeBytes: 100,
   sha256: 'abc',
 );
@@ -28,15 +28,15 @@ void main() {
         'assets': [
           {'name': 'outro.zip', 'browser_download_url': 'https://x/outro.zip'},
           {
-            'name': 'guardiao-gamer.apk',
-            'browser_download_url': 'https://github.com/x/guardiao-gamer.apk',
+            'name': 'guardiao.apk',
+            'browser_download_url': 'https://github.com/x/guardiao.apk',
             'size': 70000000,
             'digest': 'sha256:ABCDEF',
           },
         ],
       });
       expect(u!.build, 7);
-      expect(u.apkUrl, 'https://github.com/x/guardiao-gamer.apk');
+      expect(u.apkUrl, 'https://github.com/x/guardiao.apk');
       expect(u.sizeBytes, 70000000);
       expect(u.sha256, 'abcdef');
       expect(u.notes, 'Novidades');
@@ -50,7 +50,7 @@ void main() {
           'tag_name': 'apk-2',
           'assets': [
             {
-              'name': 'guardiao-gamer.apk',
+              'name': 'guardiao.apk',
               'browser_download_url': 'http://inseguro/x.apk',
             },
           ],
@@ -94,7 +94,7 @@ void main() {
       await c.start();
       expect(installer.downloads, 1);
       expect(installer.installs, 1);
-      expect(installer.installed!.path, contains('guardiao-gamer-2.apk'));
+      expect(installer.installed!.path, contains('guardiao-2.apk'));
       expect(c.status, UpdateStatus.readyToInstall);
     });
 
@@ -122,7 +122,7 @@ void main() {
       await c.check();
       await c.start();
       expect(c.status, UpdateStatus.error);
-      expect(c.error, contains('Tente de novo'));
+      expect(c.error, contains('Tente novamente'));
 
       installer.failDownload = false;
       await c.start();
@@ -163,7 +163,7 @@ void main() {
         ),
       );
       expect(find.byKey(const Key('updateBar')), findsOneWidget);
-      expect(find.textContaining('versão nova'), findsOneWidget);
+      expect(find.textContaining('Nova versão'), findsOneWidget);
       expect(find.text('conteúdo'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('updateStart')));

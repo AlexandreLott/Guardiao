@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Guardião Gamer')),
+      appBar: AppBar(title: const Text('Guardião')),
       body: SafeArea(child: _buildList(context)),
     );
   }
@@ -206,7 +206,7 @@ class _PermissionsCard extends StatelessWidget {
     ),
     MonitorPermission.notifications: (
       'Permitir avisos',
-      'Mostra que o Guardião Gamer está ativo.',
+      'Mostra que o Guardião está ativo.',
     ),
   };
 

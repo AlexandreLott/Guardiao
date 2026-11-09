@@ -42,7 +42,7 @@ String pairingQrPayload(String code) =>
     'guardiao://pair?code=${normalizePairingCode(code)}';
 
 /// Lê o conteúdo de um QR (ou um código digitado) e devolve o código de
-/// pareamento no formato canônico. `null` se não for do Guardião Gamer.
+/// pareamento no formato canônico. `null` se não for do Guardião.
 String? parsePairingQr(String? text) {
   final value = (text ?? '').trim();
   if (value.isEmpty) return null;

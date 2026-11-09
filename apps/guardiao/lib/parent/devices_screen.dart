@@ -140,10 +140,10 @@ class _EmptyState extends StatelessWidget {
             Text('Nenhum aparelho ainda', style: text.titleLarge),
             const SizedBox(height: 8),
             Text(
-              'Instale o Guardião Gamer no celular ou no computador do filho '
-              'e escolha "Este aparelho é do filho": a tela dele mostra um QR. '
-              'Depois toque em "Adicionar aparelho" aqui e escaneie o QR. '
-              'Você pode vincular quantos aparelhos quiser.',
+              'Instale o Guardião no celular ou no computador do filho e '
+              'selecione "Este aparelho é do filho"; a tela exibirá um QR. '
+              'Em seguida, toque em "Adicionar aparelho" e escaneie o QR. '
+              'É possível vincular quantos aparelhos forem necessários.',
               textAlign: TextAlign.center,
               style: text.bodyMedium,
             ),

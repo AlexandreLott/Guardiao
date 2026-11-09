@@ -25,7 +25,7 @@ int? buildFromTag(String? tag) {
 }
 
 /// Converte a resposta de `releases/latest` da API do GitHub. Devolve `null`
-/// se a Release não tem o arquivo `guardiao-gamer.apk` ou a etiqueta é de outro
+/// se a Release não tem o arquivo `guardiao.apk` ou a etiqueta é de outro
 /// tipo.
 AppUpdate? parseRelease(Map<String, Object?> json) {
   final build = buildFromTag(json['tag_name'] as String?);
@@ -33,7 +33,7 @@ AppUpdate? parseRelease(Map<String, Object?> json) {
   final assets = (json['assets'] as List?) ?? const [];
   for (final raw in assets) {
     if (raw is! Map) continue;
-    if (raw['name'] != 'guardiao-gamer.apk') continue;
+    if (raw['name'] != 'guardiao.apk') continue;
     final url = raw['browser_download_url'] as String?;
     if (url == null || !url.startsWith('https://')) continue;
     final digest = raw['digest'] as String?;

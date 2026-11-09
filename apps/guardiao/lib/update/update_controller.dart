@@ -136,10 +136,10 @@ class UpdateController extends ChangeNotifier {
 
   String _message(Object e) {
     if (e is SocketException || e is HttpException) {
-      return 'Sem internet ou o download falhou. Tente de novo.';
+      return 'Falha de conexão ou no download. Tente novamente.';
     }
     if (e is FormatException) return e.message;
-    return 'Não deu para atualizar: $e';
+    return 'Não foi possível atualizar: $e';
   }
 
   void _notify() {

@@ -17,12 +17,12 @@ class UpdateBar extends StatelessWidget {
     final (String text, List<Widget> actions) = switch (controller.status) {
       UpdateStatus.idle => ('', const <Widget>[]),
       UpdateStatus.available => (
-        'Tem uma versão nova do Guardião Gamer$version.',
+        'Nova versão do Guardião disponível$version.',
         [
           TextButton(
             key: const Key('updateDismiss'),
             onPressed: controller.dismiss,
-            child: const Text('Depois'),
+            child: const Text('Agora não'),
           ),
           FilledButton(
             key: const Key('updateStart'),
@@ -31,9 +31,9 @@ class UpdateBar extends StatelessWidget {
           ),
         ],
       ),
-      UpdateStatus.downloading => ('Baixando a versão nova…', const <Widget>[]),
+      UpdateStatus.downloading => ('Baixando a nova versão…', const <Widget>[]),
       UpdateStatus.needsPermission => (
-        'Libere “Instalar apps desconhecidos” para o Guardião Gamer e volte aqui.',
+        'Autorize a instalação de aplicativos de fontes desconhecidas para o Guardião e retorne a esta tela.',
         [
           FilledButton(
             key: const Key('updateContinue'),
@@ -43,7 +43,7 @@ class UpdateBar extends StatelessWidget {
         ],
       ),
       UpdateStatus.readyToInstall => (
-        'Confirme a instalação na tela do Android.',
+        'Confirme a instalação na tela do Android para concluir a atualização.',
         [
           FilledButton(
             key: const Key('updateContinue'),
@@ -53,7 +53,7 @@ class UpdateBar extends StatelessWidget {
         ],
       ),
       UpdateStatus.error => (
-        controller.error ?? 'Não deu para atualizar.',
+        controller.error ?? 'Não foi possível atualizar.',
         [
           TextButton(
             key: const Key('updateDismiss'),
@@ -63,7 +63,7 @@ class UpdateBar extends StatelessWidget {
           FilledButton(
             key: const Key('updateStart'),
             onPressed: controller.start,
-            child: const Text('Tentar de novo'),
+            child: const Text('Tentar novamente'),
           ),
         ],
       ),

@@ -59,7 +59,7 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
       setState(() {
         _step = _Step.start;
         _error = scanned
-            ? 'Esse QR não é de um aparelho do Guardião Gamer.'
+            ? 'Esse QR não é de um aparelho do Guardião.'
             : 'O código tem 8 letras e números, como K7M2-9QXA.';
       });
       return;
@@ -158,9 +158,9 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
         Text('Vincular o aparelho do seu filho', style: text.titleLarge),
         const SizedBox(height: 8),
         Text(
-          'No celular ou computador dele, abra o Guardião Gamer e escolha '
-          '"Este aparelho é do filho". A tela mostra um QR e um código. '
-          'Você pode vincular quantos aparelhos quiser, um de cada vez.',
+          'No celular ou computador do filho, abra o Guardião e selecione '
+          '"Este aparelho é do filho"; a tela exibirá um QR e um código. '
+          'É possível vincular vários aparelhos, um de cada vez.',
           style: text.bodyMedium,
         ),
         const SizedBox(height: 20),

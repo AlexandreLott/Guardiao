@@ -89,11 +89,11 @@ class AndroidUpdateInstaller implements UpdateInstaller {
   ) async {
     final dir = await _channel.invokeMethod<String>('updateDir');
     if (dir == null) throw const FileSystemException('Sem pasta para baixar.');
-    final target = File('$dir/guardiao-gamer-${update.build}.apk');
+    final target = File('$dir/guardiao-${update.build}.apk');
     if (await target.exists()) await target.delete();
 
     final request = await _client.getUrl(Uri.parse(update.apkUrl));
-    request.headers.set('User-Agent', 'guardiao-gamer-app');
+    request.headers.set('User-Agent', 'guardiao-app');
     final response = await request.close();
     if (response.statusCode != 200) {
       await response.drain<void>();
@@ -121,14 +121,16 @@ class AndroidUpdateInstaller implements UpdateInstaller {
     final size = update.sizeBytes;
     if (size != null && await file.length() != size) {
       await file.delete();
-      throw const FormatException('O arquivo baixado veio incompleto.');
+      throw const FormatException('O arquivo baixado está incompleto.');
     }
     final expected = update.sha256;
     if (expected != null) {
       final digest = await sha256.bind(file.openRead()).first;
       if (digest.toString() != expected) {
         await file.delete();
-        throw const FormatException('O arquivo baixado não confere (SHA-256).');
+        throw const FormatException(
+          'A verificação de integridade (SHA-256) do arquivo baixado falhou.',
+        );
       }
     }
   }
@@ -180,7 +182,7 @@ class FakeUpdateInstaller implements UpdateInstaller {
     if (failDownload) throw const HttpException('sem rede');
     onProgress(0.5);
     onProgress(1);
-    return File('/tmp/guardiao-gamer-${update.build}.apk');
+    return File('/tmp/guardiao-${update.build}.apk');
   }
 
   @override

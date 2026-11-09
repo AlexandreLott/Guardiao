@@ -12,7 +12,7 @@ abstract class UpdateSource {
 
 /// Endereço da Release mais recente do repositório (público).
 const githubLatestRelease =
-    'https://api.github.com/repos/AlexandreLott/Bet-Blocker/releases/latest';
+    'https://api.github.com/repos/AlexandreLott/Guardiao/releases/latest';
 
 /// Consulta a API pública do GitHub (sem login; limite de 60 consultas por hora
 /// por rede, o que sobra).
@@ -30,7 +30,7 @@ class GithubUpdateSource implements UpdateSource {
           .getUrl(Uri.parse(url))
           .timeout(const Duration(seconds: 15));
       request.headers.set('Accept', 'application/vnd.github+json');
-      request.headers.set('User-Agent', 'guardiao-gamer-app');
+      request.headers.set('User-Agent', 'guardiao-app');
       final response = await request.close().timeout(
         const Duration(seconds: 15),
       );

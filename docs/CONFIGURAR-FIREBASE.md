@@ -1,30 +1,28 @@
-# Configurar o Firebase
+# Configuração do Firebase
 
-Leva cerca de 15 minutos e usa o plano gratuito (Spark).
+Procedimento com duração aproximada de 15 minutos, no plano gratuito (Spark).
 
-## 1. Criar o projeto
+## 1. Criação do projeto
 
-1. Entre em https://console.firebase.google.com com a conta do grupo e crie o projeto **guardiao-gamer** (pode desligar o Google Analytics).
-2. Em **Build → Authentication → Sign-in method**, ative **E-mail/senha** e **Anônimo**.
+1. Acesse https://console.firebase.google.com com a conta da equipe e crie o projeto **guardiao-gamer** (o identificador do projeto é mantido por não ser alterável; o Google Analytics pode ser desativado).
+2. Em **Build → Authentication → Sign-in method**, ative os provedores **E-mail/senha** e **Anônimo**.
 3. Em **Build → Firestore Database**, crie o banco em **modo de produção** (região `southamerica-east1`, São Paulo).
 4. Em **Firestore → Regras**, cole o conteúdo de `firebase/firestore.rules` e publique.
 
-## 2. Registrar os apps
+## 2. Registro dos aplicativos
 
 Em **Configurações do projeto → Seus apps**, registre:
 
-| Onde roda | Plataforma | ID do pacote |
+| Onde executa | Plataforma | Identificador |
 | --- | --- | --- |
-| Celular (responsável **e** filho) | Android | `br.edu.guardiaogamer.guardiao` |
-| Computador | **Web** | qualquer apelido (o Windows usa a configuração de um app web) |
+| Celular (responsável e filho) | Android | `br.edu.guardiaogamer.guardiao` |
+| Computador | **Web** | qualquer apelido (o Windows utiliza a configuração de um app web) |
 
-É um app só, então o mesmo registro Android serve para o celular do responsável e o do filho. Cada registro tem um **App ID** próprio (`1:123456789:android:abc...`). A **chave de API**, o **ID do projeto** e o **ID do remetente** (messagingSenderId) são os mesmos nos dois.
+O aplicativo é único; portanto, o mesmo registro Android atende ao celular do responsável e ao do filho. Cada registro possui um **App ID** próprio (`1:123456789:android:abc...`). A **chave de API**, o **ID do projeto** e o **ID do remetente** (messagingSenderId) são os mesmos nos dois registros.
 
-> Se você já tinha registrado `guardiao_parent` e `guardiao_child` na versão anterior, pode apagá-los: não são mais usados.
+> Não é necessário baixar o arquivo `google-services.json`: o aplicativo recebe as chaves por `--dart-define`.
 
-> Não é preciso baixar `google-services.json`: o app lê as chaves por `--dart-define`.
-
-## 3. Rodar
+## 3. Execução
 
 ```
 cd apps/guardiao
@@ -36,7 +34,7 @@ flutter run \
   --dart-define=FIREBASE_PROJECT_ID=guardiao-gamer \
   --dart-define=FIREBASE_MESSAGING_SENDER_ID=<remetente>
 
-# Computador Windows (use o App ID do app Web)
+# Computador Windows (utilize o App ID do app Web)
 flutter run -d windows \
   --dart-define=FIREBASE_API_KEY=<chave> \
   --dart-define=FIREBASE_APP_ID=<app id do app web> \
@@ -44,51 +42,51 @@ flutter run -d windows \
   --dart-define=FIREBASE_MESSAGING_SENDER_ID=<remetente>
 ```
 
-No Windows é preciso ter o Visual Studio 2022 com a carga "Desenvolvimento para desktop com C++". O primeiro build baixa o SDK C++ do Firebase e demora.
+No Windows, é necessário o Visual Studio 2022 com a carga de trabalho "Desenvolvimento para desktop com C++". A primeira compilação baixa o SDK C++ do Firebase e leva mais tempo.
 
-## 4. Testar o pareamento
+## 4. Teste do vínculo
 
-1. No aparelho do filho (celular ou computador), escolha **Este aparelho é do filho**: aparece um **QR** e, embaixo, o código de reserva, como `K7M2-9QXA` (vale 10 minutos).
-2. No aparelho do responsável, escolha **Sou o responsável**, crie a conta e toque em **Adicionar aparelho**. Aponte a câmera para o QR (ou digite o código, no Windows), confira o nome do aparelho e toque em **Vincular**. Repita para cada aparelho de filho.
-3. O filho avança sozinho para a tela principal; o responsável vê o aparelho na lista e, em segundos, a lista de aplicativos.
-4. No filho (Android), libere as três permissões que o app pede (acesso ao uso, aparecer sobre outros apps, avisos).
-5. No app do responsável, toque em um aplicativo, defina um limite ou bloqueio e confira no aparelho do filho. Depois de usar o app, o tempo aparece no responsável em até 30 segundos.
+1. No aparelho do filho (celular ou computador), selecione **Este aparelho é do filho**. O aplicativo exibe um **QR** e, abaixo, o código alternativo, como `K7M2-9QXA` (validade de 10 minutos).
+2. No aparelho do responsável, selecione **Sou o responsável**, crie a conta e toque em **Adicionar aparelho**. Aponte a câmera para o QR (ou informe o código, no Windows), confira o nome do aparelho e toque em **Vincular**. Repita o procedimento para cada aparelho de filho.
+3. O aparelho do filho avança automaticamente para a tela principal; o responsável visualiza o aparelho na lista e, em instantes, a lista de aplicativos.
+4. No aparelho do filho (Android), conceda as três permissões solicitadas: acesso ao uso, sobreposição a outros aplicativos e notificações.
+5. No aplicativo do responsável, selecione um aplicativo e defina um limite ou bloqueio. Após o uso no aparelho do filho, o tempo é exibido ao responsável em até 30 segundos.
 
-## 5. APK para instalar no Android (GitHub Actions)
+## 5. APK para instalação no Android (GitHub Actions)
 
-O repositório tem o workflow **Compilar APK** (`.github/workflows/build-apk.yml`), que compila o app com as suas chaves e publica o `guardiao-gamer.apk` numa Release.
+O repositório contém o workflow **Compilar APK** (`.github/workflows/build-apk.yml`), que compila o aplicativo com as chaves da equipe e publica o arquivo `guardiao.apk` em uma Release.
 
-1. No GitHub, abra o repositório → **Settings → Secrets and variables → Actions → New repository secret** e crie seis segredos:
+1. No GitHub, acesse o repositório → **Settings → Secrets and variables → Actions → New repository secret** e crie seis segredos:
 
 | Nome | Valor |
 | --- | --- |
-| `FIREBASE_API_KEY` | chave de API do app registrado |
+| `FIREBASE_API_KEY` | chave de API do aplicativo registrado |
 | `FIREBASE_APP_ID` | App ID do app **Android** (`1:247599409292:android:...`) |
 | `FIREBASE_PROJECT_ID` | `guardiao-gamer` |
 | `FIREBASE_MESSAGING_SENDER_ID` | `247599409292` |
-| `KEYSTORE_BASE64` | arquivo `guardiao.jks` convertido para base64 (a chave de assinatura do app) |
-| `KEYSTORE_PASSWORD` | senha da chave (apelido `guardiao`) |
+| `KEYSTORE_BASE64` | arquivo `guardiao.jks` codificado em base64 (chave de assinatura do aplicativo) |
+| `KEYSTORE_PASSWORD` | senha da chave (alias `guardiao`) |
 
-2. Abra **Actions → Compilar APK → Run workflow**. Leva uns 8 minutos.
-3. O arquivo aparece em **Releases** (`/releases/latest`). Baixe pelo celular.
+2. Acesse **Actions → Compilar APK → Run workflow**. A execução leva cerca de 8 minutos.
+3. O arquivo fica disponível em **Releases** (`/releases/latest`).
 
-Sem os segredos o workflow para com um aviso. A chave de assinatura é o que permite ao Android aceitar uma versão nova por cima da antiga (e a atualização dentro do app): guarde o `.jks` e a senha em local seguro e nunca os coloque no repositório. Se a chave mudar, é preciso desinstalar o app e instalar de novo. A numeração vem da execução do workflow: a Release `apk-N` tem versão `N`, e o app só oferece atualizar quando `N` é maior que a instalada.
+Sem os segredos, o workflow é interrompido com um aviso. A chave de assinatura é o que permite ao Android aceitar uma versão nova sobre a anterior (inclusive pela atualização dentro do aplicativo): o arquivo `.jks` e a senha devem ser guardados em local seguro e jamais versionados. Se a chave for alterada, é necessário desinstalar o aplicativo e instalá-lo novamente. A numeração decorre da execução do workflow: a Release `apk-N` corresponde à versão `N`, e o aplicativo só oferece atualização quando `N` é superior ao número instalado.
 
 ## Problemas comuns
 
-- **"Esse tipo de login não está ativado"**: ative E-mail/senha e Anônimo no passo 1.
-- **"O código expirou" / "já foi usado"**: o código vale 10 minutos e uma vez. No aparelho do filho o QR se renova sozinho; toque em *Gerar novo código* se precisar. Se persistir, confira se as regras do passo 1 foram publicadas.
-- **"Missing or insufficient permissions" ao ver o uso**: as regras do passo 1 mudaram (a coleção `pairRequests` e as regras de vínculo mudaram). Cole de novo o conteúdo atual de `firebase/firestore.rules` e publique.
-- **A câmera não abre ao ler o QR**: conceda a permissão de câmera ao app; sem câmera (ou no Windows) digite o código de reserva que aparece embaixo do QR.
-- **O bloqueio não aparece no Android**: abra o app do filho e confira se o cartão de permissões sumiu. Em alguns celulares (Xiaomi, Samsung) também é preciso tirar o app da economia de bateria.
-- **A lista de apps não chega**: abra o app do filho com internet; ele envia a lista ao abrir e a cada 6 horas.
+- **"Esse tipo de login não está ativado"**: ative E-mail/senha e Anônimo conforme o passo 1.
+- **"O código expirou" ou "já foi usado"**: o código vale por 10 minutos e pode ser usado uma única vez. No aparelho do filho, o QR se renova automaticamente; também é possível tocar em *Gerar novo código*. Se o problema persistir, confirme que as regras do passo 1 foram publicadas.
+- **"Missing or insufficient permissions" ao consultar o uso**: as regras publicadas estão desatualizadas. Cole novamente o conteúdo atual de `firebase/firestore.rules` e publique.
+- **A câmera não abre ao ler o QR**: conceda a permissão de câmera ao aplicativo; sem câmera (ou no Windows), informe o código exibido abaixo do QR.
+- **O bloqueio não aparece no Android**: abra o aplicativo do filho e verifique se o cartão de permissões foi concluído. Em alguns aparelhos (Xiaomi, Samsung), também é necessário remover o aplicativo da economia de bateria.
+- **A lista de aplicativos não chega**: abra o aplicativo do filho com acesso à internet; ele envia a lista ao ser aberto e a cada 6 horas.
 
-## Antes de ir para produção (não faz parte do marco 2)
+## Recomendações antes da produção
 
-- Ativar o **App Check** para impedir o uso da API por apps de terceiros.
+- Ativar o **App Check** para impedir o uso da API por aplicativos de terceiros.
+- Restringir a chave de API do Firebase ao pacote e à assinatura do aplicativo no Google Cloud.
 - Definir alertas de orçamento no Google Cloud.
-- Assinar o app com chave própria (hoje o build de release usa a chave de debug).
 
-## Opcional: apagar pedidos de vínculo antigos
+## Opcional: limpeza de pedidos de vínculo antigos
 
-O app já apaga o pedido de vínculo ao sair da tela, mas se o aplicativo for fechado à força o documento fica em `pairRequests`. Ele deixa de valer em 10 minutos. Para limpar sozinho, em **Firestore → TTL**, crie uma política na coleção `pairRequests` usando o campo `expiresAt`.
+O aplicativo remove o pedido de vínculo ao sair da tela, mas, se for encerrado de forma forçada, o documento permanece em `pairRequests` e deixa de valer após 10 minutos. Para a limpeza automática, crie em **Firestore → TTL** uma política na coleção `pairRequests` com o campo `expiresAt`.

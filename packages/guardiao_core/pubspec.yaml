@@ -1,5 +1,5 @@
 name: guardiao_core
-description: "Núcleo compartilhado do Guardião Gamer: modelos, regras de pareamento e acesso ao Firebase."
+description: "Núcleo compartilhado do Guardião: modelos, regras de pareamento e acesso ao Firebase."
 version: 0.1.0
 publish_to: none
 

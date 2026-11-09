@@ -29,7 +29,7 @@ class RoleScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Guardião Gamer',
+                    'Guardião',
                     style: text.headlineMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -41,8 +41,8 @@ class RoleScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Você escolhe uma vez. No celular do responsável e no '
-                    'aparelho do filho, o app é o mesmo.',
+                    'A escolha é feita uma única vez. O aplicativo é o mesmo no '
+                    'aparelho do responsável e no do filho.',
                     style: text.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -52,8 +52,8 @@ class RoleScreen extends StatelessWidget {
                     icon: Icons.family_restroom,
                     title: 'Sou o responsável',
                     description:
-                        'Vejo os apps instalados no aparelho do filho, o tempo '
-                        'de uso de cada um e defino limites ou bloqueios.',
+                        'Acompanhe os aplicativos instalados no aparelho do filho, o '
+                        'tempo de uso de cada um e defina limites ou bloqueios.',
                     onTap: () => onPick(DeviceRole.parent),
                   ),
                   const SizedBox(height: 12),
@@ -62,8 +62,8 @@ class RoleScreen extends StatelessWidget {
                     icon: Icons.sports_esports_outlined,
                     title: 'Este aparelho é do filho',
                     description:
-                        'Vincular este celular ou computador ao responsável '
-                        'e ver quanto tempo ainda dá para usar cada app.',
+                        'Vincule este celular ou computador ao responsável e '
+                        'consulte o tempo restante de uso de cada aplicativo.',
                     onTap: () => onPick(DeviceRole.child),
                   ),
                 ],

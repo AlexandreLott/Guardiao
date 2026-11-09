@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Guardião Gamer — regras de segurança do Firestore.
+// Guardião — regras de segurança do Firestore.
 //
 // Quem é quem:
 //  - Responsável: conta com e-mail e senha (provedor "password").

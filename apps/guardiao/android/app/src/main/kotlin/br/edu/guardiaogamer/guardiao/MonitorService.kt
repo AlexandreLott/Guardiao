@@ -106,7 +106,7 @@ class MonitorService : Service() {
             Notification.Builder(this)
         }
         val notification = builder
-            .setContentTitle("Guardião Gamer")
+            .setContentTitle("Guardião")
             .setContentText("Acompanhando o tempo de jogo deste aparelho.")
             .setSmallIcon(applicationInfo.icon)
             .setOngoing(true)

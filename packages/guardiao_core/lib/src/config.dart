@@ -53,7 +53,7 @@ class BackendSetup {
 const demoPairingCode = 'DEMX2345';
 
 /// Conta do responsável usada no modo demonstração.
-const demoParentEmail = 'demo@guardiaogamer.app';
+const demoParentEmail = 'demo@guardiao.app';
 const demoParentPassword = 'demo1234';
 
 /// Liga o Firebase quando configurado; senão usa a nuvem em memória.
