@@ -38,6 +38,18 @@ Limites conhecidos (veja `docs/ARQUITETURA.md`):
 - Leitura do QR pela câmera só no Android/iOS; no Windows o responsável digita o código (o filho no Windows mostra o QR normalmente).
 - Câmera/QR e bloqueio nativo foram compilados e testados por simulação, mas **precisam ser provados em celulares de verdade** (veja o roteiro em `docs/ARQUITETURA.md`).
 
+## Instalar no Android (APK)
+
+O APK é compilado pelo GitHub (workflow **Compilar APK**, em *Actions*) e fica numa Release do repositório:
+
+**[Baixar o APK mais recente](https://github.com/AlexandreLott/Bet-Blocker/releases/latest)** (o repositório é privado: o link abre logado na conta do GitHub com acesso a ele).
+
+1. No celular Android, abra o link, entre no GitHub e baixe o arquivo `guardiao-gamer.apk` da Release.
+2. Abra o arquivo e permita *instalar apps desconhecidos* para o navegador ou o gerenciador de arquivos, se o Android pedir.
+3. Abra o Guardião Gamer e escolha a função do aparelho.
+
+Para gerar uma versão nova: *Actions → Compilar APK → Run workflow*. Antes da primeira vez, cadastre as 4 chaves do Firebase em *Settings → Secrets and variables → Actions* (`FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID`, `FIREBASE_MESSAGING_SENDER_ID`; veja [docs/CONFIGURAR-FIREBASE.md](../docs/CONFIGURAR-FIREBASE.md)). O APK é assinado com a chave de testes, então, ao instalar uma versão nova, desinstale a antiga antes.
+
 ## Rodar sem Firebase (modo demonstração)
 
 Sem chaves do Firebase o app abre com dados de exemplo, na memória do próprio aparelho (um aparelho não conversa com o outro).
@@ -51,7 +63,7 @@ cd apps/guardiao && flutter run
 
 ## Rodar com Firebase (aparelhos conversando)
 
-Siga [docs/CONFIGURAR-FIREBASE.md](docs/CONFIGURAR-FIREBASE.md) e rode com as chaves:
+Siga [docs/CONFIGURAR-FIREBASE.md](../docs/CONFIGURAR-FIREBASE.md) e rode com as chaves:
 
 ```
 flutter run \
