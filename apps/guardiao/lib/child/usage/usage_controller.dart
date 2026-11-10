@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:guardiao_core/guardiao_core.dart';
@@ -26,7 +27,9 @@ class UsageController extends ChangeNotifier {
   bool _disposed = false;
   List<InstalledApp> _apps = const [];
   Map<String, AppRule> _rules = const {};
-  List<MonitoredApp>? _pushed;
+  DeviceConfig _config = const DeviceConfig();
+  int _bonus = 0;
+  String? _pushedKey;
   bool _pushedWithAccess = false;
   bool _busy = false;
 
@@ -53,9 +56,16 @@ class UsageController extends ChangeNotifier {
   }
 
   /// Chamado sempre que a lista de apps ou as regras mudam.
-  void update(List<InstalledApp> apps, Map<String, AppRule> rules) {
+  void update(
+    List<InstalledApp> apps,
+    Map<String, AppRule> rules, {
+    DeviceConfig config = const DeviceConfig(),
+    int bonusMinutes = 0,
+  }) {
     _apps = apps;
     _rules = rules;
+    _config = config;
+    _bonus = bonusMinutes;
     unawaited(refresh());
   }
 
@@ -77,12 +87,28 @@ class UsageController extends ChangeNotifier {
       missing = await monitor.missingPermissions();
       adminActive = await monitor.adminActive();
       final hasAccess = !missing.contains(MonitorPermission.usageAccess);
-      final wanted = buildMonitored(_apps, _rules, platform);
-      if (_pushed == null ||
-          !listEquals(_pushed, wanted) ||
+      final extras = MonitorExtras(
+        lockAll: _config.lockAll,
+        routines: _config.routines,
+        bonusDay: dayKey(_clock()),
+        bonusMinutes: _bonus,
+        message: _config.blockMessage,
+      );
+      final wanted = buildMonitored(
+        _apps,
+        _rules,
+        platform,
+        includeAll: extras.needsEveryApp,
+      );
+      final key = jsonEncode([
+        for (final a in wanted) a.toJson(),
+        extras.toJson(),
+      ]);
+      if (_pushedKey == null ||
+          _pushedKey != key ||
           (hasAccess && !_pushedWithAccess)) {
-        await monitor.start(wanted);
-        _pushed = wanted;
+        await monitor.start(wanted, extras: extras);
+        _pushedKey = key;
         _pushedWithAccess = hasAccess;
       }
       final byKey = await monitor.usageByKey();

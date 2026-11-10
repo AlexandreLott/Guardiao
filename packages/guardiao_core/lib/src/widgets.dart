@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'pairing.dart';
 
 import 'models.dart';
+import 'theme.dart';
 
 /// Ícone do app (o mesmo do menu do celular do filho). Sem ícone, mostra a
 /// letra inicial em um círculo colorido.
@@ -87,6 +88,17 @@ String formatMinutes(int? minutes) {
   return '$h h $m min';
 }
 
+/// Mostra "2h 57min", "42 min", "1h" (formato curto das telas novas).
+String formatDur(int? minutes) {
+  if (minutes == null) return 'sem limite';
+  if (minutes <= 0) return '0 min';
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  if (h == 0) return '$m min';
+  if (m == 0) return '${h}h';
+  return '${h}h ${m}min';
+}
+
 /// Aviso em destaque (erro, informação).
 class Notice extends StatelessWidget {
   const Notice(this.message, {super.key, this.isError = false, this.icon});
@@ -97,16 +109,15 @@ class Notice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final bg = isError ? scheme.errorContainer : scheme.secondaryContainer;
-    final fg = isError ? scheme.onErrorContainer : scheme.onSecondaryContainer;
+    final bg = isError ? GColors.redSoft : GColors.blueSoft;
+    final fg = isError ? GColors.redText : GColors.blue;
     return Semantics(
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +129,10 @@ class Notice extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(message, style: TextStyle(color: fg)),
+              child: Text(
+                message,
+                style: TextStyle(color: fg, fontSize: 13.5, height: 1.4),
+              ),
             ),
           ],
         ),

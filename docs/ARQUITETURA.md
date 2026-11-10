@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O Guardião é um único aplicativo (`apps/guardiao`). A função do aparelho (responsável ou filho) é escolhida no primeiro acesso e armazenada localmente; as demais telas variam conforme essa escolha.
+O Guardian (Guardião, no código) é um único aplicativo (`apps/guardiao`). A função do aparelho (responsável ou filho) é escolhida no primeiro acesso e armazenada localmente; as demais telas variam conforme essa escolha.
 
 ```
  Aparelho do filho (Android/Windows)        Firebase                         Aparelho do responsável (Android/Windows)
@@ -47,6 +47,8 @@ Não há necessidade de domínio nem de servidor próprio: o QR contém apenas o
 | `devices/{id}/apps/*` | lê, limpa ao remover | escreve (só no próprio aparelho) | nada |
 | `devices/{id}/rules/*` | lê e escreve (limite de 0 a 1440 min) | só lê | nada |
 | `devices/{id}/alerts/*` | lê, marca como visto (só `seen: true`) e apaga | cria (tipo válido, `at` = horário do servidor, `seen: false`) | nada |
+| `devices/{id}/config/main` | lê e escreve (`lockAll`, `routines`, `missions`, `blockMessage`, `suggestedMissionId`, `allowRequests`, com tamanhos limitados) | só lê | nada |
+| `devices/{id}/claims/*` | lê e decide uma vez (aprova ou recusa) | cria pedido pendente (`usedDay` vazio) e, se aprovado, marca o dia de uso uma única vez | nada |
 | `devices/{id}/usage/*` | lê e apaga | lê e escreve (minutos de 0 a 1440, só no próprio aparelho) | nada |
 
 Os testes em `firebase/tests/rules.test.mjs` cobrem cada linha dessa tabela, incluindo as tentativas de burla (reusar código, código expirado, aparelho de outro filho, criar o aparelho sem queimar o pedido, escrever regra ou uso pelo lado errado).
@@ -75,6 +77,14 @@ As regras (`rules/*`) chegam ao aparelho do filho pelo Firestore e são **copiad
 - Ao estourar o limite (ou se o programa está bloqueado), encerra o processo com `taskkill` (apenas nomes simples de `.exe`; nunca o próprio Guardião).
 
 **Envio ao responsável**: a cada 30 s, enquanto o app do filho está aberto, os minutos de hoje por app vão para `usage/{dia}_{app}` (só o que mudou). O responsável vê o total de hoje, a média e as barras dos últimos 7 dias e o uso de cada app.
+
+## Rotinas, bloqueio geral e créditos
+
+O responsável grava `devices/{id}/config/main`. O aparelho do filho copia o plano (apps, `lockAll`, rotinas, minutos extras de hoje e a mensagem) para o `MonitorService`, que o aplica em `PolicyMath` (espelho em Kotlin de `verdictFor`, em `guardiao_core`, coberto pelos mesmos casos nos dois lados). A ordem de decisão é: app bloqueado; depois, exceto para apps *sempre liberados*, bloqueio geral e rotinas ativas (pausar tudo, só estudo, só jogos); por fim, o limite diário somado aos minutos extras de créditos usados no dia.
+
+Créditos: a criança cria `claims/{id}` pendente a partir de uma missão; o responsável aprova ou recusa uma vez; o crédito aprovado e ainda não usado conta como saldo, e ao ser usado (`usedDay` = hoje) vira bônus até o fim do dia. A tela de bloqueio traz "Fiz a tarefa!" e "Pedir mais tempo", que abrem a aba Créditos do app (`MonitorConfig.requestTab` e `takeLaunchTab`).
+
+O painel do responsável no celular da criança (aba *Responsável*) é protegido por PIN de 4 dígitos, guardado só nesse aparelho com sal e SHA-256 (`PrefsPinStore`). É uma trava contra o uso por engano; o que impede a criança de mudar regras é o Firestore, que só aceita escrita da conta do responsável.
 
 ## Proteção contra burla
 

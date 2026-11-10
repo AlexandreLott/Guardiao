@@ -247,12 +247,16 @@ void main() {
           limitMinutes: 60,
         ),
       ]);
-      final sent = jsonDecode(calls.single.arguments['apps'] as String) as List;
-      expect(sent.single, {
+      final sent = jsonDecode(
+        calls.single.arguments['apps'] as String,
+      ) as Map<String, dynamic>;
+      expect((sent['apps'] as List).single, {
         'pkg': 'com.roblox.client',
         'name': 'Roblox',
         'limit': 60,
         'blocked': false,
+        'allowed': false,
+        'cat': 'other',
       });
       expect(await m.usageByKey(), {'com.roblox.client': 42});
     });
@@ -313,12 +317,12 @@ void main() {
     });
 
     Future<PairedDevice> pairChild(WidgetTester tester) async {
+      tallScreen(tester);
       await tester.pumpWidget(
         appFor(childBackend, role: DeviceRole.child, monitor: monitor),
       );
       await tester.pumpAndSettle();
-      await parent.approvePairRequest(shownPairingCode(tester));
-      await tester.pumpAndSettle();
+      await pairThroughWizard(tester, parent);
       return (await tester.runAsync(() => parent.watchDevices().first))!.single;
     }
 
@@ -340,14 +344,14 @@ void main() {
 
         expect(monitor.started.single.key, 'demo.roblox');
         expect(monitor.started.single.limitMinutes, 90);
-        expect(find.text('Usou 0 min de 1 h 30 min hoje'), findsOneWidget);
+        expect(find.text('0 min de 1h 30min hoje'), findsOneWidget);
 
         monitor.simulate('demo.roblox', 30);
         monitor.simulate('demo.chrome', 12);
         await tickMinute(tester);
 
-        expect(find.text('Usou 30 min de 1 h 30 min hoje'), findsOneWidget);
-        expect(find.text('1 h restantes'), findsOneWidget);
+        expect(find.text('30 min de 1h 30min hoje'), findsOneWidget);
+        expect(find.text('Dentro do limite'), findsOneWidget);
         expect(find.text('Hoje: 12 min'), findsOneWidget); // app sem limite
 
         final reported = (await tester.runAsync(
@@ -363,7 +367,7 @@ void main() {
       },
     );
 
-    testWidgets('limite esgotado vira "Bloqueado" na tela do filho', (
+    testWidgets('limite esgotado vira "Esgotado" na tela do filho', (
       tester,
     ) async {
       final device = await pairChild(tester);
@@ -374,7 +378,7 @@ void main() {
       await tester.pump();
       monitor.simulate('demo.roblox', 30);
       await tickMinute(tester);
-      expect(find.text('Bloqueado'), findsOneWidget);
+      expect(find.text('Esgotado'), findsOneWidget);
       await closeApp(tester);
     });
 
@@ -384,8 +388,11 @@ void main() {
       monitor = DemoUsageMonitor(
         missing: {MonitorPermission.usageAccess, MonitorPermission.overlay},
       );
-      await pairChild(tester);
-      await tester.pump();
+      await pairChild(tester); // o passo de permissões do pareamento libera
+      expect(find.byKey(const Key('permissionsCard')), findsNothing);
+      monitor.revoke(MonitorPermission.usageAccess);
+      monitor.revoke(MonitorPermission.overlay);
+      await tickMinute(tester);
       expect(find.byKey(const Key('permissionsCard')), findsOneWidget);
       expect(find.byKey(const Key('permission_usageAccess')), findsOneWidget);
       expect(find.byKey(const Key('permission_overlay')), findsOneWidget);
@@ -406,10 +413,10 @@ void main() {
     testWidgets('sem medidor no aparelho, avisa que o tempo não diminui', (
       tester,
     ) async {
+      tallScreen(tester);
       await tester.pumpWidget(appFor(childBackend, role: DeviceRole.child));
       await tester.pumpAndSettle();
-      await parent.approvePairRequest(shownPairingCode(tester));
-      await tester.pumpAndSettle();
+      await pairThroughWizard(tester, parent);
       expect(
         find.textContaining('ainda não mede o tempo de uso'),
         findsOneWidget,

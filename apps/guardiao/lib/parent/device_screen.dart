@@ -1,48 +1,143 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../common/names.dart';
+import 'account_screen.dart';
 import 'alerts_panel.dart';
-import 'rule_sheet.dart';
-import 'usage_summary.dart';
+import 'apps_tab.dart';
+import 'credits_tab.dart';
+import 'routines_tab.dart';
+import 'summary_tab.dart';
 
-/// Apps instalados no aparelho do filho e as regras de cada um.
+/// Tudo que as abas do painel mostram sobre um aparelho de filho.
+class PanelData {
+  const PanelData({
+    required this.device,
+    required this.apps,
+    required this.rules,
+    required this.config,
+    required this.claims,
+    required this.usage,
+    required this.alerts,
+    required this.now,
+  });
+
+  final PairedDevice device;
+  final List<InstalledApp> apps;
+  final Map<String, AppRule> rules;
+  final DeviceConfig config;
+  final List<Claim> claims;
+
+  /// Uso dos últimos 60 dias.
+  final List<UsageEntry> usage;
+  final List<TamperAlert> alerts;
+  final DateTime now;
+
+  String get today => dayKey(now);
+  Map<String, int> get usedToday => {
+    for (final e in usage)
+      if (e.day == today) e.appId: e.minutes,
+  };
+  int get pendingClaims =>
+      claims.where((c) => c.status == ClaimStatus.pending).length;
+}
+
+/// Painel do responsável para um aparelho: Resumo, Apps, Rotinas e Créditos.
 class DeviceScreen extends StatefulWidget {
-  const DeviceScreen({super.key, required this.backend, required this.device});
+  const DeviceScreen({
+    super.key,
+    required this.backend,
+    required this.device,
+    this.onChangeRole,
+  });
 
   final GuardianBackend backend;
   final PairedDevice device;
+  final VoidCallback? onChangeRole;
 
   @override
   State<DeviceScreen> createState() => _DeviceScreenState();
 }
 
 class _DeviceScreenState extends State<DeviceScreen> {
-  late final Stream<PairedDevice> _live = widget.backend.watchDevices().map(
-    (list) => list.firstWhere(
-      (d) => d.id == widget.device.id,
-      orElse: () => widget.device,
-    ),
-  );
-  late final Stream<List<TamperAlert>> _alerts = widget.backend.watchAlerts(
-    widget.device.id,
-  );
-  late final Stream<List<InstalledApp>> _apps = widget.backend.watchApps(
-    widget.device.id,
-  );
-  late final Stream<Map<String, AppRule>> _rules = widget.backend.watchRules(
-    widget.device.id,
-  );
-  late final Stream<List<UsageEntry>> _usage = widget.backend.watchUsage(
-    widget.device.id,
-    sinceDay: dayKey(DateTime.now().subtract(const Duration(days: 6))),
-  );
-  final _search = TextEditingController();
-  String _query = '';
+  final _subs = <StreamSubscription<Object?>>[];
+  late PairedDevice _device = widget.device;
+  List<InstalledApp>? _apps;
+  Map<String, AppRule>? _rules;
+  DeviceConfig _config = const DeviceConfig();
+  List<Claim> _claims = const [];
+  List<UsageEntry> _usage = const [];
+  List<TamperAlert> _alerts = const [];
+  Object? _error;
+  int _tab = 0;
+
+  GuardianBackend get _backend => widget.backend;
+  String get _id => widget.device.id;
+
+  @override
+  void initState() {
+    super.initState();
+    void listen<T>(Stream<T> stream, void Function(T) onData) {
+      _subs.add(
+        stream.listen(
+          (v) {
+            if (mounted) setState(() => onData(v));
+          },
+          onError: (Object e) {
+            if (mounted) setState(() => _error = e);
+          },
+        ),
+      );
+    }
+
+    listen<List<PairedDevice>>(_backend.watchDevices(), (list) {
+      _device = list.firstWhere((d) => d.id == _id, orElse: () => _device);
+    });
+    listen<List<InstalledApp>>(_backend.watchApps(_id), (v) => _apps = v);
+    listen<Map<String, AppRule>>(_backend.watchRules(_id), (v) => _rules = v);
+    listen<DeviceConfig>(_backend.watchConfig(_id), (v) => _config = v);
+    listen<List<Claim>>(_backend.watchClaims(_id), (v) => _claims = v);
+    listen<List<TamperAlert>>(_backend.watchAlerts(_id), (v) => _alerts = v);
+    listen<List<UsageEntry>>(
+      _backend.watchUsage(
+        _id,
+        sinceDay: dayKey(DateTime.now().subtract(const Duration(days: 60))),
+      ),
+      (v) => _usage = v,
+    );
+  }
 
   @override
   void dispose() {
-    _search.dispose();
+    for (final s in _subs) {
+      s.cancel();
+    }
     super.dispose();
+  }
+
+  Future<void> _save(DeviceConfig config) async {
+    setState(() => _config = config);
+    try {
+      await _backend.saveConfig(_id, config);
+    } catch (e) {
+      _toast('Não foi possível salvar: $e');
+    }
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _saveRule(AppRule rule) async {
+    try {
+      await _backend.setRule(_id, rule);
+    } catch (e) {
+      _toast('Não foi possível salvar: $e');
+    }
   }
 
   Future<void> _remove() async {
@@ -51,7 +146,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Remover aparelho?'),
         content: Text(
-          '"${widget.device.name}" deixa de ser monitorado e perde os limites '
+          '"${_device.name}" deixa de ser monitorado e perde os limites '
           'definidos. Para voltar, será preciso vincular de novo.',
         ),
         actions: [
@@ -60,6 +155,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Remover'),
           ),
@@ -68,228 +164,121 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
     if (ok != true) return;
     try {
-      await widget.backend.removeDevice(widget.device.id);
+      await _backend.removeDevice(_id);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Não foi possível remover: $e')));
-      }
+      _toast('Não foi possível remover: $e');
     }
   }
 
-  Future<void> _edit(InstalledApp app, AppRule? rule) async {
-    final result = await showModalBottomSheet<AppRule>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => RuleSheet(
-        app: app,
-        rule: rule ?? AppRule(appId: app.id),
+  void _openAccount() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => AccountScreen(
+        backend: _backend,
+        device: _device,
+        onChangeRole: widget.onChangeRole,
       ),
-    );
-    if (result == null) return;
-    try {
-      await widget.backend.setRule(widget.device.id, result);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Não foi possível salvar: $e')));
-      }
-    }
-  }
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.device.name),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (_) => _remove(),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'remove', child: Text('Remover aparelho')),
-            ],
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Notice(
+            'Não foi possível carregar os dados do aparelho. $_error',
+            isError: true,
           ),
-        ],
+        ),
+      );
+    }
+    final data = PanelData(
+      device: _device,
+      apps: _apps ?? const [],
+      rules: _rules ?? const {},
+      config: _config,
+      claims: _claims,
+      usage: _usage,
+      alerts: _alerts,
+      now: DateTime.now(),
+    );
+    final loading = _apps == null || _rules == null;
+    final pending = data.pendingClaims;
+    final tabs = <Widget>[
+      SummaryTab(
+        data: data,
+        onLockAll: (v) => _save(_config.copyWith(lockAll: v)),
+        onGoTab: (i) => setState(() => _tab = i),
+        onMarkSeen: () => _backend.markAlertsSeen(_id),
+        onRemove: _remove,
+        onAccount: _openAccount,
       ),
+      AppsTab(data: data, onRule: _saveRule),
+      RoutinesTab(data: data, onSave: _save),
+      CreditsTab(
+        data: data,
+        onSave: _save,
+        onDecide: (claim, ok) => _backend.decideClaim(_id, claim.id, ok),
+      ),
+    ];
+    return Scaffold(
       body: SafeArea(
-        child: StreamBuilder<List<InstalledApp>>(
-          stream: _apps,
-          builder: (context, appsSnap) => StreamBuilder<Map<String, AppRule>>(
-            stream: _rules,
-            builder: (context, rulesSnap) => StreamBuilder<List<UsageEntry>>(
-              stream: _usage,
-              builder: (context, usageSnap) {
-                if (appsSnap.hasError || rulesSnap.hasError) {
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Notice(
-                      'Não foi possível carregar os aplicativos. '
-                      '${appsSnap.error ?? rulesSnap.error}',
-                      isError: true,
-                    ),
-                  );
-                }
-                if (!appsSnap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final rules = rulesSnap.data ?? const <String, AppRule>{};
-                final entries = usageSnap.data ?? const <UsageEntry>[];
-                final now = DateTime.now();
-                final today = dayKey(now);
-                final usedToday = usageOfDay(entries, today);
-                final all = appsSnap.data!;
-                final q = _query.trim().toLowerCase();
-                final apps = q.isEmpty
-                    ? all
-                    : all
-                          .where((a) => a.name.toLowerCase().contains(q))
-                          .toList();
-                // Apps com regra primeiro; dentro de cada grupo, os mais usados hoje.
-                List<InstalledApp> mostUsedFirst(Iterable<InstalledApp> group) {
-                  final list = group.toList();
-                  final order = {
-                    for (var i = 0; i < list.length; i++) list[i].id: i,
-                  };
-                  list.sort((a, b) {
-                    final byUsage = (usedToday[b.id] ?? 0).compareTo(
-                      usedToday[a.id] ?? 0,
-                    );
-                    return byUsage != 0
-                        ? byUsage
-                        : order[a.id]!.compareTo(order[b.id]!);
-                  });
-                  return list;
-                }
-
-                final sorted = [
-                  ...mostUsedFirst(apps.where((a) => rules.containsKey(a.id))),
-                  ...mostUsedFirst(apps.where((a) => !rules.containsKey(a.id))),
-                ];
-
-                return Column(
-                  children: [
-                    StreamBuilder<PairedDevice>(
-                      stream: _live,
-                      initialData: widget.device,
-                      builder: (context, deviceSnap) =>
-                          StreamBuilder<List<TamperAlert>>(
-                            stream: _alerts,
-                            builder: (context, alertsSnap) => AlertsPanel(
-                              device: deviceSnap.data ?? widget.device,
-                              alerts: alertsSnap.data ?? const [],
-                              onMarkSeen: () => widget.backend.markAlertsSeen(
-                                widget.device.id,
-                              ),
-                            ),
-                          ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${all.length} aplicativos instalados',
-                            style: text.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          const SizedBox(height: 8),
-                          UsageSummary(
-                            totals: summarizeDays(entries, now),
-                            today: today,
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            key: const Key('searchField'),
-                            controller: _search,
-                            onChanged: (v) => setState(() => _query = v),
-                            decoration: const InputDecoration(
-                              prefixIcon: Icon(Icons.search),
-                              hintText: 'Buscar aplicativo',
-                              isDense: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: all.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text(
-                                'Ainda não chegou a lista de aplicativos. '
-                                'Ela é enviada quando o app do filho é aberto.',
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          : sorted.isEmpty
-                          ? const Center(
-                              child: Text('Nenhum aplicativo encontrado.'),
-                            )
-                          : ListView.builder(
-                              itemCount: sorted.length,
-                              itemBuilder: (context, i) {
-                                final app = sorted[i];
-                                final rule = rules[app.id];
-                                return ListTile(
-                                  key: ValueKey(app.id),
-                                  leading: AppAvatar(app),
-                                  title: Text(app.name),
-                                  subtitle: Text(
-                                    _ruleLabel(rule, usedToday[app.id] ?? 0),
-                                  ),
-                                  trailing: _RuleChip(rule: rule),
-                                  onTap: () => _edit(app, rule),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                );
-              },
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  key: const Key('panelBack'),
+                  tooltip: 'Voltar',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.chevron_left, size: 28),
+                ),
+                Expanded(
+                  child: GHeader(
+                    userName: childName(_device.name),
+                    online: _device.isOnline(data.now),
+                  ),
+                ),
+              ],
             ),
-          ),
+            const GTitle(
+              'Painel do responsável',
+              subtitle: 'Limites, rotinas e créditos',
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GSegmented(
+                labels: const ['Resumo', 'Apps', 'Rotinas', 'Créditos'],
+                icons: const [
+                  Icons.groups_outlined,
+                  Icons.smartphone,
+                  Icons.schedule,
+                  Icons.star_border_rounded,
+                ],
+                badges: {3: pending},
+                index: _tab,
+                onChanged: (i) => setState(() => _tab = i),
+              ),
+            ),
+            Expanded(
+              child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : tabs[_tab],
+            ),
+          ],
         ),
       ),
     );
   }
-
-  static String _ruleLabel(AppRule? rule, int used) {
-    final today = used > 0 ? ' · Hoje: ${formatMinutes(used)}' : '';
-    if (rule == null) {
-      return used > 0 ? 'Hoje: ${formatMinutes(used)}' : 'Sem limite';
-    }
-    if (rule.blocked) return 'Bloqueado o dia todo$today';
-    return 'Limite de ${formatMinutes(rule.dailyLimitMinutes)} por dia$today';
-  }
 }
 
-class _RuleChip extends StatelessWidget {
-  const _RuleChip({required this.rule});
-
-  final AppRule? rule;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    if (rule == null) return const Icon(Icons.chevron_right);
-    return Chip(
-      label: Text(
-        rule!.blocked ? 'Bloqueado' : formatMinutes(rule!.dailyLimitMinutes),
-      ),
-      avatar: Icon(
-        rule!.blocked ? Icons.block : Icons.timer_outlined,
-        size: 18,
-      ),
-      backgroundColor: rule!.blocked
-          ? scheme.errorContainer
-          : scheme.secondaryContainer,
-      side: BorderSide.none,
+/// Barra de alertas no topo do Resumo.
+Widget alertsFor(PanelData data, Future<void> Function() onMarkSeen) =>
+    AlertsPanel(
+      device: data.device,
+      alerts: data.alerts,
+      onMarkSeen: onMarkSeen,
     );
-  }
-}

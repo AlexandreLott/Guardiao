@@ -26,7 +26,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await store.read(), DeviceRole.parent);
-    expect(find.text('Entrar'), findsOneWidget); // login do responsável
+    expect(
+      find.byKey(const Key('submitButton')),
+      findsOneWidget,
+    ); // login do responsável
     await closeApp(tester);
   });
 
@@ -71,7 +74,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('roleParent')));
     await tester.pumpAndSettle();
-    expect(find.text('Entrar'), findsOneWidget);
+    expect(find.byKey(const Key('submitButton')), findsOneWidget);
     await closeApp(tester);
   });
 

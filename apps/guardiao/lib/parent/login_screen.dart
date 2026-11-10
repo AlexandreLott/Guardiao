@@ -73,115 +73,95 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: AutofillGroup(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Icon(
-                      Icons.shield_outlined,
-                      size: 56,
-                      color: Theme.of(context).colorScheme.primary,
+    return OnboardScaffold(
+      title: _creating ? 'Criar conta' : 'Entrar',
+      subtitle: _creating
+          ? 'Crie sua conta de responsável.'
+          : 'Entre para acompanhar os jogos dos seus filhos.',
+      onBack: _busy ? null : widget.onChangeRole,
+      backKey: const Key('changeRoleButton'),
+      bottom: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton(
+            key: const Key('submitButton'),
+            onPressed: _busy ? null : _submit,
+            child: _busy
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
                     ),
-                    const SizedBox(height: 16),
-                    Text('Guardião', style: text.headlineMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      _creating
-                          ? 'Crie sua conta de responsável.'
-                          : 'Entre para acompanhar os jogos dos seus filhos.',
-                      style: text.bodyLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      key: const Key('emailField'),
-                      controller: _email,
-                      enabled: !_busy,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      decoration: const InputDecoration(labelText: 'E-mail'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      key: const Key('passwordField'),
-                      controller: _password,
-                      enabled: !_busy,
-                      obscureText: _hidePassword,
-                      autofillHints: [
-                        _creating
-                            ? AutofillHints.newPassword
-                            : AutofillHints.password,
-                      ],
-                      onSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: 'Senha',
-                        suffixIcon: IconButton(
-                          tooltip: _hidePassword
-                              ? 'Mostrar senha'
-                              : 'Esconder senha',
-                          icon: Icon(
-                            _hidePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () =>
-                              setState(() => _hidePassword = !_hidePassword),
-                        ),
-                      ),
-                    ),
-                    if (widget.isDemo) ...[
-                      const SizedBox(height: 12),
-                      const Notice(
-                        'Modo demonstração, sem internet: os dados são de exemplo.',
-                      ),
-                    ],
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Notice(_error!, isError: true),
-                    ],
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      key: const Key('submitButton'),
-                      onPressed: _busy ? null : _submit,
-                      child: _busy
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(_creating ? 'Criar conta' : 'Entrar'),
-                    ),
-                    TextButton(
-                      key: const Key('toggleButton'),
-                      onPressed: _busy
-                          ? null
-                          : () => setState(() {
-                              _creating = !_creating;
-                              _error = null;
-                            }),
-                      child: Text(
-                        _creating
-                            ? 'Já tenho conta. Entrar'
-                            : 'Primeira vez aqui? Criar conta',
-                      ),
-                    ),
-                    TextButton(
-                      key: const Key('changeRoleButton'),
-                      onPressed: _busy ? null : widget.onChangeRole,
-                      child: const Text('Este aparelho é do filho? Voltar'),
-                    ),
-                  ],
-                ),
+                  )
+                : Text(_creating ? 'Criar conta' : 'Entrar'),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _creating ? 'Já tem conta?' : 'Não tem conta?',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              TextButton(
+                key: const Key('toggleButton'),
+                onPressed: _busy
+                    ? null
+                    : () => setState(() {
+                        _creating = !_creating;
+                        _error = null;
+                      }),
+                child: Text(_creating ? 'Entrar' : 'Criar conta'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            GField(
+              fieldKey: const Key('emailField'),
+              label: 'E-mail',
+              hint: 'voce@email.com',
+              controller: _email,
+              enabled: !_busy,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+            ),
+            const SizedBox(height: 16),
+            GField(
+              fieldKey: const Key('passwordField'),
+              label: 'Senha',
+              hint: 'Pelo menos 6 caracteres',
+              controller: _password,
+              enabled: !_busy,
+              obscure: _hidePassword,
+              autofillHints: [
+                _creating ? AutofillHints.newPassword : AutofillHints.password,
+              ],
+              onSubmitted: (_) => _submit(),
+              suffix: TextButton(
+                key: const Key('togglePassword'),
+                onPressed: () => setState(() => _hidePassword = !_hidePassword),
+                child: Text(_hidePassword ? 'Mostrar' : 'Esconder'),
               ),
             ),
-          ),
+            if (widget.isDemo) ...[
+              const SizedBox(height: 16),
+              const Notice(
+                'Modo demonstração, sem internet: os dados são de exemplo.',
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 16),
+              Notice(_error!, isError: true),
+            ],
+          ],
         ),
       ),
     );

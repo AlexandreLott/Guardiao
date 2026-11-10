@@ -75,7 +75,7 @@ class AlertsPanel extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Sem comunicação há ${sinceText(now.difference(device.lastSeen!))}. '
-                          'O Guardião pode ter sido desinstalado ou parado à força, ou o '
+                          'O Guardian pode ter sido desinstalado ou parado à força, ou o '
                           'aparelho está desligado ou sem internet.',
                           key: const Key('noSignalText'),
                           style: text.bodyMedium?.copyWith(

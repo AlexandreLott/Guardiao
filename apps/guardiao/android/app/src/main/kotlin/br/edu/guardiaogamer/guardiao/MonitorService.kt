@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import java.util.Calendar
 
 /**
  * Serviço em primeiro plano que, a cada poucos segundos, vê qual aplicativo
@@ -49,7 +50,12 @@ class MonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        overlay = BlockOverlay(this) { goHome() }
+        overlay = BlockOverlay(
+            this,
+            onGoHome = { goHome() },
+            onOpenCredits = { openCredits() },
+            onOpenApp = { pkg -> openApp(pkg) },
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -68,29 +74,98 @@ class MonitorService : Service() {
     }
 
     private fun check() {
-        val apps = MonitorConfig.load(this)
-        if (apps.isEmpty()) {
+        val plan = MonitorConfig.load(this)
+        if (plan.apps.isEmpty()) {
             overlay.hide()
             return
         }
         val usage = UsageReader.today(this)
         val foreground = usage.foreground
-        val rule = apps.firstOrNull { it.pkg == foreground }
-        if (foreground == null || foreground == packageName || rule == null) {
+        val rule = plan.apps.firstOrNull { it.pkg == foreground }
+        if (foreground == null || foreground == packageName || rule == null || isEssential(foreground)) {
             overlay.hide()
+            lastSentHome = null
             return
         }
+        val now = Calendar.getInstance()
+        val weekday = ((now.get(Calendar.DAY_OF_WEEK) + 5) % 7) + 1 // 1 = segunda
+        val minute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        val today = "%04d-%02d-%02d".format(
+            now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
+        )
         val used = usage.minutes(rule.pkg)
-        if (UsageMath.shouldBlock(rule.blocked, rule.limitMinutes, used)) {
-            val message = if (rule.blocked) {
-                "O responsável bloqueou este aplicativo."
-            } else {
-                "O tempo de hoje acabou. Amanhã você joga de novo."
-            }
-            overlay.show(rule.name, message)
-            goHome()
-        } else {
+        val result = PolicyMath.evaluate(rule, used, plan, weekday, minute, today)
+        if (result.verdict == PolicyMath.Verdict.ALLOW) {
             overlay.hide()
+            lastSentHome = null
+            return
+        }
+        val title: String
+        val message: String
+        when (result.verdict) {
+            PolicyMath.Verdict.BLOCKED -> {
+                title = "${rule.name} está bloqueado"
+                message = "O responsável bloqueou este aplicativo."
+            }
+            PolicyMath.Verdict.PAUSED -> {
+                title = "${rule.name} está em pausa"
+                message = "Agora é hora de: ${result.reason}. Daqui a pouco libera."
+            }
+            else -> {
+                title = "${rule.name} descansa por hoje"
+                message = "Você usou todo o tempo combinado com a sua família para este jogo hoje. Amanhã tem mais!"
+            }
+        }
+        val mission = plan.message.ifBlank { null }
+        val suggestions = plan.apps
+            .filter { it.pkg != rule.pkg && it.pkg != packageName && (it.allowed || it.category == "study") }
+            .filter { it.blocked.not() }
+            .take(3)
+            .map { Suggestion(it.pkg, it.name, if (it.category == "study") "Estudo e música" else "Sempre liberado") }
+        val midnight = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val secondsLeft = (midnight.timeInMillis - now.timeInMillis) / 1000
+        overlay.show(
+            BlockInfo("${rule.pkg}|${result.verdict}|${result.reason}", rule.pkg, title, message, mission, suggestions),
+            secondsLeft,
+        )
+        goHomeOnce(rule.pkg)
+    }
+
+    private var lastSentHome: String? = null
+
+    /** Manda para a tela inicial só na primeira vez, para a tela de bloqueio poder ser lida. */
+    private fun goHomeOnce(pkg: String) {
+        if (lastSentHome == pkg) return
+        lastSentHome = pkg
+        goHome()
+    }
+
+    /** Telefone e emergência nunca são cobertos. */
+    private fun isEssential(pkg: String): Boolean =
+        pkg.contains("dialer") || pkg.contains("incallui") || pkg.contains("emergency") ||
+            pkg.contains("telecom")
+
+    private fun openCredits() {
+        MonitorConfig.requestTab(this, "credits")
+        overlay.hide()
+        val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
+        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        try {
+            startActivity(launch)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun openApp(pkg: String) {
+        val launch = packageManager.getLaunchIntentForPackage(pkg) ?: return
+        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        overlay.hide()
+        try {
+            startActivity(launch)
+        } catch (_: Exception) {
         }
     }
 
@@ -118,7 +193,7 @@ class MonitorService : Service() {
             Notification.Builder(this)
         }
         val notification = builder
-            .setContentTitle("Guardião")
+            .setContentTitle("Guardian")
             .setContentText("Acompanhando o tempo de jogo deste aparelho.")
             .setSmallIcon(applicationInfo.icon)
             .setOngoing(true)

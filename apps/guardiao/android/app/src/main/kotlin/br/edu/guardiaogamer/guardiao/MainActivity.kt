@@ -138,6 +138,7 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "usageToday" -> usageToday(result)
+                    "takeLaunchTab" -> result.success(MonitorConfig.takeTab(this))
                     "health" -> result.success(HealthSnapshot.write(this))
                     "adminActive" -> result.success(HealthSnapshot.isAdminActive(this))
                     "requestAdmin" -> {

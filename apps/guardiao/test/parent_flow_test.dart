@@ -20,7 +20,7 @@ void main() {
       final backend = MemoryBackend(MemoryCloud());
       await tester.pumpWidget(appFor(backend, role: DeviceRole.parent));
       await tester.pumpAndSettle();
-      expect(find.text('Entrar'), findsOneWidget);
+      expect(find.byKey(const Key('submitButton')), findsOneWidget);
 
       await login(tester, 'sem-arroba', '123456');
       expect(find.text('Digite um e-mail válido.'), findsOneWidget);
@@ -37,7 +37,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('toggleButton')));
       await tester.pump();
-      expect(find.text('Criar conta'), findsOneWidget);
+      expect(find.text('Criar conta'), findsNWidgets(2));
       await login(tester, 'mae@exemplo.com', 'segredo1');
       expect(find.text('Meus aparelhos'), findsOneWidget);
       expect(find.text('Nenhum aparelho ainda'), findsOneWidget);
@@ -67,7 +67,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('signOutItem')));
       await tester.pumpAndSettle();
-      expect(find.text('Entrar'), findsOneWidget);
+      expect(find.byKey(const Key('submitButton')), findsOneWidget);
       await closeApp(tester);
     });
   });
@@ -88,21 +88,52 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('lista o aparelho, os apps e as regras já existentes', (
-      tester,
-    ) async {
+    Future<void> openPanel(WidgetTester tester, [int tab = 0]) async {
+      tallScreen(tester);
       await openDemo(tester);
-      expect(find.text('Celular do Pedro (exemplo)'), findsOneWidget);
       await tester.tap(find.text('Celular do Pedro (exemplo)'));
       await tester.pumpAndSettle();
+      if (tab > 0) {
+        await tester.tap(find.byKey(Key('seg_$tab')));
+        await tester.pumpAndSettle();
+      }
+    }
 
-      expect(find.text('7 aplicativos instalados'), findsOneWidget);
-      // Roblox tem limite e já usou 45 min hoje (dado de exemplo).
-      expect(find.text('Limite de 1 h por dia · Hoje: 45 min'), findsOneWidget);
+    testWidgets('resumo soma o dia e conta limites e bloqueios', (
+      tester,
+    ) async {
+      await openPanel(tester);
+      expect(find.text('Painel do responsável'), findsOneWidget);
+      // 45 + 20 + 12 min de uso nos dados de exemplo.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('statUsed')),
+          matching: find.text('1h 17min'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('statLimited')),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('statBlocked')),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
+      await closeApp(tester);
+    });
+
+    testWidgets('lista os apps com as regras já existentes', (tester) async {
+      await openPanel(tester, 1);
+      expect(find.text('7 apps'), findsOneWidget);
+      expect(find.text('45 min de 1h hoje'), findsOneWidget); // Roblox
       expect(find.text('Bloqueado o dia todo'), findsOneWidget); // Free Fire
-      // O painel soma o dia: 45 + 20 + 12 min.
-      expect(find.text('Hoje: 1 h 17 min de jogo e apps'), findsOneWidget);
-      expect(find.byKey(const Key('usageSummary')), findsOneWidget);
       // Apps com regra aparecem antes dos outros.
       final roblox = tester.getTopLeft(find.text('Roblox')).dy;
       final minecraft = tester.getTopLeft(find.text('Minecraft')).dy;
@@ -110,10 +141,8 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('busca filtra os aplicativos', (tester) async {
-      await openDemo(tester);
-      await tester.tap(find.text('Celular do Pedro (exemplo)'));
-      await tester.pumpAndSettle();
+    testWidgets('busca e categorias filtram os aplicativos', (tester) async {
+      await openPanel(tester, 1);
       await tester.enterText(find.byKey(const Key('searchField')), 'mine');
       await tester.pumpAndSettle();
       expect(find.text('Minecraft'), findsOneWidget);
@@ -121,63 +150,47 @@ void main() {
       await tester.enterText(find.byKey(const Key('searchField')), 'zzz');
       await tester.pumpAndSettle();
       expect(find.text('Nenhum aplicativo encontrado.'), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('searchField')), '');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key('chip_${AppCategory.games.name}')));
+      await tester.pumpAndSettle();
+      expect(find.text('Roblox'), findsOneWidget);
+      expect(find.text('Chrome'), findsNothing);
       await closeApp(tester);
     });
 
     testWidgets('define um limite diário e o aplicativo mostra a regra', (
       tester,
     ) async {
-      await openDemo(tester);
-      await tester.tap(find.text('Celular do Pedro (exemplo)'));
-      await tester.pumpAndSettle();
-
+      await openPanel(tester, 1);
       await tester.tap(find.text('Minecraft'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('limitSwitch')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('limitLabel')), findsOneWidget);
-      expect(find.text('1 h'), findsWidgets); // valor inicial da barra
       await tester.tap(find.byKey(const Key('saveRuleButton')));
       await tester.pumpAndSettle();
-
-      // Minecraft agora tem a regra (e passou a aparecer entre os com regra).
-      expect(find.textContaining('Limite de 1 h por dia'), findsNWidgets(2));
+      // Minecraft agora tem limite (e sobe para o grupo "com regra").
+      expect(find.textContaining(' de 1h hoje'), findsNWidgets(2));
       await closeApp(tester);
     });
 
     testWidgets('bloqueia um app e depois remove a regra', (tester) async {
-      await openDemo(tester);
-      await tester.tap(find.text('Celular do Pedro (exemplo)'));
+      await openPanel(tester, 1);
+      await tester.enterText(find.byKey(const Key('searchField')), 'chrome');
       await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Chrome'),
-        200,
-        scrollable: find.descendant(
-          of: find.byType(ListView),
-          matching: find.byType(Scrollable),
-        ),
-      );
       await tester.tap(find.text('Chrome'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('blockSwitch')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('saveRuleButton')));
       await tester.pumpAndSettle();
-      // O Chrome bloqueado sobe para o grupo "com regra", no topo da lista.
-      await tester.drag(find.byType(ListView), const Offset(0, 1500));
+      await tester.enterText(find.byKey(const Key('searchField')), '');
       await tester.pumpAndSettle();
       expect(find.text('Bloqueado o dia todo'), findsNWidgets(2));
 
-      // Reabre e desliga o bloqueio: "Remover regra".
-      await tester.scrollUntilVisible(
-        find.text('Chrome'),
-        200,
-        scrollable: find.descendant(
-          of: find.byType(ListView),
-          matching: find.byType(Scrollable),
-        ),
-      );
+      await tester.enterText(find.byKey(const Key('searchField')), 'chrome');
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Chrome'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('blockSwitch')));
@@ -185,29 +198,140 @@ void main() {
       expect(find.text('Remover regra'), findsOneWidget);
       await tester.tap(find.byKey(const Key('saveRuleButton')));
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView), const Offset(0, 1500));
+      await tester.enterText(find.byKey(const Key('searchField')), '');
       await tester.pumpAndSettle();
       expect(find.text('Bloqueado o dia todo'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('app "sempre liberado" ganha a etiqueta', (tester) async {
+      await openPanel(tester, 1);
+      await tester.enterText(find.byKey(const Key('searchField')), 'chrome');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Chrome'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('allowedSwitch')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('saveRuleButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Sempre liberado'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('bloqueio geral liga e aparece na prévia da criança', (
+      tester,
+    ) async {
+      await openPanel(tester);
+      await tester.tap(find.byKey(const Key('lockAllSwitch')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Switch>(find.byKey(const Key('lockAllSwitch'))).value,
+        isTrue,
+      );
+      await tester.ensureVisible(find.byKey(const Key('previewButton')));
+      await tester.tap(find.byKey(const Key('previewButton')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('previewBack')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('previewBack')));
+      await tester.pumpAndSettle();
+      await closeApp(tester);
+    });
+
+    testWidgets('rotinas: cria as sugeridas, desliga e exclui', (tester) async {
+      await openPanel(tester, 2);
+      await tester.tap(find.byKey(const Key('suggestedRoutines')));
+      await tester.pumpAndSettle();
+      expect(find.text('Hora de dormir'), findsOneWidget);
+      expect(find.text('21:00 – 07:00 · Todos os dias'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('routineSwitch_r-dormir')),
+      );
+      await tester.tap(find.byKey(const Key('routineSwitch_r-dormir')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Switch>(find.byKey(const Key('routineSwitch_r-dormir')))
+            .value,
+        isFalse,
+      );
+      await tester.tap(find.byKey(const Key('routine_r-dormir')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('deleteRoutine')));
+      await tester.tap(find.byKey(const Key('deleteRoutine')));
+      await tester.pumpAndSettle();
+      expect(find.text('Hora de dormir'), findsNothing);
+      await closeApp(tester);
+    });
+
+    testWidgets('rotinas: cria uma nova com nome e dias', (tester) async {
+      await openPanel(tester, 2);
+      await tester.tap(find.byKey(const Key('newRoutine')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('saveRoutine')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dê um nome para a rotina.'), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('routineName')), 'Natação');
+      await tester.tap(find.byKey(const Key('day_1'))); // tira segunda
+      await tester.ensureVisible(find.byKey(const Key('saveRoutine')));
+      await tester.tap(find.byKey(const Key('saveRoutine')));
+      await tester.pumpAndSettle();
+      expect(find.text('Natação'), findsOneWidget);
+      expect(find.text('14:00 – 16:00 · Ter, Qua, Qui e Sex'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('créditos: aprova o pedido da criança e cria missões', (
+      tester,
+    ) async {
+      tallScreen(tester);
+      final cloud = MemoryCloud();
+      final parent = MemoryBackend(cloud);
+      await parent.registerParent('mae@exemplo.com', 'segredo1');
+      final child = MemoryBackend(cloud);
+      await child.signInChild();
+      final request = await child.createPairRequest(
+        deviceName: 'Celular do Pedro',
+        platform: DevicePlatform.android,
+      );
+      await parent.approvePairRequest(request.code);
+      await child.createClaim(title: 'Arrumar o quarto', minutes: 30);
+
+      await tester.pumpWidget(appFor(parent, role: DeviceRole.parent));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Celular do Pedro'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('seg_3')));
+      await tester.pumpAndSettle();
+      expect(find.text('1 para aprovar'), findsOneWidget);
+      expect(find.text('Pedro fez: Arrumar o quarto'), findsOneWidget);
+      final claims = await tester.runAsync(
+        () => parent.watchClaims(request.deviceId).first,
+      );
+      await tester.tap(find.byKey(Key('approve_${claims!.single.id}')));
+      await tester.pumpAndSettle();
+      expect(find.text('nada para aprovar'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('suggestedMissions')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(Key('mission_${defaultMissions.first.id}')),
+        findsOneWidget,
+      );
       await closeApp(tester);
     });
 
     testWidgets('remover o aparelho pede confirmação e volta para a lista', (
       tester,
     ) async {
-      await openDemo(tester);
-      await tester.tap(find.text('Celular do Pedro (exemplo)'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Remover aparelho'));
+      await openPanel(tester);
+      await tester.ensureVisible(find.byKey(const Key('removeDevice')));
+      await tester.tap(find.byKey(const Key('removeDevice')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
-      expect(find.text('7 aplicativos instalados'), findsOneWidget);
+      expect(find.text('Painel do responsável'), findsOneWidget);
 
-      await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Remover aparelho'));
+      await tester.tap(find.byKey(const Key('removeDevice')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Remover'));
       await tester.pumpAndSettle();
@@ -349,7 +473,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('addAnotherButton')));
       await tester.pumpAndSettle();
-      expect(find.text('Vincular o aparelho do seu filho'), findsOneWidget);
+      expect(find.text('Vincular aparelho'), findsOneWidget);
       await typeCode(tester, notebook.code);
       await tester.tap(find.byKey(const Key('approveButton')));
       await tester.pumpAndSettle();
@@ -394,7 +518,7 @@ void main() {
         await openAdd(tester, scanner: scanner);
 
         await typeCode(tester, 'ab12');
-        expect(find.textContaining('8 letras e números'), findsOneWidget);
+        expect(find.textContaining('como K7M2-9QXA'), findsOneWidget);
 
         await typeCode(tester, 'AAAAAAAA');
         expect(find.textContaining('Código não encontrado'), findsOneWidget);
@@ -404,7 +528,7 @@ void main() {
         scanner.scan('https://exemplo.com/qualquer-coisa');
         await tester.pumpAndSettle();
         expect(
-          find.textContaining('não é de um aparelho do Guardião'),
+          find.textContaining('não é de um aparelho do Guardian'),
           findsOneWidget,
         );
 

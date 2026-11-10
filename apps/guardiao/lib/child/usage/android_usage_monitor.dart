@@ -39,10 +39,19 @@ class AndroidUsageMonitor implements UsageMonitor {
   }
 
   @override
-  Future<void> start(List<MonitoredApp> apps) =>
-      _channel.invokeMethod<void>('start', {
-        'apps': jsonEncode([for (final a in apps) a.toJson()]),
-      });
+  Future<void> start(
+    List<MonitoredApp> apps, {
+    MonitorExtras extras = const MonitorExtras(),
+  }) => _channel.invokeMethod<void>('start', {
+    'apps': jsonEncode({
+      'apps': [for (final a in apps) a.toJson()],
+      ...extras.toJson(),
+    }),
+  });
+
+  @override
+  Future<String?> takeLaunchTab() =>
+      _channel.invokeMethod<String>('takeLaunchTab');
 
   @override
   Future<Map<String, int>> usageByKey() async =>

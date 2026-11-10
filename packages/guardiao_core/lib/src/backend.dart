@@ -48,6 +48,17 @@ abstract class GuardianBackend {
     required String sinceDay,
   });
 
+  /// Ajustes do aparelho (bloqueio geral, rotinas, missões).
+  Stream<DeviceConfig> watchConfig(String deviceId);
+  Future<void> saveConfig(String deviceId, DeviceConfig config);
+
+  /// Pedidos de crédito ("Fiz a tarefa") e créditos usados, do mais recente
+  /// para o mais antigo.
+  Stream<List<Claim>> watchClaims(String deviceId);
+
+  /// Aprova ou recusa um pedido da criança.
+  Future<void> decideClaim(String deviceId, String claimId, bool approved);
+
   // ---- App do filho ----
 
   /// Gera o código (e o QR) que o responsável vai escanear. Cada chamada
@@ -78,6 +89,20 @@ abstract class GuardianBackend {
 
   /// Guarda a situação atual das proteções (permissões, administrador).
   Future<void> reportHealth(DeviceHealth health);
+
+  /// Ajustes feitos pelo responsável para este aparelho.
+  Stream<DeviceConfig> watchOwnConfig();
+
+  /// Tempo de uso deste aparelho a partir do dia [sinceDay].
+  Stream<List<UsageEntry>> watchOwnUsage({required String sinceDay});
+
+  Stream<List<Claim>> watchOwnClaims();
+
+  /// "Fiz a tarefa": pede que o responsável aprove [minutes] de crédito.
+  Future<void> createClaim({required String title, required int minutes});
+
+  /// Usa um crédito aprovado: o tempo vale como bônus no dia [day].
+  Future<void> useClaim(String claimId, String day);
 }
 
 class AuthException implements Exception {

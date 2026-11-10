@@ -71,6 +71,8 @@ class _Device {
   final rules = <String, AppRule>{};
   final usage = <String, UsageEntry>{};
   final alerts = <TamperAlert>[];
+  DeviceConfig config = const DeviceConfig();
+  final claims = <Claim>[];
 }
 
 class MemoryBackend implements GuardianBackend {
@@ -426,5 +428,114 @@ class MemoryBackend implements GuardianBackend {
     final list = (device?.apps.values.toList() ?? <InstalledApp>[])
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return list;
+  }
+
+  // ---- ajustes, créditos ----
+
+  @override
+  Stream<DeviceConfig> watchConfig(String deviceId) {
+    _ownedDevice(deviceId);
+    return cloud.watch(
+      () => cloud.devices[deviceId]?.config ?? const DeviceConfig(),
+    );
+  }
+
+  @override
+  Future<void> saveConfig(String deviceId, DeviceConfig config) async {
+    _ownedDevice(deviceId).config = config;
+    cloud.notify();
+  }
+
+  List<Claim> _claimsOf(_Device? device) =>
+      [...?device?.claims]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+  @override
+  Stream<List<Claim>> watchClaims(String deviceId) {
+    _ownedDevice(deviceId);
+    return cloud.watch(() => _claimsOf(cloud.devices[deviceId]));
+  }
+
+  @override
+  Future<void> decideClaim(
+    String deviceId,
+    String claimId,
+    bool approved,
+  ) async {
+    final device = _ownedDevice(deviceId);
+    final i = device.claims.indexWhere((c) => c.id == claimId);
+    if (i < 0) return;
+    final c = device.claims[i];
+    if (c.status != ClaimStatus.pending) return;
+    device.claims[i] = Claim(
+      id: c.id,
+      title: c.title,
+      minutes: c.minutes,
+      status: approved ? ClaimStatus.approved : ClaimStatus.rejected,
+      createdAt: c.createdAt,
+      decidedAt: cloud.now(),
+    );
+    cloud.notify();
+  }
+
+  @override
+  Stream<DeviceConfig> watchOwnConfig() {
+    final uid = _requireUid();
+    return cloud.watch(
+      () => cloud.devices[uid]?.config ?? const DeviceConfig(),
+    );
+  }
+
+  @override
+  Stream<List<UsageEntry>> watchOwnUsage({required String sinceDay}) {
+    final uid = _requireUid();
+    return cloud.watch(
+      () => [
+        for (final e
+            in cloud.devices[uid]?.usage.values ?? const <UsageEntry>[])
+          if (e.day.compareTo(sinceDay) >= 0) e,
+      ],
+    );
+  }
+
+  @override
+  Stream<List<Claim>> watchOwnClaims() {
+    final uid = _requireUid();
+    return cloud.watch(() => _claimsOf(cloud.devices[uid]));
+  }
+
+  @override
+  Future<void> createClaim({
+    required String title,
+    required int minutes,
+  }) async {
+    final device = _ownDevice();
+    device.claims.add(
+      Claim(
+        id: 'claim-${++cloud._counter}',
+        title: title,
+        minutes: minutes.clamp(1, 240),
+        status: ClaimStatus.pending,
+        createdAt: cloud.now(),
+      ),
+    );
+    cloud.notify();
+  }
+
+  @override
+  Future<void> useClaim(String claimId, String day) async {
+    final device = _ownDevice();
+    final i = device.claims.indexWhere((c) => c.id == claimId);
+    if (i < 0 || !device.claims[i].available) return;
+    final c = device.claims[i];
+    device.claims[i] = Claim(
+      id: c.id,
+      title: c.title,
+      minutes: c.minutes,
+      status: c.status,
+      createdAt: c.createdAt,
+      decidedAt: c.decidedAt,
+      usedDay: day,
+    );
+    cloud.notify();
   }
 }

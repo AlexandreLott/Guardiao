@@ -97,7 +97,10 @@ class WindowsUsageMonitor implements UsageMonitor {
   }
 
   @override
-  Future<void> start(List<MonitoredApp> apps) async {
+  Future<void> start(
+    List<MonitoredApp> apps, {
+    MonitorExtras extras = const MonitorExtras(),
+  }) async {
     await _load();
     _rules = {for (final a in apps) a.key.toLowerCase(): a};
     _last ??= _clock();
@@ -164,4 +167,7 @@ class WindowsUsageMonitor implements UsageMonitor {
 
   @override
   Future<void> requestAdmin() async {}
+
+  @override
+  Future<String?> takeLaunchTab() async => null;
 }

@@ -13,6 +13,8 @@ class MonitoredApp {
     required this.name,
     this.limitMinutes,
     this.blocked = false,
+    this.allowed = false,
+    this.category = 'other',
   });
 
   /// Identificador na nuvem (o mesmo de [InstalledApp.id] e [AppRule.appId]).
@@ -24,11 +26,19 @@ class MonitoredApp {
   final int? limitMinutes;
   final bool blocked;
 
+  /// "Sempre liberado": ignora o bloqueio geral e as rotinas.
+  final bool allowed;
+
+  /// `games`, `videos`, `social`, `study` ou `other` (veja [AppCategory]).
+  final String category;
+
   Map<String, Object?> toJson() => {
     'pkg': key,
     'name': name,
     'limit': limitMinutes,
     'blocked': blocked,
+    'allowed': allowed,
+    'cat': category,
   };
 
   @override
@@ -38,10 +48,13 @@ class MonitoredApp {
       other.key == key &&
       other.name == name &&
       other.limitMinutes == limitMinutes &&
-      other.blocked == blocked;
+      other.blocked == blocked &&
+      other.allowed == allowed &&
+      other.category == category;
 
   @override
-  int get hashCode => Object.hash(appId, key, name, limitMinutes, blocked);
+  int get hashCode =>
+      Object.hash(appId, key, name, limitMinutes, blocked, allowed, category);
 }
 
 /// Permissões especiais que o Android exige para medir e bloquear.
@@ -70,16 +83,19 @@ String? monitorKey(InstalledApp app, DevicePlatform platform) {
   }
 }
 
-/// Junta a lista de apps com as regras e devolve só o que precisa de vigilância.
+/// Junta a lista de apps com as regras e devolve só o que precisa de vigilância
+/// (ou todos, se [includeAll]: com bloqueio geral ou rotinas, qualquer app pode
+/// ser pausado).
 List<MonitoredApp> buildMonitored(
   List<InstalledApp> apps,
   Map<String, AppRule> rules,
-  DevicePlatform platform,
-) {
+  DevicePlatform platform, {
+  bool includeAll = false,
+}) {
   final out = <MonitoredApp>[];
   for (final app in apps) {
     final rule = rules[app.id];
-    if (rule == null || rule.isDefault) continue;
+    if (!includeAll && (rule == null || rule.isDefault)) continue;
     final key = monitorKey(app, platform);
     if (key == null) continue;
     out.add(
@@ -87,12 +103,46 @@ List<MonitoredApp> buildMonitored(
         appId: app.id,
         key: key,
         name: app.name,
-        limitMinutes: rule.dailyLimitMinutes,
-        blocked: rule.blocked,
+        limitMinutes: rule?.dailyLimitMinutes,
+        blocked: rule?.blocked ?? false,
+        allowed: rule?.alwaysAllowed ?? false,
+        category: categoryOf(app).name,
       ),
     );
   }
   return out;
+}
+
+/// O que o medidor precisa além da lista de apps: bloqueio geral, rotinas e o
+/// tempo extra ganho com créditos.
+class MonitorExtras {
+  const MonitorExtras({
+    this.lockAll = false,
+    this.routines = const [],
+    this.bonusDay,
+    this.bonusMinutes = 0,
+    this.message = '',
+  });
+
+  final bool lockAll;
+  final List<Routine> routines;
+
+  /// Dia (`2026-11-10`) a que vale o [bonusMinutes].
+  final String? bonusDay;
+  final int bonusMinutes;
+
+  /// Texto da tela de bloqueio escolhido pelo responsável.
+  final String message;
+
+  bool get needsEveryApp => lockAll || routines.any((r) => r.enabled);
+
+  Map<String, Object?> toJson() => {
+    'lockAll': lockAll,
+    'routines': [for (final r in routines) r.toMap()],
+    'bonusDay': bonusDay,
+    'bonusMinutes': bonusMinutes,
+    'message': message,
+  };
 }
 
 /// Mede o tempo de uso de hoje e bloqueia o que passou do limite.
@@ -108,7 +158,10 @@ abstract class UsageMonitor {
 
   /// Passa as regras atuais e começa a vigiar. Pode ser chamado de novo a
   /// cada mudança de regra.
-  Future<void> start(List<MonitoredApp> apps);
+  Future<void> start(
+    List<MonitoredApp> apps, {
+    MonitorExtras extras = const MonitorExtras(),
+  });
 
   /// Minutos usados hoje, por chave (veja [monitorKey]).
   Future<Map<String, int>> usageByKey();
@@ -121,6 +174,9 @@ abstract class UsageMonitor {
 
   /// Abre o pedido do sistema para ativar a proteção contra desinstalação.
   Future<void> requestAdmin();
+
+  /// Aba que a tela de bloqueio pediu para abrir ("credits"), uma única vez.
+  Future<String?> takeLaunchTab();
 
   factory UsageMonitor.detect() {
     if (Platform.isAndroid) return AndroidUsageMonitor();
@@ -140,7 +196,10 @@ class UnsupportedUsageMonitor implements UsageMonitor {
   Future<void> request(MonitorPermission permission) async {}
 
   @override
-  Future<void> start(List<MonitoredApp> apps) async {}
+  Future<void> start(
+    List<MonitoredApp> apps, {
+    MonitorExtras extras = const MonitorExtras(),
+  }) async {}
 
   @override
   Future<Map<String, int>> usageByKey() async => const {};
@@ -153,6 +212,9 @@ class UnsupportedUsageMonitor implements UsageMonitor {
 
   @override
   Future<void> requestAdmin() async {}
+
+  @override
+  Future<String?> takeLaunchTab() async => null;
 }
 
 /// Medidor de mentira para a demonstração e para testes: o uso só muda
@@ -171,6 +233,7 @@ class DemoUsageMonitor implements UsageMonitor {
 
   /// Última lista recebida em [start].
   List<MonitoredApp> started = const [];
+  MonitorExtras startedExtras = const MonitorExtras();
   int startCalls = 0;
   bool stopped = false;
 
@@ -178,6 +241,9 @@ class DemoUsageMonitor implements UsageMonitor {
       _usage[key] = (_usage[key] ?? 0) + minutes;
 
   void grant(MonitorPermission p) => _missing.remove(p);
+
+  /// Simula o Android retirando uma permissão.
+  void revoke(MonitorPermission p) => _missing.add(p);
 
   @override
   bool get supported => true;
@@ -191,9 +257,13 @@ class DemoUsageMonitor implements UsageMonitor {
       _missing.remove(permission);
 
   @override
-  Future<void> start(List<MonitoredApp> apps) async {
+  Future<void> start(
+    List<MonitoredApp> apps, {
+    MonitorExtras extras = const MonitorExtras(),
+  }) async {
     startCalls++;
     started = apps;
+    startedExtras = extras;
     stopped = false;
   }
 
@@ -209,4 +279,14 @@ class DemoUsageMonitor implements UsageMonitor {
   /// No teste, "abrir o pedido do sistema" já ativa.
   @override
   Future<void> requestAdmin() async => _admin = true;
+
+  /// Aba pedida pela tela de bloqueio (nos testes, defina antes de abrir).
+  String? launchTab;
+
+  @override
+  Future<String?> takeLaunchTab() async {
+    final tab = launchTab;
+    launchTab = null;
+    return tab;
+  }
 }

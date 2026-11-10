@@ -377,6 +377,92 @@ test('situação das proteções inválida é recusada', async () => {
   await assertFails(updateDoc(doc(parentDb(), 'devices', CHILD), { health: healthData() }));
 });
 
+// ---------- ajustes (bloqueio geral, rotinas, missões) e créditos ----------
+const configDoc = (db) => doc(db, 'devices', CHILD, 'config', 'main');
+const configData = (extra = {}) => ({
+  lockAll: false, routines: [], missions: [], blockMessage: 'Arrume o quarto',
+  suggestedMissionId: '', allowRequests: true, ...extra,
+});
+const claimDoc = (db, id = 'c1') => doc(db, 'devices', CHILD, 'claims', id);
+const claimData = (extra = {}) => ({
+  title: 'Arrumar o quarto', minutes: 50, status: 'pending',
+  createdAt: serverTimestamp(), usedDay: '', ...extra,
+});
+const seedClaim = (extra = {}) => seed((db) => setDoc(claimDoc(db), {
+  title: 'Arrumar o quarto', minutes: 50, status: 'pending',
+  createdAt: Timestamp.now(), usedDay: '', ...extra,
+}));
+
+test('responsável grava os ajustes; o aparelho lê, mas não escreve', async () => {
+  await seedDevice();
+  await assertSucceeds(setDoc(configDoc(parentDb()), configData({ lockAll: true })));
+  await assertSucceeds(getDoc(configDoc(childDb())));
+  await assertSucceeds(getDoc(configDoc(parentDb())));
+  await assertFails(setDoc(configDoc(childDb()), configData()));
+  await assertFails(setDoc(configDoc(parentDb(OTHER_PARENT)), configData()));
+  await assertFails(getDoc(configDoc(parentDb(OTHER_PARENT))));
+});
+test('ajustes inválidos são recusados', async () => {
+  await seedDevice();
+  const ref = configDoc(parentDb());
+  await assertFails(setDoc(ref, configData({ lockAll: 'sim' })));
+  await assertFails(setDoc(ref, configData({ extra: true })));
+  await assertFails(setDoc(ref, configData({ routines: 'x' })));
+  await assertFails(setDoc(ref, configData({ routines: new Array(31).fill({ id: 'r' }) })));
+  await assertFails(setDoc(ref, configData({ blockMessage: 'x'.repeat(141) })));
+  await assertFails(setDoc(doc(parentDb(), 'devices', CHILD, 'config', 'outro'), configData()));
+});
+test('regra de app aceita "sempre liberado" só como booleano', async () => {
+  await seedDevice();
+  const ref = doc(parentDb(), 'devices', CHILD, 'rules', 'roblox');
+  await assertSucceeds(setDoc(ref, { dailyLimitMinutes: null, blocked: false, alwaysAllowed: true }));
+  await assertFails(setDoc(ref, { dailyLimitMinutes: null, blocked: false, alwaysAllowed: 'sim' }));
+});
+test('a criança pede crédito; dados inválidos são recusados', async () => {
+  await seedDevice();
+  await assertSucceeds(setDoc(claimDoc(childDb()), claimData()));
+  await assertSucceeds(getDoc(claimDoc(parentDb())));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ minutes: 0 })));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ minutes: 241 })));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ title: '' })));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ status: 'approved' })));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ usedDay: '2026-11-10' })));
+  await assertFails(setDoc(claimDoc(childDb(), 'c2'), claimData({ extra: 1 })));
+  await assertFails(setDoc(claimDoc(parentDb(), 'c3'), claimData()));
+  await assertFails(setDoc(claimDoc(childDb(CHILD2)), claimData()));
+});
+test('só o responsável aprova ou recusa, uma vez', async () => {
+  await seedDevice();
+  await seedClaim();
+  await assertFails(updateDoc(claimDoc(childDb()), { status: 'approved', decidedAt: serverTimestamp() }));
+  await assertFails(updateDoc(claimDoc(parentDb(OTHER_PARENT)), { status: 'approved', decidedAt: serverTimestamp() }));
+  await assertFails(updateDoc(claimDoc(parentDb()), { status: 'approved', minutes: 240, decidedAt: serverTimestamp() }));
+  await assertFails(updateDoc(claimDoc(parentDb()), { status: 'pending', decidedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(claimDoc(parentDb()), { status: 'approved', decidedAt: serverTimestamp() }));
+  await assertFails(updateDoc(claimDoc(parentDb()), { status: 'rejected', decidedAt: serverTimestamp() }));
+});
+test('a criança usa o crédito aprovado uma única vez', async () => {
+  await seedDevice();
+  await seedClaim({ status: 'approved' });
+  await assertFails(updateDoc(claimDoc(childDb()), { usedDay: '8/11' }));
+  await assertFails(updateDoc(claimDoc(childDb()), { usedDay: '2026-11-10', minutes: 240 }));
+  await assertSucceeds(updateDoc(claimDoc(childDb()), { usedDay: '2026-11-10' }));
+  await assertFails(updateDoc(claimDoc(childDb()), { usedDay: '2026-11-11' }));
+});
+test('crédito pendente ou recusado não pode ser usado', async () => {
+  await seedDevice();
+  await seedClaim();
+  await assertFails(updateDoc(claimDoc(childDb()), { usedDay: '2026-11-10' }));
+  await seedClaim({ status: 'rejected' });
+  await assertFails(updateDoc(claimDoc(childDb()), { usedDay: '2026-11-10' }));
+});
+test('responsável apaga os créditos ao desvincular', async () => {
+  await seedDevice();
+  await seedClaim();
+  await assertFails(deleteDoc(claimDoc(childDb())));
+  await assertSucceeds(deleteDoc(claimDoc(parentDb())));
+});
+
 test('coleções desconhecidas são negadas', async () => {
   await assertFails(setDoc(doc(parentDb(), 'segredos', 'x'), { a: 1 }));
 });

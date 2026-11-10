@@ -1,125 +1,116 @@
 import 'package:flutter/material.dart';
+import 'package:guardiao_core/guardiao_core.dart';
 
 import 'role.dart';
 
-/// Primeira tela do app: define se este aparelho é do responsável ou do filho.
-class RoleScreen extends StatelessWidget {
-  const RoleScreen({super.key, required this.onPick});
+/// Primeiras telas do app: a abertura (uma vez por abertura do app) e a
+/// escolha de quem usa este aparelho.
+class RoleScreen extends StatefulWidget {
+  const RoleScreen({
+    super.key,
+    required this.onPick,
+    this.showWelcome = false,
+    this.isDemo = false,
+  });
 
   final ValueChanged<DeviceRole> onPick;
 
+  /// Mostra a abertura antes da escolha.
+  final bool showWelcome;
+  final bool isDemo;
+
+  @override
+  State<RoleScreen> createState() => _RoleScreenState();
+}
+
+class _RoleScreenState extends State<RoleScreen> {
+  late bool _welcome = widget.showWelcome;
+
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.shield_moon_outlined,
-                    size: 56,
-                    color: scheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Guardião',
-                    style: text.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Este aparelho é de quem?',
-                    style: text.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'A escolha é feita uma única vez. O aplicativo é o mesmo no '
-                    'aparelho do responsável e no do filho.',
-                    style: text.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  _RoleCard(
-                    key: const Key('roleParent'),
-                    icon: Icons.family_restroom,
-                    title: 'Sou o responsável',
-                    description:
-                        'Acompanhe os aplicativos instalados no aparelho do filho, o '
-                        'tempo de uso de cada um e defina limites ou bloqueios.',
-                    onTap: () => onPick(DeviceRole.parent),
-                  ),
-                  const SizedBox(height: 12),
-                  _RoleCard(
-                    key: const Key('roleChild'),
-                    icon: Icons.sports_esports_outlined,
-                    title: 'Este aparelho é do filho',
-                    description:
-                        'Vincule este celular ou computador ao responsável e '
-                        'consulte o tempo restante de uso de cada aplicativo.',
-                    onTap: () => onPick(DeviceRole.child),
-                  ),
-                ],
-              ),
-            ),
+    if (_welcome) {
+      return _Welcome(
+        isDemo: widget.isDemo,
+        onStart: () => setState(() => _welcome = false),
+      );
+    }
+    return OnboardScaffold(
+      title: 'Este aparelho é de quem?',
+      subtitle:
+          'A escolha é feita uma única vez. O aplicativo é o mesmo no '
+          'aparelho do responsável e no do filho.',
+      onBack: widget.showWelcome ? () => setState(() => _welcome = true) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GChoiceTile(
+            key: const Key('roleParent'),
+            title: 'Sou o responsável',
+            subtitle: 'Acompanhar e definir limites',
+            onTap: () => widget.onPick(DeviceRole.parent),
           ),
-        ),
+          const SizedBox(height: 12),
+          GChoiceTile(
+            key: const Key('roleChild'),
+            title: 'É do meu filho ou filha',
+            subtitle: 'Este aparelho será acompanhado',
+            onTap: () => widget.onPick(DeviceRole.child),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _RoleCard extends StatelessWidget {
-  const _RoleCard({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-  });
+class _Welcome extends StatelessWidget {
+  const _Welcome({required this.onStart, required this.isDemo});
 
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback onTap;
+  final VoidCallback onStart;
+  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: scheme.primaryContainer,
-                child: Icon(icon, color: scheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: text.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(description, style: text.bodySmall),
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
+                  const Center(child: GuardianLogo(size: 108)),
+                  const SizedBox(height: 28),
+                  Text(
+                    guardianName,
+                    textAlign: TextAlign.center,
+                    style: text.headlineMedium?.copyWith(fontSize: 34),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Controle parental para jogos e apps, feito para a '
+                    'família toda.',
+                    textAlign: TextAlign.center,
+                    style: text.bodyLarge,
+                  ),
+                  const Spacer(),
+                  if (isDemo) ...[
+                    const Notice(
+                      'Modo demonstração, sem internet: os dados são de exemplo.',
+                    ),
+                    const SizedBox(height: 12),
                   ],
-                ),
+                  FilledButton(
+                    key: const Key('startButton'),
+                    onPressed: onStart,
+                    child: const Text('Começar'),
+                  ),
+                ],
               ),
-              const Icon(Icons.chevron_right),
-            ],
+            ),
           ),
         ),
       ),

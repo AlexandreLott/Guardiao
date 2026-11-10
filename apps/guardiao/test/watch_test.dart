@@ -307,6 +307,7 @@ void main() {
           await child.reportHealth(health(overlay: false));
           await child.reportAlert(AlertKind.overlayRevoked);
         });
+        tallScreen(tester);
         await openParent(tester);
         expect(find.byKey(const Key('deviceWarning')), findsOneWidget);
 
@@ -355,7 +356,6 @@ void main() {
       await tester.tap(find.byKey(const Key('adminButton')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('adminCard')), findsNothing);
-      expect(find.text('Proteção contra desinstalação ativa.'), findsOneWidget);
       await closeApp(tester);
     });
 

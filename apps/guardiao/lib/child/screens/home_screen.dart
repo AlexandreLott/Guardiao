@@ -3,13 +3,59 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../../common/names.dart';
+import '../../common/pin.dart';
 import '../../watch/child_watch.dart';
 import '../../watch/health_source.dart';
 import '../platform/installed_apps_source.dart';
 import '../sync/device_sync.dart';
 import '../usage/usage_controller.dart';
 import '../usage/usage_monitor.dart';
+import 'child_account_tab.dart';
+import 'child_credits_tab.dart';
+import 'child_home_tab.dart';
+import 'child_report_tab.dart';
 
+/// Tudo que as abas do filho mostram, num só lugar.
+class ChildData {
+  const ChildData({
+    required this.device,
+    required this.apps,
+    required this.rules,
+    required this.config,
+    required this.claims,
+    required this.usage,
+    required this.usedToday,
+    required this.now,
+  });
+
+  final PairedDevice device;
+  final List<InstalledApp> apps;
+  final Map<String, AppRule> rules;
+  final DeviceConfig config;
+  final List<Claim> claims;
+
+  /// Uso dos últimos 60 dias.
+  final List<UsageEntry> usage;
+
+  /// Minutos usados hoje por app (medidos no aparelho, ou da nuvem).
+  final Map<String, int> usedToday;
+  final DateTime now;
+
+  String get today => dayKey(now);
+  int get bonus => bonusMinutesOf(claims, today);
+
+  AppVerdict verdict(InstalledApp app) => verdictFor(
+    app: app,
+    rule: rules[app.id],
+    usedMinutes: usedToday[app.id] ?? 0,
+    config: config,
+    now: now,
+    bonusMinutes: bonus,
+  );
+}
+
+/// Lado do filho depois do vínculo: Início, Relatório, Créditos e Responsável.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -19,10 +65,14 @@ class HomeScreen extends StatefulWidget {
     required this.device,
     this.healthSource,
     this.healthStore,
+    this.pinStore,
+    this.isDemo = false,
   });
 
   final HealthSource? healthSource;
   final HealthStore? healthStore;
+  final PinStore? pinStore;
+  final bool isDemo;
 
   final GuardianBackend backend;
   final InstalledAppsSource source;
@@ -33,20 +83,25 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late final DeviceSync _sync;
   late final UsageController _usage;
-  StreamSubscription<List<InstalledApp>>? _appsSub;
-  StreamSubscription<Map<String, AppRule>>? _rulesSub;
-  StreamSubscription<String>? _errors;
+  late final PinStore _pin = widget.pinStore ?? MemoryPinStore();
+  final _subs = <StreamSubscription<Object?>>[];
+  Timer? _clock;
   List<InstalledApp> _apps = const [];
   Map<String, AppRule> _rules = const {};
+  DeviceConfig _config = const DeviceConfig();
+  List<Claim> _claims = const [];
+  List<UsageEntry> _history = const [];
   String? _syncError;
   DateTime? _lastSync;
+  int _tab = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final healthSource = widget.healthSource;
     _sync = DeviceSync(
       widget.backend,
@@ -59,15 +114,21 @@ class _HomeScreenState extends State<HomeScreen> {
               store: widget.healthStore ?? MemoryHealthStore(),
             ),
     )..start();
-    _errors = _sync.errors.stream.listen((e) => setState(() => _syncError = e));
-    _sync.lastSync.stream.listen((t) {
-      if (mounted) {
-        setState(() {
-          _lastSync = t;
-          _syncError = null;
-        });
-      }
-    });
+    _subs.add(
+      _sync.errors.stream.listen((e) {
+        if (mounted) setState(() => _syncError = e);
+      }),
+    );
+    _subs.add(
+      _sync.lastSync.stream.listen((t) {
+        if (mounted) {
+          setState(() {
+            _lastSync = t;
+            _syncError = null;
+          });
+        }
+      }),
+    );
     _usage =
         UsageController(
           backend: widget.backend,
@@ -76,321 +137,153 @@ class _HomeScreenState extends State<HomeScreen> {
         )..addListener(() {
           if (mounted) setState(() {});
         });
-    _appsSub = widget.backend.watchOwnApps().listen((apps) {
-      _apps = apps;
-      _usage.update(_apps, _rules);
-      if (mounted) setState(() {});
-    });
-    _rulesSub = widget.backend.watchOwnRules().listen((rules) {
-      _rules = rules;
-      _usage.update(_apps, _rules);
-      if (mounted) setState(() {});
-    });
+    _subs.add(
+      widget.backend.watchOwnApps().listen((v) {
+        _apps = v;
+        _push();
+      }),
+    );
+    _subs.add(
+      widget.backend.watchOwnRules().listen((v) {
+        _rules = v;
+        _push();
+      }),
+    );
+    _subs.add(
+      widget.backend.watchOwnConfig().listen((v) {
+        _config = v;
+        _push();
+      }),
+    );
+    _subs.add(
+      widget.backend.watchOwnClaims().listen((v) {
+        _claims = v;
+        _push();
+      }),
+    );
+    final since = dayKey(DateTime.now().subtract(const Duration(days: 60)));
+    _subs.add(
+      widget.backend.watchOwnUsage(sinceDay: since).listen((v) {
+        if (mounted) setState(() => _history = v);
+      }),
+    );
     _usage.begin();
+    // Mantém contagens regressivas e rotinas em dia.
+    _clock = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+    unawaited(_checkLaunchTab());
+    if (widget.isDemo) unawaited(_seedDemoPin());
+  }
+
+  Future<void> _seedDemoPin() async {
+    if (!await _pin.hasPin()) await _pin.set('1234');
+  }
+
+  void _push() {
+    _usage.update(
+      _apps,
+      _rules,
+      config: _config,
+      bonusMinutes: bonusMinutesOf(_claims, dayKey(DateTime.now())),
+    );
+    if (mounted) setState(() {});
+  }
+
+  /// A tela de bloqueio pode pedir a aba de créditos ("Fiz a tarefa!").
+  Future<void> _checkLaunchTab() async {
+    final tab = await widget.monitor.takeLaunchTab();
+    if (tab == 'credits' && mounted) setState(() => _tab = 2);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_checkLaunchTab());
   }
 
   @override
   void dispose() {
-    _errors?.cancel();
-    _appsSub?.cancel();
-    _rulesSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _clock?.cancel();
+    for (final s in _subs) {
+      s.cancel();
+    }
     _usage.dispose();
     _sync.dispose();
     super.dispose();
   }
 
+  ChildData _data() {
+    // O uso medido no aparelho vale mais que o da nuvem (que chega com atraso).
+    final now = DateTime.now();
+    final today = dayKey(now);
+    final cloud = {
+      for (final e in _history)
+        if (e.day == today) e.appId: e.minutes,
+    };
+    return ChildData(
+      device: widget.device,
+      apps: _apps,
+      rules: _rules,
+      config: _config,
+      claims: _claims,
+      usage: _history,
+      usedToday: {...cloud, ..._usage.usedByAppId},
+      now: now,
+    );
+  }
+
+  static const _items = [
+    GNavItem('Início', Icons.home_rounded, Key('nav_home')),
+    GNavItem('Relatório', Icons.bar_chart_rounded, Key('nav_report')),
+    GNavItem('Créditos', Icons.star_border_rounded, Key('nav_credits')),
+    GNavItem('Responsável', Icons.lock_outline, Key('nav_guardian')),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final data = _data();
+    final name = childName(widget.device.name);
+    final online = widget.device.isOnline(data.now);
+    final tabs = <Widget>[
+      ChildHomeTab(
+        data: data,
+        usage: _usage,
+        syncError: _syncError,
+        lastSync: _lastSync,
+      ),
+      ChildReportTab(data: data),
+      ChildCreditsTab(
+        data: data,
+        onClaim: (title, minutes) =>
+            widget.backend.createClaim(title: title, minutes: minutes),
+        onUse: (claims) async {
+          for (final c in claims) {
+            await widget.backend.useClaim(c.id, data.today);
+          }
+        },
+      ),
+      ChildAccountTab(
+        data: data,
+        usage: _usage,
+        pinStore: _pin,
+        isDemo: widget.isDemo,
+      ),
+    ];
     return Scaffold(
-      appBar: AppBar(title: const Text('Guardião')),
-      body: SafeArea(child: _buildList(context)),
-    );
-  }
-
-  Widget _buildList(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final apps = _apps;
-    final rules = _rules;
-    final limited = [
-      for (final a in apps)
-        if (rules[a.id] != null) a,
-    ];
-    final free = [
-      for (final a in apps)
-        if (rules[a.id] == null) a,
-    ];
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('Seu tempo de hoje', style: text.headlineSmall),
-        const SizedBox(height: 4),
-        Text(
-          'Aqui você vê quanto tempo ainda pode usar cada aplicativo.',
-          style: text.bodyMedium,
-        ),
-        const SizedBox(height: 12),
-        if (!_usage.supported)
-          const Notice(
-            'Este aparelho ainda não mede o tempo de uso. Os limites aparecem, '
-            'mas o tempo restante não diminui.',
-            icon: Icons.hourglass_empty,
-          )
-        else if (_usage.missing.isNotEmpty)
-          _PermissionsCard(missing: _usage.missing, onRequest: _usage.request),
-        if (_usage.supported && _usage.adminActive != null) ...[
-          const SizedBox(height: 8),
-          _AdminCard(
-            active: _usage.adminActive!,
-            onActivate: _usage.requestAdmin,
-          ),
-        ],
-        if (_syncError != null) ...[
-          const SizedBox(height: 8),
-          Notice(_syncError!, isError: true),
-        ],
-        if (_usage.reportError != null) ...[
-          const SizedBox(height: 8),
-          Notice(_usage.reportError!, isError: true),
-        ],
-        const SizedBox(height: 16),
-        if (limited.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'O responsável ainda não definiu limites. '
-                'Quando definir, eles aparecem aqui.',
-              ),
-            ),
-          )
-        else
-          for (final app in limited)
-            _LimitedTile(
-              app: app,
-              rule: rules[app.id]!,
-              used: _usage.usedMinutes(app.id),
-            ),
-        if (free.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text('Sem limite (${free.length})', style: text.titleMedium),
-          const SizedBox(height: 8),
-          for (final app in free)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: AppAvatar(app, size: 32),
-              title: Text(app.name),
-              subtitle: _usage.usedMinutes(app.id) > 0
-                  ? Text('Hoje: ${formatMinutes(_usage.usedMinutes(app.id))}')
-                  : null,
-            ),
-        ],
-        const SizedBox(height: 24),
-        Text(
-          _lastSync == null
-              ? 'Enviando a lista de apps para o responsável...'
-              : 'Lista de apps enviada ao responsável.',
-          style: text.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Aparelho: ${widget.device.name} (${widget.device.platform.label})',
-          style: text.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-        if (widget.device.parentLabel != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            'Responsável: ${widget.device.parentLabel}',
-            key: const Key('parentLabel'),
-            style: text.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Proteção contra desinstalação: o Android passa a exigir desativar o
-/// "administrador do dispositivo" antes de remover o app, e o responsável é
-/// avisado quando isso acontece.
-class _AdminCard extends StatelessWidget {
-  const _AdminCard({required this.active, required this.onActivate});
-
-  final bool active;
-  final Future<void> Function() onActivate;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    if (active) {
-      return const Notice(
-        'Proteção contra desinstalação ativa.',
-        icon: Icons.verified_user_outlined,
-      );
-    }
-    return Card(
-      key: const Key('adminCard'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        bottom: false,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Proteção contra desinstalação', style: text.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Ativada, o Android exige desativar esta proteção antes de remover '
-              'o Guardião, e o responsável é avisado. Também é avisado quando '
-              'uma permissão é retirada.',
-              style: text.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            FilledButton.tonal(
-              key: const Key('adminButton'),
-              onPressed: onActivate,
-              child: const Text('Ativar proteção'),
-            ),
+            GHeader(userName: name, online: online),
+            Expanded(child: tabs[_tab]),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Pede, uma a uma, as permissões especiais do Android.
-class _PermissionsCard extends StatelessWidget {
-  const _PermissionsCard({required this.missing, required this.onRequest});
-
-  final Set<MonitorPermission> missing;
-  final Future<void> Function(MonitorPermission) onRequest;
-
-  static const _info = {
-    MonitorPermission.usageAccess: (
-      'Liberar acesso ao uso',
-      'Sem isso o Android não conta quanto tempo cada app foi usado.',
-    ),
-    MonitorPermission.overlay: (
-      'Permitir aparecer sobre outros apps',
-      'Para avisar e cobrir o jogo quando o tempo acabar.',
-    ),
-    MonitorPermission.notifications: (
-      'Permitir avisos',
-      'Mostra que o Guardião está ativo.',
-    ),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Card(
-      key: const Key('permissionsCard'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Falta liberar no Android', style: text.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Para contar o tempo e bloquear, o app precisa destas permissões:',
-              style: text.bodySmall,
-            ),
-            for (final p in MonitorPermission.values)
-              if (missing.contains(p)) ...[
-                const SizedBox(height: 12),
-                Text(_info[p]!.$2, style: text.bodyMedium),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.tonal(
-                    key: Key('permission_${p.name}'),
-                    onPressed: () => onRequest(p),
-                    child: Text(_info[p]!.$1),
-                  ),
-                ),
-              ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LimitedTile extends StatelessWidget {
-  const _LimitedTile({
-    required this.app,
-    required this.rule,
-    required this.used,
-  });
-
-  final InstalledApp app;
-  final AppRule rule;
-  final int used;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final left = rule.remainingMinutes(used);
-    final blocked = rule.blocked || left == 0;
-    final limit = rule.dailyLimitMinutes;
-
-    final subtitle = rule.blocked
-        ? 'Bloqueado pelo responsável'
-        : (limit == null
-              ? 'Usou ${formatMinutes(used)} hoje'
-              : 'Usou ${formatMinutes(used)} de ${formatMinutes(limit)} hoje');
-    final progress = (limit == null || limit == 0)
-        ? 0.0
-        : (used / limit).clamp(0.0, 1.0);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                AppAvatar(app),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        app.name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                Chip(
-                  label: Text(
-                    blocked ? 'Bloqueado' : '${formatMinutes(left)} restantes',
-                  ),
-                  backgroundColor: blocked
-                      ? scheme.errorContainer
-                      : scheme.secondaryContainer,
-                  side: BorderSide.none,
-                ),
-              ],
-            ),
-            if (!rule.blocked && limit != null) ...[
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: progress,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ],
-          ],
-        ),
+      bottomNavigationBar: GNavBar(
+        items: _items,
+        index: _tab,
+        onChanged: (i) => setState(() => _tab = i),
       ),
     );
   }

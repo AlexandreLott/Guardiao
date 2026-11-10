@@ -24,6 +24,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> tapGenerate(WidgetTester tester) async {
+    await tester.ensureVisible(find.byKey(const Key('generateButton')));
+    await tester.tap(find.byKey(const Key('generateButton')));
+    await tester.pumpAndSettle();
+  }
+
+  /// Abre o app e avança do nome até a tela do QR.
+  Future<void> openQr(WidgetTester tester) async {
+    await openApp(tester);
+    await tapGenerate(tester);
+  }
+
   Future<void> tapNewCode(WidgetTester tester) async {
     await tester.ensureVisible(find.byKey(const Key('newCodeButton')));
     await tester.tap(find.byKey(const Key('newCodeButton')));
@@ -31,8 +43,8 @@ void main() {
   }
 
   testWidgets('começa mostrando o QR e o código de vínculo', (tester) async {
-    await openApp(tester);
-    expect(find.text('Vincular este aparelho'), findsOneWidget);
+    await openQr(tester);
+    expect(find.text('Mostre para o responsável'), findsOneWidget);
     expect(find.byKey(const Key('pairingQr')), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(const Key('pairingCode'))).data,
@@ -45,7 +57,7 @@ void main() {
   testWidgets('o QR carrega o mesmo código que está escrito na tela', (
     tester,
   ) async {
-    await openApp(tester);
+    await openQr(tester);
     expect(find.byType(QrImageView), findsOneWidget);
     final code = shownPairingCode(tester);
     expect(find.byKey(ValueKey(pairingQrPayload(code))), findsOneWidget);
@@ -56,7 +68,7 @@ void main() {
   testWidgets('o código gerado já está disponível para o responsável', (
     tester,
   ) async {
-    await openApp(tester);
+    await openQr(tester);
     final preview = await parent.previewPairRequest(shownPairingCode(tester));
     expect(preview.platform, DevicePlatform.other); // fonte de demonstração
     expect(preview.deviceName, isNotEmpty);
@@ -66,7 +78,7 @@ void main() {
   testWidgets('"Gerar novo código" troca o código e cancela o anterior', (
     tester,
   ) async {
-    await openApp(tester);
+    await openQr(tester);
     final first = shownPairingCode(tester);
     await tapNewCode(tester);
     final second = shownPairingCode(tester);
@@ -85,7 +97,7 @@ void main() {
       find.byKey(const Key('nameField')),
       'Notebook da Ana',
     );
-    await tapNewCode(tester);
+    await tapGenerate(tester);
     final preview = await parent.previewPairRequest(shownPairingCode(tester));
     expect(preview.deviceName, 'Notebook da Ana');
     await closeApp(tester);
@@ -95,7 +107,7 @@ void main() {
     await openApp(tester);
     await tester.ensureVisible(find.byKey(const Key('nameField')));
     await tester.enterText(find.byKey(const Key('nameField')), '  ');
-    await tapNewCode(tester);
+    await tapGenerate(tester);
     expect(find.text('Dê um nome para este aparelho.'), findsOneWidget);
     await closeApp(tester);
   });
@@ -103,17 +115,21 @@ void main() {
   testWidgets('pareia, envia os apps e mostra os limites do responsável', (
     tester,
   ) async {
-    await openApp(tester);
+    tallScreen(tester);
+    await openQr(tester);
 
     // O responsável lê o QR e aprova; a tela do filho muda sozinha.
     await parent.approvePairRequest(shownPairingCode(tester));
     await tester.pumpAndSettle();
+    expect(find.text('Tudo pronto!'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('linkedContinue')));
+    await tester.pumpAndSettle();
 
     // Entrou na tela principal e o responsável já enxerga os apps do aparelho.
-    expect(find.text('Seu tempo de hoje'), findsOneWidget);
+    expect(find.text('Tempo de tela hoje'), findsOneWidget);
     await tester.scrollUntilVisible(find.byKey(const Key('parentLabel')), 300);
     expect(find.text('Responsável: ma***@exemplo.com'), findsOneWidget);
-    await tester.drag(find.byType(ListView), const Offset(0, 2000));
+    await tester.drag(find.byType(ListView).first, const Offset(0, 2000));
     await tester.pumpAndSettle();
     final device = (await tester.runAsync(() => parent.watchDevices().first))!
         .single;
@@ -135,8 +151,8 @@ void main() {
       const AppRule(appId: 'demo.freefire', blocked: true),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Usou 0 min de 1 h 30 min hoje'), findsOneWidget);
-    expect(find.text('1 h 30 min restantes'), findsOneWidget);
+    expect(find.text('0 min de 1h 30min hoje'), findsOneWidget);
+    expect(find.text('Dentro do limite'), findsOneWidget);
     expect(find.text('Bloqueado pelo responsável'), findsOneWidget);
     expect(find.text('Sem limite (2)'), findsOneWidget);
 
@@ -144,7 +160,6 @@ void main() {
     await parent.removeDevice(device.id);
     await tester.pumpAndSettle();
     expect(find.text('Vincular este aparelho'), findsOneWidget);
-    expect(find.byKey(const Key('pairingQr')), findsOneWidget);
     await closeApp(tester);
   });
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../common/pin.dart';
 import '../watch/health_source.dart';
 import 'platform/installed_apps_source.dart';
 import 'usage/usage_monitor.dart';
 import 'screens/home_screen.dart';
+import 'screens/linked_screen.dart';
 import 'screens/pairing_screen.dart';
 
 /// Lado do filho. Decide a tela: entrando na conta, mostrando o QR de
@@ -19,11 +21,13 @@ class ChildGate extends StatefulWidget {
     this.isDemo = false,
     this.healthSource,
     this.healthStore,
+    this.pinStore,
   });
 
   /// Se informado, o aparelho confere as proteções e avisa o responsável.
   final HealthSource? healthSource;
   final HealthStore? healthStore;
+  final PinStore? pinStore;
 
   final GuardianBackend backend;
   final UsageMonitor monitor;
@@ -38,6 +42,10 @@ class ChildGate extends StatefulWidget {
 class _ChildGateState extends State<ChildGate> {
   late Future<void> _signIn;
   Stream<PairedDevice?>? _device;
+
+  /// A tela de vínculo foi mostrada: ao ser vinculado, comemora antes da home.
+  bool _sawPairing = false;
+  bool _linkedAck = false;
 
   @override
   void initState() {
@@ -84,11 +92,19 @@ class _ChildGateState extends State<ChildGate> {
             }
             final device = snap.data;
             if (device == null) {
+              _sawPairing = true;
+              _linkedAck = false;
               return PairingScreen(
                 backend: widget.backend,
                 source: widget.source,
                 isDemo: widget.isDemo,
+                monitor: widget.monitor,
                 onChangeRole: widget.onChangeRole,
+              );
+            }
+            if (_sawPairing && !_linkedAck) {
+              return LinkedScreen(
+                onContinue: () => setState(() => _linkedAck = true),
               );
             }
             return HomeScreen(
@@ -99,6 +115,8 @@ class _ChildGateState extends State<ChildGate> {
               device: device,
               healthSource: widget.healthSource,
               healthStore: widget.healthStore,
+              pinStore: widget.pinStore,
+              isDemo: widget.isDemo,
             );
           },
         );

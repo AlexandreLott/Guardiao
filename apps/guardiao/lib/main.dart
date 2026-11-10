@@ -4,6 +4,7 @@ import 'package:guardiao_core/guardiao_core.dart';
 import 'app.dart';
 import 'child/platform/installed_apps_source.dart';
 import 'child/usage/usage_monitor.dart';
+import 'common/pin.dart';
 import 'qr/qr_scanner.dart';
 import 'role/role.dart';
 import 'update/update_controller.dart';
@@ -29,10 +30,12 @@ Future<void> main() async {
       scanner: QrScanner.detect(),
       initialRole: await roleStore.read(),
       isDemo: setup.isDemo,
+      showWelcome: true,
       updates: updates,
       background: BackgroundTasks.detect(),
       healthSource: HealthSource.detect(),
       healthStore: const PrefsHealthStore(),
+      pinStore: const PrefsPinStore(),
     ),
   );
 }

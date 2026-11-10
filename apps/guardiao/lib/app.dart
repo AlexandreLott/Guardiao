@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
 import 'child/child_flow.dart';
+import 'common/pin.dart';
 import 'child/platform/installed_apps_source.dart';
 import 'child/usage/usage_monitor.dart';
 import 'parent/parent_flow.dart';
@@ -25,10 +26,12 @@ class GuardiaoApp extends StatefulWidget {
     required this.monitor,
     this.initialRole,
     this.isDemo = false,
+    this.showWelcome = false,
     this.updates,
     this.background,
     this.healthSource,
     this.healthStore,
+    this.pinStore,
   });
 
   final GuardianBackend backend;
@@ -39,6 +42,9 @@ class GuardiaoApp extends StatefulWidget {
   final DeviceRole? initialRole;
   final bool isDemo;
 
+  /// Mostra a abertura do Guardian antes da escolha da função.
+  final bool showWelcome;
+
   /// Aviso e instalação de versões novas (só no Android).
   final UpdateController? updates;
 
@@ -48,6 +54,9 @@ class GuardiaoApp extends StatefulWidget {
   /// Leitura das proteções do aparelho do filho.
   final HealthSource? healthSource;
   final HealthStore? healthStore;
+
+  /// PIN do painel do responsável neste aparelho (o do filho).
+  final PinStore? pinStore;
 
   @override
   State<GuardiaoApp> createState() => _GuardiaoAppState();
@@ -81,14 +90,17 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guardião',
+      title: guardianName,
       debugShowCheckedModeBanner: false,
       theme: guardiaoTheme(Brightness.light),
-      darkTheme: guardiaoTheme(Brightness.dark),
       builder: (context, child) =>
           UpdateHost(controller: widget.updates, child: child!),
       home: switch (_role) {
-        null => RoleScreen(onPick: _pick),
+        null => RoleScreen(
+          onPick: _pick,
+          showWelcome: widget.showWelcome,
+          isDemo: widget.isDemo,
+        ),
         DeviceRole.parent => ParentFlow(
           key: const ValueKey('parent'),
           backend: widget.backend,
@@ -103,6 +115,7 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
           monitor: widget.monitor,
           healthSource: widget.healthSource,
           healthStore: widget.healthStore,
+          pinStore: widget.pinStore,
           isDemo: widget.isDemo,
           onChangeRole: _changeRole,
         ),

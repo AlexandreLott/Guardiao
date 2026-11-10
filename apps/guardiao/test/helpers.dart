@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardiao/app.dart';
 import 'package:guardiao/child/platform/installed_apps_source.dart';
+import 'package:guardiao/common/pin.dart';
 import 'package:guardiao/child/usage/usage_monitor.dart';
 import 'package:guardiao/qr/qr_scanner.dart';
 import 'package:guardiao/role/role.dart';
@@ -54,6 +55,7 @@ Widget appFor(
   HealthSource? healthSource,
   HealthStore? healthStore,
   BackgroundTasks? background,
+  PinStore? pinStore,
 }) => GuardiaoApp(
   backend: backend,
   roleStore: store ?? MemoryRoleStore(role),
@@ -65,6 +67,7 @@ Widget appFor(
   healthSource: healthSource,
   healthStore: healthStore,
   background: background,
+  pinStore: pinStore,
 );
 
 /// Desmonta a árvore para cancelar os temporizadores da sincronização.
@@ -86,4 +89,45 @@ class RecordingBackground implements BackgroundTasks {
 
   @override
   Future<void> disable() async => calls.add('disable');
+}
+
+/// Tela alta, para que listas e folhas longas caibam sem rolar.
+void tallScreen(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
+/// No aparelho do filho: gera o código, o responsável aprova e a tela
+/// "Tudo pronto!" leva para a tela principal.
+Future<void> pairThroughWizard(
+  WidgetTester tester,
+  GuardianBackend parent,
+) async {
+  await tester.ensureVisible(find.byKey(const Key('generateButton')));
+  await tester.tap(find.byKey(const Key('generateButton')));
+  await tester.pumpAndSettle();
+  // Se faltam permissões, o passo delas vem antes do QR.
+  if (find.byKey(const Key('permissionsContinue')).evaluate().isNotEmpty) {
+    for (final k in const ['permUsage', 'permOverlay']) {
+      final row = find.byKey(Key(k));
+      final on = tester
+          .widget<Switch>(
+            find.descendant(of: row, matching: find.byType(Switch)),
+          )
+          .value;
+      if (!on) {
+        await tester.tap(
+          find.descendant(of: row, matching: find.byType(Switch)),
+        );
+        await tester.pumpAndSettle();
+      }
+    }
+    await tester.tap(find.byKey(const Key('permissionsContinue')));
+    await tester.pumpAndSettle();
+  }
+  await parent.approvePairRequest(shownPairingCode(tester));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('linkedContinue')));
+  await tester.pumpAndSettle();
 }

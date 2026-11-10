@@ -168,10 +168,68 @@ service cloud.firestore {
           && (request.auth.uid == deviceId || isParentOf(deviceId));
         allow create, update: if isParentOf(deviceId)
           && request.resource.data.blocked is bool
+          && (!('alwaysAllowed' in request.resource.data)
+              || request.resource.data.alwaysAllowed is bool)
           && (request.resource.data.dailyLimitMinutes == null
               || (request.resource.data.dailyLimitMinutes is int
                   && request.resource.data.dailyLimitMinutes >= 0
                   && request.resource.data.dailyLimitMinutes <= 1440));
+        allow delete: if isParentOf(deviceId);
+      }
+
+      // Ajustes do aparelho (bloqueio geral, rotinas, missões): um único
+      // documento, escrito só pelo responsável e lido pelo aparelho.
+      match /config/{docId} {
+        allow read: if signedIn()
+          && (request.auth.uid == deviceId || isParentOf(deviceId));
+        allow create, update: if isParentOf(deviceId)
+          && docId == 'main'
+          && request.resource.data.keys().hasOnly(
+               ['lockAll', 'routines', 'missions', 'blockMessage',
+                'suggestedMissionId', 'allowRequests'])
+          && request.resource.data.lockAll is bool
+          && request.resource.data.allowRequests is bool
+          && request.resource.data.routines is list
+          && request.resource.data.routines.size() <= 30
+          && request.resource.data.missions is list
+          && request.resource.data.missions.size() <= 30
+          && request.resource.data.blockMessage is string
+          && request.resource.data.blockMessage.size() <= 140
+          && request.resource.data.suggestedMissionId is string
+          && request.resource.data.suggestedMissionId.size() <= 60;
+        allow delete: if isParentOf(deviceId);
+      }
+
+      // Créditos: a criança pede ("Fiz a tarefa"), o responsável aprova ou
+      // recusa, e a criança usa o crédito aprovado (uma única vez).
+      match /claims/{claimId} {
+        allow read: if signedIn()
+          && (request.auth.uid == deviceId || isParentOf(deviceId));
+        allow create: if signedIn() && request.auth.uid == deviceId
+          && request.resource.data.keys().hasOnly(
+               ['title', 'minutes', 'status', 'createdAt', 'usedDay'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.minutes is int
+          && request.resource.data.minutes >= 1
+          && request.resource.data.minutes <= 240
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.usedDay == '';
+        allow update: if signedIn() && (
+          (isParentOf(deviceId)
+            && resource.data.status == 'pending'
+            && request.resource.data.status in ['approved', 'rejected']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'decidedAt'])
+            && request.resource.data.decidedAt == request.time)
+          || (request.auth.uid == deviceId
+            && resource.data.status == 'approved'
+            && resource.data.usedDay == ''
+            && request.resource.data.usedDay is string
+            && request.resource.data.usedDay.size() == 10
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedDay']))
+        );
         allow delete: if isParentOf(deviceId);
       }
     }

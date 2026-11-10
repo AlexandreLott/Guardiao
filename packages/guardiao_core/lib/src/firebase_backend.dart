@@ -471,6 +471,91 @@ class FirebaseBackend implements GuardianBackend {
     }
   }
 
+  // ---- ajustes, créditos ----
+
+  DocumentReference<Map<String, dynamic>> _configRef(String deviceId) =>
+      _db.collection('devices').doc(deviceId).collection('config').doc('main');
+
+  Stream<DeviceConfig> _configStream(String deviceId) =>
+      _configRef(deviceId)
+          .snapshots()
+          .map((d) => DeviceConfig.fromMap(d.data()));
+
+  Stream<List<Claim>> _claimsStream(String deviceId) => _db
+      .collection('devices')
+      .doc(deviceId)
+      .collection('claims')
+      .snapshots()
+      .map((q) {
+        final list = [
+          for (final d in q.docs)
+            Claim(
+              id: d.id,
+              title: (d.data()['title'] as String?) ?? '',
+              minutes: (d.data()['minutes'] as num?)?.toInt() ?? 0,
+              status: ClaimStatus.parse(d.data()['status'] as String?),
+              createdAt:
+                  (d.data()['createdAt'] as Timestamp?)?.toDate() ??
+                  DateTime.now(),
+              decidedAt: (d.data()['decidedAt'] as Timestamp?)?.toDate(),
+              usedDay: (d.data()['usedDay'] as String?)?.isEmpty ?? true
+                  ? null
+                  : d.data()['usedDay'] as String?,
+            ),
+        ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      });
+
+  @override
+  Stream<DeviceConfig> watchConfig(String deviceId) => _configStream(deviceId);
+
+  @override
+  Future<void> saveConfig(String deviceId, DeviceConfig config) =>
+      _configRef(deviceId).set(config.toMap());
+
+  @override
+  Stream<List<Claim>> watchClaims(String deviceId) => _claimsStream(deviceId);
+
+  @override
+  Future<void> decideClaim(String deviceId, String claimId, bool approved) =>
+      _db
+          .collection('devices')
+          .doc(deviceId)
+          .collection('claims')
+          .doc(claimId)
+          .update({
+            'status': approved ? 'approved' : 'rejected',
+            'decidedAt': FieldValue.serverTimestamp(),
+          });
+
+  @override
+  Stream<DeviceConfig> watchOwnConfig() => _configStream(_requireUid());
+
+  @override
+  Stream<List<UsageEntry>> watchOwnUsage({required String sinceDay}) =>
+      watchUsage(_requireUid(), sinceDay: sinceDay);
+
+  @override
+  Stream<List<Claim>> watchOwnClaims() => _claimsStream(_requireUid());
+
+  @override
+  Future<void> createClaim({required String title, required int minutes}) =>
+      _db.collection('devices').doc(_requireUid()).collection('claims').add({
+        'title': title,
+        'minutes': minutes.clamp(1, 240),
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'usedDay': '',
+      });
+
+  @override
+  Future<void> useClaim(String claimId, String day) => _db
+      .collection('devices')
+      .doc(_requireUid())
+      .collection('claims')
+      .doc(claimId)
+      .update({'usedDay': day});
+
   // ---- auxiliares ----
 
   Stream<List<InstalledApp>> _appsStream(String deviceId) => _db

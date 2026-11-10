@@ -72,9 +72,13 @@ class AppRule {
     required this.appId,
     this.dailyLimitMinutes,
     this.blocked = false,
+    this.alwaysAllowed = false,
   });
 
   final String appId;
+
+  /// Fica liberado mesmo no "Bloqueio geral" e nas rotinas que pausam tudo.
+  final bool alwaysAllowed;
 
   /// Limite diário em minutos. `null` significa sem limite.
   final int? dailyLimitMinutes;
@@ -82,17 +86,19 @@ class AppRule {
   /// Quando verdadeiro, o app fica bloqueado o dia todo.
   final bool blocked;
 
-  bool get isDefault => dailyLimitMinutes == null && !blocked;
+  bool get isDefault => dailyLimitMinutes == null && !blocked && !alwaysAllowed;
 
   factory AppRule.fromMap(String appId, Map<String, dynamic> data) => AppRule(
     appId: appId,
     dailyLimitMinutes: (data['dailyLimitMinutes'] as num?)?.toInt(),
     blocked: (data['blocked'] as bool?) ?? false,
+    alwaysAllowed: (data['alwaysAllowed'] as bool?) ?? false,
   );
 
   Map<String, dynamic> toMap() => {
     'dailyLimitMinutes': dailyLimitMinutes,
     'blocked': blocked,
+    'alwaysAllowed': alwaysAllowed,
   };
 
   /// Minutos ainda disponíveis hoje, dado o tempo já usado.
@@ -375,3 +381,418 @@ class PairingException implements Exception {
   @override
   String toString() => message;
 }
+
+// ---------------------------------------------------------------------------
+// Rotinas, missões e créditos
+// ---------------------------------------------------------------------------
+
+/// Grupo de apps para filtrar a lista e somar o uso no relatório.
+enum AppCategory {
+  games('Jogos'),
+  videos('Vídeos'),
+  social('Redes'),
+  study('Estudo'),
+  other('Outros');
+
+  const AppCategory(this.label);
+  final String label;
+}
+
+const _gameWords = [
+  'game',
+  'jogo',
+  'roblox',
+  'minecraft',
+  'fortnite',
+  'freefire',
+  'free fire',
+  'brawl',
+  'clash',
+  'subway',
+  'puzzle',
+  'candy',
+  'pubg',
+  'garena',
+  'supercell',
+  'mojang',
+  'epicgames',
+  'among',
+  'stumble',
+  'cod',
+  'valorant',
+  'steam',
+];
+const _videoWords = [
+  'youtube',
+  'netflix',
+  'disney',
+  'primevideo',
+  'hbo',
+  'max',
+  'twitch',
+  'globoplay',
+  'video',
+  'vídeo',
+  'tiktok',
+  'kwai',
+  'cinema',
+  'tv',
+];
+const _socialWords = [
+  'whatsapp',
+  'instagram',
+  'facebook',
+  'telegram',
+  'discord',
+  'snapchat',
+  'twitter',
+  'messenger',
+  'pinterest',
+  'reddit',
+  'bluesky',
+  'threads',
+];
+const _studyWords = [
+  'duolingo',
+  'khan',
+  'classroom',
+  'escola',
+  'estudo',
+  'edu',
+  'dictionary',
+  'dicionário',
+  'wikipedia',
+  'calculator',
+  'calculadora',
+  'spotify',
+  'music',
+  'música',
+  'deezer',
+  'kindle',
+  'livros',
+  'books',
+];
+
+/// Melhor palpite da categoria de um app, pelo nome e pelo pacote.
+AppCategory categoryOf(InstalledApp app) {
+  final text = '${app.name} ${app.packageName ?? app.id}'.toLowerCase();
+  bool any(List<String> words) => words.any(text.contains);
+  if (any(_studyWords)) return AppCategory.study;
+  if (any(_gameWords)) return AppCategory.games;
+  if (any(_videoWords)) return AppCategory.videos;
+  if (any(_socialWords)) return AppCategory.social;
+  return AppCategory.other;
+}
+
+/// O que uma rotina faz enquanto está valendo.
+enum RoutineMode {
+  /// Pausa todos os apps (menos os "sempre liberados").
+  pauseAll('pause_all', 'Pausa tudo'),
+
+  /// Só deixa abrir apps de estudo e música.
+  studyOnly('study_only', 'Só estudo e música'),
+
+  /// Só deixa abrir jogos.
+  gamesOnly('games_only', 'Libera só jogos');
+
+  const RoutineMode(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static RoutineMode parse(String? value) => RoutineMode.values.firstWhere(
+    (m) => m.wire == value,
+    orElse: () => RoutineMode.pauseAll,
+  );
+}
+
+/// Horário recorrente com uma regra especial ("Hora de dormir", "Almoço").
+class Routine {
+  const Routine({
+    required this.id,
+    required this.name,
+    required this.startMinute,
+    required this.endMinute,
+    this.days = const {1, 2, 3, 4, 5, 6, 7},
+    this.mode = RoutineMode.pauseAll,
+    this.icon = 'sun',
+    this.enabled = true,
+  });
+
+  final String id;
+  final String name;
+
+  /// Minutos desde a meia-noite (07:00 = 420).
+  final int startMinute;
+  final int endMinute;
+
+  /// Dias da semana (1 = segunda ... 7 = domingo).
+  final Set<int> days;
+  final RoutineMode mode;
+
+  /// Nome do ícone (veja `routineIcons` no app).
+  final String icon;
+  final bool enabled;
+
+  /// A rotina vale neste instante? Faixas que atravessam a meia-noite
+  /// (21:00–07:00) valem até de manhã, no dia seguinte ao marcado.
+  bool isActive(DateTime now) {
+    if (!enabled) return false;
+    final minute = now.hour * 60 + now.minute;
+    if (startMinute <= endMinute) {
+      return days.contains(now.weekday) &&
+          minute >= startMinute &&
+          minute < endMinute;
+    }
+    if (minute >= startMinute) return days.contains(now.weekday);
+    if (minute < endMinute) {
+      final yesterday = now.weekday == 1 ? 7 : now.weekday - 1;
+      return days.contains(yesterday);
+    }
+    return false;
+  }
+
+  Routine copyWith({
+    String? name,
+    int? startMinute,
+    int? endMinute,
+    Set<int>? days,
+    RoutineMode? mode,
+    String? icon,
+    bool? enabled,
+  }) => Routine(
+    id: id,
+    name: name ?? this.name,
+    startMinute: startMinute ?? this.startMinute,
+    endMinute: endMinute ?? this.endMinute,
+    days: days ?? this.days,
+    mode: mode ?? this.mode,
+    icon: icon ?? this.icon,
+    enabled: enabled ?? this.enabled,
+  );
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'start': startMinute,
+    'end': endMinute,
+    'days': (days.toList()..sort()),
+    'mode': mode.wire,
+    'icon': icon,
+    'enabled': enabled,
+  };
+
+  static Routine? fromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final id = raw['id'];
+    final name = raw['name'];
+    final start = raw['start'];
+    final end = raw['end'];
+    if (id is! String || name is! String || start is! num || end is! num) {
+      return null;
+    }
+    final days = <int>{
+      for (final d in (raw['days'] as List? ?? const []))
+        if (d is num && d >= 1 && d <= 7) d.toInt(),
+    };
+    return Routine(
+      id: id,
+      name: name,
+      startMinute: start.toInt().clamp(0, 1439),
+      endMinute: end.toInt().clamp(0, 1439),
+      days: days.isEmpty ? const {1, 2, 3, 4, 5, 6, 7} : days,
+      mode: RoutineMode.parse(raw['mode'] as String?),
+      icon: (raw['icon'] as String?) ?? 'sun',
+      enabled: raw['enabled'] != false,
+    );
+  }
+}
+
+/// Tarefa da família que rende tempo extra ("Arrumar o quarto", +50 min).
+class Mission {
+  const Mission({
+    required this.id,
+    required this.title,
+    required this.minutes,
+    this.icon = 'broom',
+  });
+
+  final String id;
+  final String title;
+  final int minutes;
+  final String icon;
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'title': title,
+    'minutes': minutes,
+    'icon': icon,
+  };
+
+  static Mission? fromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final id = raw['id'];
+    final title = raw['title'];
+    final minutes = raw['minutes'];
+    if (id is! String || title is! String || minutes is! num) return null;
+    return Mission(
+      id: id,
+      title: title,
+      minutes: minutes.toInt().clamp(1, 240),
+      icon: (raw['icon'] as String?) ?? 'broom',
+    );
+  }
+}
+
+/// Ajustes do responsável para um aparelho (um documento só).
+class DeviceConfig {
+  const DeviceConfig({
+    this.lockAll = false,
+    this.routines = const [],
+    this.missions = const [],
+    this.blockMessage = '',
+    this.suggestedMissionId,
+    this.allowRequests = true,
+  });
+
+  /// "Bloqueio geral": pausa tudo agora, menos os apps sempre liberados.
+  final bool lockAll;
+  final List<Routine> routines;
+  final List<Mission> missions;
+
+  /// Texto da tela de bloqueio ("Arrume o quarto e ganhe mais 50 minutos!").
+  final String blockMessage;
+  final String? suggestedMissionId;
+
+  /// A criança pode pedir mais tempo.
+  final bool allowRequests;
+
+  Mission? get suggestedMission {
+    for (final m in missions) {
+      if (m.id == suggestedMissionId) return m;
+    }
+    return null;
+  }
+
+  /// Rotinas valendo agora.
+  List<Routine> activeRoutines(DateTime now) => [
+    for (final r in routines)
+      if (r.isActive(now)) r,
+  ];
+
+  DeviceConfig copyWith({
+    bool? lockAll,
+    List<Routine>? routines,
+    List<Mission>? missions,
+    String? blockMessage,
+    String? suggestedMissionId,
+    bool clearSuggested = false,
+    bool? allowRequests,
+  }) => DeviceConfig(
+    lockAll: lockAll ?? this.lockAll,
+    routines: routines ?? this.routines,
+    missions: missions ?? this.missions,
+    blockMessage: blockMessage ?? this.blockMessage,
+    suggestedMissionId: clearSuggested
+        ? null
+        : (suggestedMissionId ?? this.suggestedMissionId),
+    allowRequests: allowRequests ?? this.allowRequests,
+  );
+
+  Map<String, dynamic> toMap() => {
+    'lockAll': lockAll,
+    'routines': [for (final r in routines) r.toMap()],
+    'missions': [for (final m in missions) m.toMap()],
+    'blockMessage': blockMessage,
+    'suggestedMissionId': suggestedMissionId ?? '',
+    'allowRequests': allowRequests,
+  };
+
+  factory DeviceConfig.fromMap(Map<String, dynamic>? data) {
+    if (data == null) return const DeviceConfig();
+    final suggested = data['suggestedMissionId'] as String?;
+    return DeviceConfig(
+      lockAll: data['lockAll'] == true,
+      routines: [
+        for (final r in (data['routines'] as List? ?? const []))
+          ?Routine.fromMap(r),
+      ],
+      missions: [
+        for (final m in (data['missions'] as List? ?? const []))
+          ?Mission.fromMap(m),
+      ],
+      blockMessage: (data['blockMessage'] as String?) ?? '',
+      suggestedMissionId: (suggested == null || suggested.isEmpty)
+          ? null
+          : suggested,
+      allowRequests: data['allowRequests'] != false,
+    );
+  }
+}
+
+/// Missões sugeridas na primeira vez.
+const defaultMissions = [
+  Mission(
+    id: 'm-quarto',
+    title: 'Arrumar o quarto',
+    minutes: 50,
+    icon: 'broom',
+  ),
+  Mission(
+    id: 'm-louca',
+    title: 'Lavar a louça do almoço',
+    minutes: 30,
+    icon: 'dish',
+  ),
+  Mission(id: 'm-ler', title: 'Ler 20 minutos', minutes: 30, icon: 'book'),
+  Mission(
+    id: 'm-cachorro',
+    title: 'Passear com o cachorro',
+    minutes: 15,
+    icon: 'pet',
+  ),
+];
+
+enum ClaimStatus {
+  pending,
+  approved,
+  rejected;
+
+  static ClaimStatus parse(String? value) => ClaimStatus.values.firstWhere(
+    (s) => s.name == value,
+    orElse: () => ClaimStatus.pending,
+  );
+}
+
+/// "Fiz a tarefa": pedido de crédito da criança, que o responsável aprova.
+class Claim {
+  const Claim({
+    required this.id,
+    required this.title,
+    required this.minutes,
+    required this.status,
+    required this.createdAt,
+    this.decidedAt,
+    this.usedDay,
+  });
+
+  final String id;
+  final String title;
+  final int minutes;
+  final ClaimStatus status;
+  final DateTime createdAt;
+  final DateTime? decidedAt;
+
+  /// Dia (`2026-11-10`) em que o crédito foi usado; `null` = ainda disponível.
+  final String? usedDay;
+
+  bool get available => status == ClaimStatus.approved && usedDay == null;
+}
+
+/// Minutos de crédito aprovados e ainda não usados.
+int availableCredit(Iterable<Claim> claims) =>
+    claims.where((c) => c.available).fold(0, (sum, c) => sum + c.minutes);
+
+/// Minutos extras valendo no [day] (créditos usados nesse dia).
+int bonusMinutesOf(Iterable<Claim> claims, String day) => claims
+    .where((c) => c.status == ClaimStatus.approved && c.usedDay == day)
+    .fold(0, (sum, c) => sum + c.minutes);
