@@ -1,0 +1,27 @@
+# Temporário: aplica o pacote code-update5.zip e se apaga em seguida.
+name: unpack-update5
+on:
+  push:
+    paths:
+      - '.github/workflows/unpack-update5.yml'
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar pacote
+        run: |
+          set -euo pipefail
+          test -f code-update5.zip
+          unzip -q -o code-update5.zip
+          rm code-update5.zip
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q --cached .github/workflows/unpack-update5.yml || true
+          git add -A -- . ':!.github/workflows/unpack-update5.yml'
+          git commit -m "Filho: sincroniza ao vincular, tempos limites, diagnostico e fallback sem icones" || echo "nada a commitar"
+          git push
