@@ -52,13 +52,18 @@ class DeviceSync {
   }
 
   Future<void> syncNow() async {
+    var step = 'lendo os apps do aparelho';
     try {
       final apps = await source.list();
-      await backend.syncInstalledApps(apps);
-      await backend.touch();
+      step = 'enviando ${apps.length} apps para a nuvem';
+      await backend
+          .syncInstalledApps(apps)
+          .timeout(const Duration(seconds: 60));
+      step = 'registrando o sinal de vida';
+      await backend.touch().timeout(const Duration(seconds: 30));
       lastSync.add(DateTime.now());
     } catch (e) {
-      errors.add('Não foi possível atualizar a lista de apps: $e');
+      errors.add('Não foi possível atualizar a lista de apps ($step): $e');
     }
   }
 

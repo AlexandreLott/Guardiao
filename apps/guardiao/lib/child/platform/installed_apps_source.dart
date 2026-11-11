@@ -43,10 +43,23 @@ class AndroidAppsSource implements InstalledAppsSource {
 
   @override
   Future<List<InstalledApp>> list() async {
-    final raw = await _channel.invokeListMethod<Map<Object?, Object?>>(
-      'listInstalledApps',
-    );
-    return parseAndroidApps(raw ?? const []);
+    // Primeiro com ícones; se demorar ou falhar, manda só nomes (o responsável
+    // vê a letra inicial) em vez de não mandar nada.
+    try {
+      final raw = await _channel
+          .invokeListMethod<Map<Object?, Object?>>('listInstalledApps', {
+            'icons': true,
+          })
+          .timeout(const Duration(seconds: 45));
+      return parseAndroidApps(raw ?? const []);
+    } catch (_) {
+      final raw = await _channel
+          .invokeListMethod<Map<Object?, Object?>>('listInstalledApps', {
+            'icons': false,
+          })
+          .timeout(const Duration(seconds: 30));
+      return parseAndroidApps(raw ?? const []);
+    }
   }
 }
 

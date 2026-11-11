@@ -198,7 +198,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(_checkLaunchTab());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_checkLaunchTab());
+      // Ao voltar para o app, reenvia a lista de apps e o sinal de vida.
+      unawaited(_sync.syncNow());
+    }
   }
 
   @override

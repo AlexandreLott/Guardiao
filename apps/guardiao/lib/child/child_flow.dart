@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
@@ -6,6 +8,7 @@ import '../watch/health_source.dart';
 import 'platform/installed_apps_source.dart';
 import 'usage/usage_monitor.dart';
 import 'screens/home_screen.dart';
+import 'sync/device_sync.dart';
 import 'screens/linked_screen.dart';
 import 'screens/pairing_screen.dart';
 
@@ -46,6 +49,18 @@ class _ChildGateState extends State<ChildGate> {
   /// A tela de vínculo foi mostrada: ao ser vinculado, comemora antes da home.
   bool _sawPairing = false;
   bool _linkedAck = false;
+
+  /// Aparelho cuja primeira sincronização já foi disparada.
+  String? _syncedDeviceId;
+
+  /// Envia a lista de apps (com ícones) e o "estou ativo" assim que o vínculo
+  /// existe, sem esperar o usuário sair da tela de comemoração.
+  void _firstSync(PairedDevice device) {
+    if (_syncedDeviceId == device.id) return;
+    _syncedDeviceId = device.id;
+    final sync = DeviceSync(widget.backend, widget.source);
+    unawaited(sync.syncNow().whenComplete(sync.dispose));
+  }
 
   @override
   void initState() {
@@ -102,6 +117,7 @@ class _ChildGateState extends State<ChildGate> {
                 onChangeRole: widget.onChangeRole,
               );
             }
+            _firstSync(device);
             if (_sawPairing && !_linkedAck) {
               return LinkedScreen(
                 onContinue: () => setState(() => _linkedAck = true),

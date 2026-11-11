@@ -38,7 +38,8 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "listInstalledApps" -> listInstalledApps(result)
+                    "listInstalledApps" ->
+                        listInstalledApps(result, call.argument<Boolean>("icons") ?: true)
                     "deviceName" -> result.success(deviceName())
                     else -> result.notImplemented()
                 }
@@ -242,19 +243,21 @@ class MainActivity : FlutterActivity() {
 
     // --------------------------------------------------------- apps e nome
 
-    private fun listInstalledApps(result: MethodChannel.Result) {
+    private fun listInstalledApps(result: MethodChannel.Result, withIcons: Boolean) {
         // A consulta pode demorar com muitos apps; sai da thread principal.
+        // Captura Throwable (não só Exception) para nunca deixar o Flutter
+        // esperando uma resposta que não vem.
         Thread {
             try {
-                val apps = queryLauncherApps()
+                val apps = queryLauncherApps(withIcons)
                 runOnUiThread { result.success(apps) }
-            } catch (e: Exception) {
-                runOnUiThread { result.error("LIST_FAILED", e.message, null) }
+            } catch (e: Throwable) {
+                runOnUiThread { result.error("LIST_FAILED", e.toString(), null) }
             }
         }.start()
     }
 
-    private fun queryLauncherApps(): List<Map<String, String>> {
+    private fun queryLauncherApps(withIcons: Boolean): List<Map<String, String>> {
         val pm = packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         val resolved: List<ResolveInfo> =
@@ -270,7 +273,7 @@ class MainActivity : FlutterActivity() {
                     "packageName" to it.activityInfo.packageName,
                     "name" to it.loadLabel(pm).toString(),
                 )
-                iconBase64(it, pm)?.let { icon -> map["icon"] = icon }
+                if (withIcons) iconBase64(it, pm)?.let { icon -> map["icon"] = icon }
                 map
             }
             .distinctBy { it["packageName"] }
