@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'update_controller.dart';
 
 /// Faixa no topo do app que avisa da versão nova e conduz a atualização.
+/// O tema deixa os botões em largura total; numa linha com outros botões isso
+/// os faria sumir, então aqui eles têm só a largura do texto.
+final ButtonStyle _compact = FilledButton.styleFrom(
+  minimumSize: const Size(0, 40),
+);
+
 class UpdateBar extends StatelessWidget {
   const UpdateBar({super.key, required this.controller});
 
@@ -25,6 +31,7 @@ class UpdateBar extends StatelessWidget {
             child: const Text('Agora não'),
           ),
           FilledButton(
+            style: _compact,
             key: const Key('updateStart'),
             onPressed: controller.start,
             child: const Text('Atualizar'),
@@ -36,6 +43,7 @@ class UpdateBar extends StatelessWidget {
         'Autorize a instalação de aplicativos de fontes desconhecidas para o Guardião e retorne a esta tela.',
         [
           FilledButton(
+            style: _compact,
             key: const Key('updateContinue'),
             onPressed: controller.continueInstall,
             child: const Text('Continuar'),
@@ -46,6 +54,7 @@ class UpdateBar extends StatelessWidget {
         'Confirme a instalação na tela do Android para concluir a atualização.',
         [
           FilledButton(
+            style: _compact,
             key: const Key('updateContinue'),
             onPressed: controller.continueInstall,
             child: const Text('Abrir de novo'),
@@ -61,6 +70,7 @@ class UpdateBar extends StatelessWidget {
             child: const Text('Fechar'),
           ),
           FilledButton(
+            style: _compact,
             key: const Key('updateStart'),
             onPressed: controller.start,
             child: const Text('Tentar novamente'),

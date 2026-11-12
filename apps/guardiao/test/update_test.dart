@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardiao/update/update_bar.dart';
+import 'package:guardiao_core/guardiao_core.dart';
 import 'package:guardiao/update/update_controller.dart';
 import 'package:guardiao/update/update_installer.dart';
 import 'package:guardiao/update/update_models.dart';
@@ -171,6 +172,34 @@ void main() {
       await tester.pump();
       expect(installer.installs, 1);
       expect(find.textContaining('Confirme a instalação'), findsOneWidget);
+    });
+
+    testWidgets('com o tema do app o botão Atualizar aparece e é tocável', (
+      tester,
+    ) async {
+      final installer = FakeUpdateInstaller(build: 1);
+      final c = UpdateController(
+        source: FakeUpdateSource(update(5)),
+        installer: installer,
+      );
+      await c.check();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guardiaoTheme(Brightness.light),
+          home: UpdateHost(
+            controller: c,
+            child: const Scaffold(body: Text('conteúdo')),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      final size = tester.getSize(find.byKey(const Key('updateStart')));
+      expect(size.width, greaterThan(0));
+      expect(size.width, lessThan(300));
+      await tester.tap(find.byKey(const Key('updateStart')));
+      await tester.pump();
+      await tester.pump();
+      expect(installer.installs, 1);
     });
 
     testWidgets('sem versão nova a barra some', (tester) async {
