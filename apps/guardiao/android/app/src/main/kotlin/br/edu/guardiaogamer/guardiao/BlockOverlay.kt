@@ -31,7 +31,11 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 
-/** Atalho de app liberado mostrado em "Enquanto isso, que tal...". */
+/**
+ * Sugestão mostrada em "Enquanto isso, que tal...". Com [pkg], é um app
+ * liberado e ganha o botão Abrir; sem [pkg], é uma ideia para fazer fora do
+ * celular.
+ */
 data class Suggestion(val pkg: String, val label: String, val hint: String)
 
 /** O que a tela de bloqueio mostra. */
@@ -44,6 +48,8 @@ data class BlockInfo(
     val suggestions: List<Suggestion>,
     /** Minutos de crédito que a criança tem para usar. */
     val credits: Int = 0,
+    /** Falso quando não há hora para liberar (app bloqueado pelo responsável). */
+    val showClock: Boolean = true,
 )
 
 /** Cadeado desenhado à mão; [lift] levanta a haste (1 = aberto, 0 = trancado). */
@@ -291,28 +297,32 @@ class BlockOverlay(
             text(info.message, 15f, muted).apply { setPadding(dp(8), dp(8), dp(8), dp(16)) },
         )
 
-        column.addView(text("LIBERA DE NOVO EM", 12f, muted, bold = true).apply { letterSpacing = 0.06f })
-        val (hBox, h) = timeBox("horas")
-        val (mBox, m) = timeBox("min")
-        val (sBox, s) = timeBox("seg")
-        hoursView = h; minutesView = m; secondsView = s
-        column.addView(
-            LinearLayout(context).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER
-                setPadding(0, dp(8), 0, dp(16))
-                addView(hBox); addView(mBox); addView(sBox)
-            },
-        )
-        updateCountdown(secondsLeft)
+        if (info.showClock) {
+            column.addView(text("LIBERA DE NOVO EM", 12f, muted, bold = true).apply { letterSpacing = 0.06f })
+            val (hBox, h) = timeBox("horas")
+            val (mBox, m) = timeBox("min")
+            val (sBox, s) = timeBox("seg")
+            hoursView = h; minutesView = m; secondsView = s
+            column.addView(
+                LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER
+                    setPadding(0, dp(8), 0, dp(16))
+                    addView(hBox); addView(mBox); addView(sBox)
+                },
+            )
+            updateCountdown(secondsLeft)
+        }
 
-        if (info.mission != null || info.credits > 0) {
+        // o cartão da missão aparece sempre: é por ele que se ganha tempo
+        run {
             val card = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 background = rounded(Color.WHITE, 22, Color.parseColor("#FFD2B0"))
                 setPadding(dp(16), dp(14), dp(16), dp(14))
             }
-            if (info.mission != null) {
+            val mission = info.mission ?: "Faça uma missão da família e ganhe tempo extra!"
+            run {
                 card.addView(
                     text("MISSÃO PARA GANHAR MAIS TEMPO", 12f, Color.parseColor("#D95F00"), bold = true, gravity = Gravity.START)
                         .apply { letterSpacing = 0.05f },
@@ -329,20 +339,24 @@ class BlockOverlay(
                             },
                         )
                         addView(
-                            text(info.mission, 16.5f, ink, bold = true, gravity = Gravity.START).apply {
+                            text(mission, 16.5f, ink, bold = true, gravity = Gravity.START).apply {
                                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
                             },
                         )
                     },
                 )
-                card.addView(button("Fiz a tarefa!", orange, Color.WHITE) { onOpenCredits() })
+                card.addView(
+                    button(if (info.mission != null) "Fiz a tarefa!" else "Ver as missões", orange, Color.WHITE) {
+                        onOpenCredits()
+                    },
+                )
             }
             // linha dos créditos
             card.addView(
                 LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     gravity = Gravity.CENTER_VERTICAL
-                    setPadding(0, dp(if (info.mission != null) 14 else 2), 0, 0)
+                    setPadding(0, dp(14), 0, 0)
                     addView(
                         text("☆  Seus créditos: ", 14f, muted, gravity = Gravity.START),
                     )
@@ -383,8 +397,15 @@ class BlockOverlay(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                     ).apply { bottomMargin = dp(8) }
                 }
-                val icon = appIcon(sug.pkg, 40, 12).apply {
-                    (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(12)
+                val icon: View = if (sug.pkg.isNotEmpty()) {
+                    appIcon(sug.pkg, 40, 12).apply {
+                        (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(12)
+                    }
+                } else {
+                    text("★", 18f, Color.parseColor("#027A48"), bold = true).apply {
+                        background = rounded(Color.parseColor("#DDF5E8"), 12)
+                        layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(12) }
+                    }
                 }
                 val labels = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
@@ -397,7 +418,8 @@ class BlockOverlay(
                     setPadding(dp(14), dp(7), dp(14), dp(7))
                     setOnClickListener { onOpenApp(sug.pkg) }
                 }
-                row.addView(icon); row.addView(labels); row.addView(open)
+                row.addView(icon); row.addView(labels)
+                if (sug.pkg.isNotEmpty()) row.addView(open)
                 column.addView(row)
             }
         }

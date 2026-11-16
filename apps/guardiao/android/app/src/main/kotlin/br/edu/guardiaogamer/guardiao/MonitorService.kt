@@ -123,11 +123,7 @@ class MonitorService : Service() {
             }
         }
         val mission = plan.message.ifBlank { null }
-        val suggestions = plan.apps
-            .filter { it.pkg != rule.pkg && it.pkg != packageName && (it.allowed || it.category == "study") }
-            .filter { it.blocked.not() }
-            .take(3)
-            .map { Suggestion(it.pkg, it.name, if (it.category == "study") "Estudo e música" else "Sempre liberado") }
+        val suggestions = suggestionsFor(plan, rule.pkg, result.verdict)
         val midnight = Calendar.getInstance().apply {
             add(Calendar.DAY_OF_MONTH, 1)
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
@@ -137,10 +133,42 @@ class MonitorService : Service() {
             BlockInfo(
                 "${rule.pkg}|${result.verdict}|${result.reason}", rule.pkg, title, message, mission, suggestions,
                 plan.credits,
+                showClock = result.verdict != PolicyMath.Verdict.BLOCKED,
             ),
             secondsLeft,
         )
         goHomeOnce(rule.pkg)
+    }
+
+    /**
+     * Três sugestões para a tela de bloqueio: primeiro os apps que o
+     * responsável deixou sempre liberados (ou de estudo); depois apps comuns
+     * que estejam instalados e sem regra; e, para completar, ideias para
+     * fazer fora do celular.
+     */
+    private fun suggestionsFor(plan: MonitorPlan, blockedPkg: String, verdict: PolicyMath.Verdict): List<Suggestion> {
+        val out = ArrayList<Suggestion>()
+        plan.apps
+            .filter { it.pkg != blockedPkg && it.pkg != packageName && (it.allowed || it.category == "study") }
+            .filter { it.blocked.not() }
+            .take(3)
+            .forEach { out.add(Suggestion(it.pkg, it.name, if (it.category == "study") "Estudo e música" else "Sempre liberado")) }
+        // Em pausa (rotina ou bloqueio geral) só abre o que é sempre liberado.
+        val everythingPaused = plan.lockAll || verdict == PolicyMath.Verdict.PAUSED
+        if (!everythingPaused) {
+            val ruled = plan.apps.map { it.pkg }.toSet()
+            for ((pkg, label, hint) in COMMON_APPS) {
+                if (out.size >= 3) break
+                if (pkg == blockedPkg || pkg in ruled || out.any { it.pkg == pkg }) continue
+                if (packageManager.getLaunchIntentForPackage(pkg) == null) continue
+                out.add(Suggestion(pkg, label, hint))
+            }
+        }
+        for ((label, hint) in OFFLINE_IDEAS) {
+            if (out.size >= 3) break
+            out.add(Suggestion("", label, hint))
+        }
+        return out
     }
 
     private var lastSentHome: String? = null
@@ -258,6 +286,23 @@ class MonitorService : Service() {
         private const val NOTIFICATION_ID = 7101
         private const val INTERVAL_MS = 3_000L
         private const val HEALTH_EVERY_TICKS = 10
+
+        /** Apps comuns sugeridos quando estão instalados e sem regra. */
+        private val COMMON_APPS = listOf(
+            Triple("com.duolingo", "Estudar um pouco?", "Duolingo · lição de 5 min"),
+            Triple("com.spotify.music", "Ouvir uma música?", "Spotify · sua playlist favorita"),
+            Triple("com.whatsapp", "Mandar um oi pra família?", "WhatsApp"),
+            Triple("com.google.android.apps.youtube.music", "Ouvir uma música?", "YouTube Music"),
+            Triple("com.amazon.kindle", "Ler um livro?", "Kindle"),
+            Triple("com.google.android.apps.photos", "Ver suas fotos?", "Google Fotos"),
+        )
+
+        /** Ideias para fora do celular, usadas para completar três sugestões. */
+        private val OFFLINE_IDEAS = listOf(
+            "Ler um livro ou gibi" to "Uns minutinhos já valem",
+            "Brincar lá fora" to "Bola, bicicleta ou pega-pega",
+            "Desenhar ou montar algo" to "Papel, lápis, blocos",
+        )
 
         fun start(context: Context) {
             val intent = Intent(context, MonitorService::class.java)
