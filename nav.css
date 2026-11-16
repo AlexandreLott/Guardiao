@@ -1,0 +1,14 @@
+html { scroll-behavior: auto; }
+
+/* menu do topo: fundo que desliza até o item apontado ou ativo */
+.top nav { position: relative; gap: 2px; }
+.top nav a { padding: 8px 13px; border-radius: 10px; position: relative; z-index: 1; transition: color .25s; }
+.top nav a.active { color: var(--ink); }
+.lp .top nav a.active { color: #fff; }
+.nav-pill { position: absolute; top: 50%; left: 0; height: 36px; width: 0; margin-top: -18px; border-radius: 11px; background: #E9EDF5; opacity: 0; transition: transform .42s var(--ease), width .42s var(--ease), opacity .25s; pointer-events: none; }
+.lp .nav-pill { background: rgba(255,255,255,.12); }
+
+
+.top nav a { white-space: nowrap; }
+.top nav { flex-wrap: nowrap; }
+@media (max-width: 1180px) { .top nav a { padding: 8px 9px; font-size: .88rem; } }

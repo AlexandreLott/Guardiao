@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baixar o Guardian para Android</title>
+<meta name="description" content="Baixe o Guardian para Android: a versão oficial e a versão de teste com dados de exemplo.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="nav.css">
+<script>try{if(sessionStorage.getItem("gt")){sessionStorage.removeItem("gt");document.documentElement.classList.add("arriving")}}catch(e){}</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 20h14"/></symbol>
+</svg>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-512.png" alt="">Guardian</a>
+    <nav aria-label="Seções">
+      <a href="index.html">Conheça o app</a>
+      <a href="apresentacao.html">Apresentação</a>
+      <a href="index.html#dia">Um dia com o Guardian</a>
+      <a href="#versoes">Versões</a>
+      <a href="#instalar">Como instalar</a>
+      <a href="#duvidas">Dúvidas</a>
+    </nav>
+    <a class="btn btn-ghost btn-small" href="index.html">Voltar ao início</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main>
+<section class="dl-hero">
+  <div class="wrap">
+    <div class="intro" id="release">
+      <h1>Baixar o Guardian para Android.</h1>
+      <p class="lead" style="margin-top:20px">Instale o mesmo arquivo no celular do responsável e no da criança. No primeiro acesso, cada aparelho escolhe o seu papel.</p>
+      <div class="meta" aria-live="polite">
+        <span>Versão <b id="relVersion">carregando</b></span>
+        <span>Publicada em <b id="relDate">…</b></span>
+        <span>Tamanho <b id="relSize">…</b></span>
+        <span>Android <b>7 ou mais novo</b></span>
+      </div>
+      <div class="hero-cta" style="margin-top:0">
+        <a class="btn btn-blue" data-apk href="https://github.com/AlexandreLott/Guardiao/releases/latest/download/guardiao.apk"><svg><use href="#i-down"/></svg>Baixar o APK oficial</a>
+        <a class="btn btn-ghost" href="#versoes">Comparar com a versão de teste</a>
+      </div>
+    </div>
+    <div class="qr reveal">
+      <img src="assets/qr.svg" alt="QR code do link de download do APK oficial">
+      <p>Está no computador? Aponte a câmera do celular para baixar direto nele.</p>
+    </div>
+  </div>
+</section>
+
+<section class="choose" id="versoes">
+  <div class="wrap">
+    <div class="two">
+      <div class="opt main">
+        <h2 style="font-size:1.5rem">Versão oficial</h2>
+        <p>Para usar de verdade. Cria conta, sincroniza pela internet e aplica as regras no celular da criança.</p>
+        <ul>
+          <li>Conta do responsável com e-mail e senha</li>
+          <li>Limites, rotinas e créditos aplicados no aparelho</li>
+          <li>Avisa quando sai uma versão nova, dentro do app</li>
+        </ul>
+        <a class="btn btn-blue" data-apk href="https://github.com/AlexandreLott/Guardiao/releases/latest/download/guardiao.apk"><svg><use href="#i-down"/></svg>Baixar o APK oficial</a>
+      </div>
+      <div class="opt">
+        <h2 style="font-size:1.5rem">Versão de teste</h2>
+        <p>Para conhecer as telas. Funciona sem internet, com dados de exemplo, e não bloqueia nada de verdade.</p>
+        <div class="cred">
+          <span>E-mail: <code>demo@guardiao.app</code></span>
+          <span>Senha: <code>demo1234</code></span>
+          <span>Código para vincular: <code>DEMX2345</code></span>
+        </div>
+        <a class="btn btn-ghost" href="downloads/guardian-teste.apk" download><svg><use href="#i-down"/></svg>Baixar o APK de teste (27 MB)</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="install" id="instalar">
+  <div class="wrap">
+    <h2>Como instalar o arquivo APK.</h2>
+    <ol class="steps3">
+      <li><h3>Abra o arquivo baixado</h3><p>Toque na notificação de download ou procure por "guardiao.apk" na pasta Downloads.</p></li>
+      <li><h3>Permita a instalação</h3><p>O Android pergunta se o navegador pode instalar apps. Toque em Configurações, ative a permissão e volte.</p></li>
+      <li><h3>Toque em Instalar</h3><p>Depois abra o Guardian. No celular da criança, ele pede as permissões de uso e de sobreposição para poder bloquear.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="faq" id="duvidas">
+  <div class="wrap">
+    <h2 style="margin-bottom:28px">Dúvidas comuns.</h2>
+    <details><summary>Por que o Android mostra um aviso ao instalar?</summary><p>Porque o arquivo vem de fora da Play Store. O aviso aparece para qualquer APK baixado pelo navegador. O código do Guardian é aberto e fica no GitHub.</p></details>
+    <details><summary>Preciso baixar um app para o responsável e outro para a criança?</summary><p>Não. O arquivo é o mesmo. Ao abrir pela primeira vez, você escolhe "Sou o responsável" ou "É do meu filho ou filha".</p></details>
+    <details><summary>A versão de teste bloqueia os apps do meu celular?</summary><p>Não. Ela usa dados de exemplo guardados só na memória e serve para navegar pelas telas. Ao fechar o app, tudo volta ao início.</p></details>
+    <details><summary>Posso ter a versão oficial e a de teste no mesmo celular?</summary><p>Não ao mesmo tempo. As duas usam o mesmo nome de pacote, então o Android pede para desinstalar uma antes de instalar a outra.</p></details>
+    <details><summary>Funciona no iPhone?</summary><p>Ainda não. Hoje o Guardian roda em Android, e há uma versão para computadores com Windows no repositório do projeto.</p></details>
+    <p style="margin-top:28px;color:var(--muted)">Procura uma versão anterior? Todas ficam na <a href="https://github.com/AlexandreLott/Guardiao/releases" rel="noopener">página de versões no GitHub</a>.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-512.png" alt="">Guardian</a>
+    <span>Controle parental para jogos e apps.</span>
+    <span class="sp"><a href="index.html">Início</a><a href="https://github.com/AlexandreLott/Guardiao" rel="noopener">Código no GitHub</a></span>
+  </div>
+</footer>
+
+<script src="motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

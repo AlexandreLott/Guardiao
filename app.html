@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conheça o app Guardian</title>
+<meta name="description" content="Veja o app Guardian por dentro: limites por app, rotinas, créditos por tarefas, relatório e bloqueio geral.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="nav.css">
+<link rel="stylesheet" href="story2.css">
+<script>try{if(sessionStorage.getItem("gt")){sessionStorage.removeItem("gt");document.documentElement.classList.add("arriving")}}catch(e){}</script>
+</head>
+<body class="sv">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 20h14"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.700 5.600 6.100.8-4.500 4.300 1.100 6.100L12 16.900 6.600 19.800l1.100-6.100L3.200 9.400l6.100-.8z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.500A2.500 2.500 0 0 1 6.500 3H20v15H6.500A2.500 2.500 0 0 0 4 20.500z"/><path d="M4 20.500A2.500 2.500 0 0 0 6.500 23H20v-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.500A8 8 0 1 1 9.500 4a6.500 6.500 0 0 0 10.500 10.500z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 20v-7M12 20V5M18 20v-10"/></symbol>
+  <symbol id="i-chartf" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="11" width="3.600" height="8.500" rx="1.200"/><rect x="10.200" y="5" width="3.600" height="14.500" rx="1.200"/><rect x="15.400" y="13.500" width="3.600" height="6" rx="1.200"/></symbol>
+  <symbol id="i-lockf" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" d="M8.500 10.500V8a3.500 3.500 0 0 1 7 0v2.500"/><rect x="5.500" y="10" width="13" height="10.500" rx="2.400" fill="currentColor"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.200 3 11h2.500v9h5v-6h3v6h5v-9H21z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.500"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+</svg>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-512.png" alt="">Guardian</a>
+    <nav aria-label="Cenas">
+      <a href="index.html">Início</a>
+      <a href="apresentacao.html">Apresentação</a>
+      <a href="#story" data-scene="1">Limites</a>
+      <a href="#story" data-scene="2">Rotinas</a>
+      <a href="#story" data-scene="3">Créditos</a>
+      <a href="#story" data-scene="4">Relatório</a>
+      <a href="#story" data-scene="5">Bloqueio geral</a>
+    </nav>
+    <a class="btn btn-blue btn-small" href="download.html">Baixar</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main>
+<section class="story2" id="story">
+  <div class="stage2">
+    <div class="scenetabs" id="sceneTabs" role="group" aria-label="Cenas">
+      <button data-scene="0"><i></i><span>Início</span></button>
+      <button data-scene="1"><i></i><span>Limites</span></button>
+      <button data-scene="2"><i></i><span>Rotinas</span></button>
+      <button data-scene="3"><i></i><span>Créditos</span></button>
+      <button data-scene="4"><i></i><span>Relatório</span></button>
+      <button data-scene="5"><i></i><span>Bloqueio geral</span></button>
+    </div>
+    <div class="board" id="board">
+      <span class="halo b"></span><span class="halo"></span><span class="halo c" id="orbit"></span>
+      <span class="shock" id="shock"></span>
+      <span class="gridfloor" aria-hidden="true"></span>
+      <span class="holo h1" aria-hidden="true"></span><span class="holo h2" aria-hidden="true"></span><span class="holo h3" aria-hidden="true"></span>
+      <div class="hud" id="hud" aria-hidden="true"><i></i><i></i><i></i><i></i><b id="hudNum">01 / 06</b><em id="hudWord">Guardian</em></div>
+      <div class="bigword" id="bigword" aria-hidden="true">Guardian</div>
+
+      <div class="col-l">
+        <div class="cp on">
+          <h1><span class="ln"><span>Menos briga.</span></span><span class="ln"><span>Mais combinado.</span></span></h1>
+          <p>O Guardian transforma o tempo de tela em um acordo da família. O responsável define, a criança acompanha e o app cuida do relógio.</p>
+          <div class="hero-cta"><a class="btn btn-blue" href="download.html"><svg><use href="#i-down"/></svg>Baixar para Android</a><a class="btn btn-ghost" href="#story" data-scene="1">Ver por dentro</a></div>
+        </div>
+        <div class="cp"><span class="who"><i>M</i>O responsável define</span>
+          <h2><span class="ln"><span>Cada jogo</span></span><span class="ln"><span>com o seu</span></span><span class="ln"><span>limite.</span></span></h2>
+          <p>Uma hora de Roblox, quarenta e cinco minutos de Fortnite. Quando o tempo acaba, o app fecha sozinho, sem discussão.</p></div>
+        <div class="cp"><span class="who"><i>M</i>O responsável define</span>
+          <h2><span class="ln"><span>Rotinas</span></span><span class="ln"><span>que seguem</span></span><span class="ln"><span>o relógio.</span></span></h2>
+          <p>Escola, almoço, lição e sono. Em cada horário só abre o que foi combinado.</p></div>
+        <div class="cp"><span class="who"><i>D</i>A criança conquista</span>
+          <h2><span class="ln"><span>Tarefa feita</span></span><span class="ln"><span>vale tempo</span></span><span class="ln"><span>extra.</span></span></h2>
+          <p>Ela marca a missão como feita, o responsável aprova e os minutos viram crédito para usar onde quiser.</p></div>
+        <div class="cp"><span class="who"><i>F</i>A família enxerga</span>
+          <h2><span class="ln"><span>A semana</span></span><span class="ln"><span>inteira em</span></span><span class="ln"><span>uma tela.</span></span></h2>
+          <p>O app mais usado, o dia mais intenso e o total de hoje, sete ou trinta dias. A conversa parte de dados, não de impressão.</p></div>
+        <div class="cp"><span class="who"><i>M</i>O responsável decide</span>
+          <h2><span class="ln"><span>Hora do jantar?</span></span><span class="ln"><span>Um toque</span></span><span class="ln"><span>pausa tudo.</span></span></h2>
+          <p>O bloqueio geral fecha os apps na hora. Os de estudo e de contato continuam liberados.</p></div>
+      </div>
+
+      <div class="rig2" id="rig">
+        <img class="fl" src="assets/apps/com.roblox.client.png" alt="" style="--x:-215px;--y:-210px;--z:90px">
+        <img class="fl" src="assets/apps/com.mojang.minecraftpe.png" alt="" style="--x:220px;--y:-120px;--z:60px;--dl:-1.5s">
+        <img class="fl" src="assets/apps/com.google.android.youtube.png" alt="" style="--x:-225px;--y:150px;--z:40px;--dl:-2.5s">
+        <img class="fl" src="assets/apps/com.supercell.brawlstars.png" alt="" style="--x:215px;--y:200px;--z:110px;--dl:-3.5s">
+        <span class="fl tok" style="--x:205px;--y:40px;--z:150px;--dl:-1s"><svg><use href="#i-star"/></svg></span>
+        <span class="fl tok blue" style="--x:-200px;--y:-30px;--z:140px;--dl:-2s"><svg><use href="#i-lock"/></svg></span>
+        <div class="phone"><div class="screen app" id="appScreen">
+
+      <div class="status"><span>16:10</span><span>Guardian</span></div>
+
+      <div class="view on">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Olá, Duda</div>
+        <div class="v-sub">Hoje, segunda-feira</div>
+        <div class="big blue"><small>Tempo de tela hoje</small><strong>1 h 17 min</strong><small>de 2 h 30 combinadas</small></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="--w:75%"></i></div></div><span class="pill">15 min</span></div>
+          <div class="row"><img src="assets/apps/com.mojang.minecraftpe.png" alt=""><div class="t"><b>Minecraft</b><span>20 min de 2 h</span><div class="bar"><i style="--w:17%"></i></div></div><span class="pill">1 h 40</span></div>
+          <div class="row"><img src="assets/apps/com.supercell.brawlstars.png" alt=""><div class="t"><b>Brawl Stars</b><span>12 min de 45 min</span><div class="bar"><i style="--w:27%"></i></div></div><span class="pill">33 min</span></div>
+          <div class="row"><img src="assets/apps/com.kiloo.subwaysurf.png" alt=""><div class="t"><b>Subway Surfers</b><span>0 min de 30 min</span><div class="bar"><i style="--w:2%"></i></div></div><span class="pill">30 min</span></div>
+        </div>
+      </div>
+
+      <div class="view">
+        <div class="v-title">Painel do responsável</div><div class="v-sub">Limites, rotinas e créditos</div>
+        <div class="tabs"><span data-tab="res">Resumo</span><span class="sel" data-tab="apps">Apps</span><span data-tab="rot">Rotinas</span><span data-tab="cred">Créditos</span></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="--w:75%"></i></div></div><span class="pill">1 h</span></div>
+          <div class="row"><img src="assets/apps/com.epicgames.fortnite.png" alt=""><div class="t"><b>Fortnite</b><span>10 min de 45 min</span><div class="bar"><i style="--w:22%"></i></div></div><span class="pill">45 min</span></div>
+          <div class="row"><img src="assets/apps/com.supercell.clashroyale.png" alt=""><div class="t"><b>Clash Royale</b><span>30 min de 30 min</span><div class="bar"><i class="full" style="--w:100%"></i></div></div><span class="pill orange">No limite</span></div>
+          <div class="row"><img src="assets/apps/com.google.android.youtube.png" alt=""><div class="t"><b>YouTube</b><span>25 min de 1 h</span><div class="bar"><i style="--w:42%"></i></div></div><span class="pill">1 h</span></div>
+          <div class="row"><img src="assets/apps/com.zhiliaoapp.musically.png" alt=""><div class="t"><b>TikTok</b><span>18 min de 30 min</span><div class="bar"><i style="--w:60%"></i></div></div><span class="pill">30 min</span></div>
+          <div class="row"><img src="assets/apps/com.instagram.android.png" alt="" style="filter:grayscale(1);opacity:.55"><div class="t"><b>Instagram</b><span>Bloqueado o dia todo</span></div><span class="pill red">Bloqueado</span></div>
+        </div>
+      </div>
+
+      <div class="view">
+        <div class="v-title">Painel do responsável</div><div class="v-sub">Limites, rotinas e créditos</div>
+        <div class="tabs"><span data-tab="res">Resumo</span><span data-tab="apps">Apps</span><span class="sel" data-tab="rot">Rotinas</span><span data-tab="cred">Créditos</span></div>
+        <div class="big ink"><small>Agora</small><strong>Lição de casa</strong><small>das 14:00 às 15:30</small></div>
+        <div class="pcard">
+          <div class="row"><span class="ico"><svg><use href="#i-book"/></svg></span><div class="t"><b>Escola</b><span>07:00 às 12:30, segunda a sexta</span></div><span class="pill green">Ativa</span></div>
+          <div class="row"><span class="ico o"><svg><use href="#i-clock"/></svg></span><div class="t"><b>Almoço</b><span>12:30 às 13:15, todos os dias</span></div><span class="pill green">Ativa</span></div>
+          <div class="row"><span class="ico g"><svg><use href="#i-book"/></svg></span><div class="t"><b>Lição de casa</b><span>14:00 às 15:30, segunda a sexta</span></div><span class="pill green">Ativa</span></div>
+          <div class="row"><span class="ico"><svg><use href="#i-moon"/></svg></span><div class="t"><b>Hora de dormir</b><span>21:00 às 07:00, todos os dias</span></div><span class="pill green">Ativa</span></div>
+        </div>
+      </div>
+
+      <div class="view">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Créditos</div><div class="v-sub">Missões que viram tempo extra</div>
+        <div class="big orange"><small>Seus créditos</small><strong>30 min</strong><small>Pode usar até as 21:00</small><span class="pbtn white">Usar crédito</span></div>
+        <div class="pcard">
+          <div class="row"><span class="ico g"><svg><use href="#i-star"/></svg></span><div class="t"><b>Arrumar o quarto</b><span>+30 min de diversão</span></div><span class="pill green">Aprovada</span></div>
+          <div class="row"><span class="ico o"><svg><use href="#i-book"/></svg></span><div class="t"><b>Ler 20 páginas</b><span>+15 min de diversão</span></div><span class="pill orange">Esperando</span></div>
+          <div class="row"><span class="ico"><svg><use href="#i-star"/></svg></span><div class="t"><b>Lavar a louça</b><span>+15 min de diversão</span></div><span class="pill">Fiz!</span></div>
+        </div>
+      </div>
+
+      <div class="view">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Relatório</div><div class="v-sub">Últimos 7 dias</div>
+        <div class="tabs" style="grid-template-columns:repeat(3,1fr)"><span>Hoje</span><span class="sel">7 dias</span><span>30 dias</span></div>
+        <div class="big blue"><small>Total na semana</small><strong>14 h 20 min</strong><small>média de 2 h 03 por dia</small></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Jogo mais jogado</b><span>Roblox, 5 h 10 min</span><div class="bar"><i style="--w:82%"></i></div></div></div>
+          <div class="row"><img src="assets/apps/com.google.android.youtube.png" alt=""><div class="t"><b>App mais usado</b><span>YouTube, 3 h 40 min</span><div class="bar"><i style="--w:58%"></i></div></div></div>
+          <div class="row"><span class="ico o"><svg><use href="#i-chart"/></svg></span><div class="t"><b>Dia mais intenso</b><span>Sábado, 3 h 05 min</span><div class="bar"><i class="full" style="--w:70%"></i></div></div></div>
+        </div>
+      </div>
+
+      <div class="view">
+        <div class="v-title">Painel do responsável</div><div class="v-sub">Limites, rotinas e créditos</div>
+        <div class="tabs"><span class="sel" data-tab="res">Resumo</span><span data-tab="apps">Apps</span><span data-tab="rot">Rotinas</span><span data-tab="cred">Créditos</span></div>
+        <div class="big ink lockcard"><small class="lk-off">Bloqueio geral</small><small class="lk-on">Bloqueio geral ligado</small><strong class="lk-off">Desligado</strong><strong class="lk-on">Tudo em pausa</strong><small class="lk-off">Cada app segue o seu limite</small><small class="lk-on">Só os sempre liberados abrem</small></div>
+        <div class="pcard"><div class="row"><span class="ico o"><svg><use href="#i-lock"/></svg></span><div class="t"><b>Pausar todos os apps</b><span>Vale até você desligar</span></div><button class="switch" id="lockSw" role="switch" aria-checked="false" aria-label="Bloqueio geral" tabindex="-1"></button></div></div>
+        <div class="pcard">
+          <div class="row lockrow" style="--k:0"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span class="lk-off">45 min de 1 h</span><span class="lk-on">Em pausa</span></div></div>
+          <div class="row lockrow" style="--k:1"><img src="assets/apps/com.google.android.youtube.png" alt=""><div class="t"><b>YouTube</b><span class="lk-off">25 min de 1 h</span><span class="lk-on">Em pausa</span></div></div>
+          <div class="row lockrow free" style="--k:2"><img src="assets/apps/com.duolingo.png" alt=""><div class="t"><b>Duolingo</b><span>Sempre liberado</span></div><span class="pill green">Liberado</span></div>
+        </div>
+      </div>
+
+      <div class="appnav">
+        <span class="nb" id="nb"></span>
+        <span class="ni on" data-nav="0"><svg><use href="#i-home"/></svg>Início</span>
+        <span class="ni" data-nav="1"><svg><use href="#i-chartf"/></svg>Relatório</span>
+        <span class="ni" data-nav="2"><svg><use href="#i-star"/></svg>Créditos</span>
+        <span class="ni" data-nav="3"><svg><use href="#i-lockf"/></svg>Responsável</span>
+      </div>
+      <span class="lockfx"></span><span class="lockstamp"><svg><use href="#i-lock"/></svg></span>
+      <span class="tap" id="tap"></span>
+        </div></div>
+      </div>
+
+      <div class="col-r">
+        <div class="sd on">
+          <div class="sc" style="--j:0"><div class="rowi"><img src="assets/apps/com.roblox.client.png" alt=""><div><b>Roblox</b><small>45 min de 1 h hoje</small></div></div><div class="bar"><i style="--w:75%"></i></div></div>
+          <div class="sc" style="--j:1"><b>+30 min de crédito</b><small>Missão aprovada: arrumar o quarto</small></div>
+        </div>
+        <div class="sd">
+          <div class="sc" style="--j:0"><small>Limite de hoje do Roblox</small><div class="stepper"><span>−</span><strong>1 h</strong><span>+</span></div></div>
+          <div class="sc" style="--j:1"><div class="rowi"><img src="assets/apps/com.supercell.clashroyale.png" alt=""><div><b>Clash Royale no limite</b><small>30 min de 30 min. Fecha sozinho.</small></div></div><div class="bar"><i class="full" style="--w:100%"></i></div></div>
+        </div>
+        <div class="sd">
+          <div class="sc" style="--j:0"><b>O dia da Duda</b><small>Faixas em que os apps ficam em pausa</small>
+            <div class="daystrip"><i style="--l:29%;--w:23%;--c:#2B59FF;--k:0"></i><i style="--l:52%;--w:3.500%;--c:#FF7A1A;--k:1"></i><i style="--l:58.300%;--w:6.300%;--c:#12B76A;--k:2"></i><i style="--l:87.500%;--w:12.500%;--c:#0F172A;--k:3"></i></div>
+            <div class="dayscale"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>24h</span></div></div>
+          <div class="sc" style="--j:1"><b>Durante a escola</b><small>Só Duolingo e WhatsApp abrem</small></div>
+        </div>
+        <div class="sd">
+          <div class="sc" style="--j:0"><b>Arrumar o quarto</b><small>Vale +30 min de diversão</small><div class="flowmini"><span>Fiz!</span><i></i><span>Aprovar</span><i></i><span>+30 min</span></div></div>
+          <div class="sc" style="--j:1"><b>Pode usar até as 21:00</b><small>No máximo 1 h de crédito por dia</small></div>
+        </div>
+        <div class="sd">
+          <div class="sc" style="--j:0"><b>14 h 20 min na semana</b><small>Média de 2 h 03 por dia</small>
+            <div class="cbars"><i style="--h:46%;--k:0"></i><i style="--h:62%;--k:1"></i><i style="--h:40%;--k:2"></i><i style="--h:55%;--k:3"></i><i style="--h:70%;--k:4"></i><i class="top" style="--h:100%;--k:5"></i><i style="--h:58%;--k:6"></i></div></div>
+          <div class="sc" style="--j:1"><div class="rowi"><img src="assets/apps/com.roblox.client.png" alt=""><div><b>Mais jogado: Roblox</b><small>5 h 10 min em 7 dias</small></div></div></div>
+        </div>
+        <div class="sd" id="lockSide">
+          <div class="sc" style="--j:0"><div class="rowi"><span class="bigtoggle"></span><div><b>Bloqueio geral</b><small class="lk2">Um toque e tudo pausa</small></div></div>
+            <div class="icons-row"><img src="assets/apps/com.roblox.client.png" alt="" style="--k:0"><img src="assets/apps/com.google.android.youtube.png" alt="" style="--k:1"><img src="assets/apps/com.zhiliaoapp.musically.png" alt="" style="--k:2"><img src="assets/apps/com.epicgames.fortnite.png" alt="" style="--k:3"><img class="free" src="assets/apps/com.duolingo.png" alt="" style="--k:4"></div></div>
+          <div class="sc" style="--j:1"><b>Para desligar</b><small>O mesmo botão, a qualquer hora</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="manifesto"><div class="wrap">
+  <p id="manifesto">O Guardian não é sobre vigiar. É sobre combinar. A família decide junta quanto tempo cabe em cada dia, e o aplicativo cuida do relógio para que ninguém precise brigar por ele.</p>
+</div></section>
+
+<section class="bento"><div class="wrap">
+  <div class="bgrid">
+    <div class="bt w4 blue"><span class="ringdeco"></span><div class="art"><img src="assets/apps/com.roblox.client.png" alt=""><img src="assets/apps/com.epicgames.fortnite.png" alt=""><img src="assets/apps/com.mojang.minecraftpe.png" alt=""></div><h3>Limite por app</h3><p>Minutos por dia para cada jogo ou rede social. Ao fim, a tela de pausa aparece com um recado gentil.</p></div>
+    <div class="bt w2 lime"><span class="tclock" id="btClock">06:54:12</span><h3>Tempo que renova</h3><p>A criança vê quanto falta para voltar a jogar.</p></div>
+    <div class="bt w2"><h3>Rotinas</h3><p>Escola, refeições, lição e sono, cada uma com o seu horário.</p></div>
+    <div class="bt w2 orange"><span class="ringdeco"></span><h3>Créditos por missões</h3><p>Tarefa de casa aprovada vira tempo extra.</p></div>
+    <div class="bt w2 ink"><h3>Aviso de tentativa de burla</h3><p>Se uma proteção for desligada, o responsável fica sabendo.</p></div>
+    <div class="bt w3"><h3>Relatório de hoje, 7 e 30 dias</h3><p>App mais usado, dia mais intenso e tempo por categoria.</p></div>
+    <div class="bt w3"><h3>Privacidade por princípio</h3><p>O app mede tempo de uso. Não lê conversas e não rastreia localização.</p></div>
+  </div>
+</div></section>
+
+<section class="marq" aria-label="Apps reconhecidos">
+  <p>Funciona com os jogos e apps que já estão no celular.</p>
+  <div class="marq-row" id="m1"></div>
+  <div class="marq-row rev" id="m2"></div>
+</section>
+
+<section class="lp-final">
+  <span class="orb o2"></span><span class="orb o1"></span>
+  <h2>Pronto para combinar?</h2>
+  <a class="btn" href="download.html"><svg><use href="#i-down"/></svg>Baixar o Guardian</a>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-512.png" alt="">Guardian</a>
+    <span>Controle parental para jogos e apps.</span>
+    <span class="sp"><a href="index.html">Início</a><a href="download.html">Download</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var apps = [["com.roblox.client","Roblox"],["com.dts.freefireth","Free Fire"],["com.mojang.minecraftpe","Minecraft"],["com.epicgames.fortnite","Fortnite"],["com.supercell.brawlstars","Brawl Stars"],["com.supercell.clashroyale","Clash Royale"],["com.kiloo.subwaysurf","Subway Surfers"],["com.innersloth.spacemafia","Among Us"],["com.kitkagames.fallbuddies","Stumble Guys"],["com.google.android.youtube","YouTube"],["com.zhiliaoapp.musically","TikTok"],["com.instagram.android","Instagram"],["com.whatsapp","WhatsApp"],["com.kwai.video","Kwai"],["com.netflix.mediaclient","Netflix"],["com.spotify.music","Spotify"],["com.duolingo","Duolingo"]];
+  function fill(id, list) {
+    var h = list.map(function (a) { return '<span><img src="assets/apps/' + a[0] + '.png" alt="">' + a[1] + '</span>'; }).join("");
+    document.getElementById(id).innerHTML = h + h;
+  }
+  fill("m1", apps.slice(0, 9)); fill("m2", apps.slice(8));
+})();
+</script>
+<script src="motion.js"></script>
+<script src="main.js"></script>
+<script src="story.js"></script>
+</body>
+</html>

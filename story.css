@@ -1,0 +1,92 @@
+/* Landing do app: um único celular fixo que atravessa a página inteira. */
+html { scroll-behavior: auto; }
+
+/* menu do topo: fundo que desliza até o item apontado ou ativo */
+.top nav { position: relative; gap: 2px; }
+.top nav a { padding: 8px 13px; border-radius: 10px; position: relative; z-index: 1; transition: color .25s; }
+.top nav a.active { color: var(--ink); }
+.lp .top nav a.active { color: #fff; }
+.nav-pill { position: absolute; top: 50%; left: 0; height: 36px; width: 0; margin-top: -18px; border-radius: 11px; background: #E9EDF5; opacity: 0; transition: transform .42s var(--ease), width .42s var(--ease), opacity .25s; pointer-events: none; }
+.lp .nav-pill { background: rgba(255,255,255,.12); }
+
+.story { position: relative; height: 760vh; background: var(--ink); }
+.stage { position: sticky; top: 0; height: 100vh; overflow: hidden; perspective: 1700px; --accent: #2B59FF; }
+
+/* palavra gigante atrás do celular */
+.bgword { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; will-change: transform; }
+.bgword span { grid-area: 1 / 1; font-size: 27vw; font-weight: 800; letter-spacing: -.05em; line-height: 1; white-space: nowrap; color: transparent; -webkit-text-stroke: 2px var(--c); opacity: 0; transform: translateY(12vh) scale(.94); transition: opacity .6s ease, transform .9s var(--ease); }
+.bgword span.on { opacity: .5; transform: none; }
+.bgword span.past { transform: translateY(-12vh) scale(.94); }
+
+.disc { position: absolute; left: 50%; top: 50%; width: 62vh; height: 62vh; margin: -31vh; border-radius: 50%; background: var(--accent); transition: background .7s ease; will-change: transform; }
+.disc.small { width: 13vh; height: 13vh; margin: -6.5vh; background: var(--lime); transition: none; }
+
+.rig { position: absolute; left: 50%; top: 50%; width: 640px; height: 1320px; margin: -660px -320px; transform-style: preserve-3d; will-change: transform; }
+.floaty { width: 100%; height: 100%; animation: bob 5.5s ease-in-out infinite, rigIn 1.3s var(--ease) .2s both; }
+@keyframes rigIn { from { opacity: 0; transform: translateY(40vh) rotate(10deg); } }
+.rig .phone { zoom: 2; width: 320px; height: 660px; border-radius: 46px; padding: 10px; box-shadow: -14px 24px 40px rgba(0,0,0,.5), inset 0 0 0 2px #2a3550; }
+.rig .screen { border-radius: 37px; font-size: 12.6px; }
+
+/* app dentro do celular */
+.app { color: var(--ink); }
+.app .view { bottom: 62px; overflow: hidden; filter: none; }
+.appnav { position: absolute; left: 0; right: 0; bottom: 0; height: 62px; background: #fff; display: grid; grid-template-columns: repeat(4, 1fr); border-radius: 24px 24px 0 0; box-shadow: 0 -1px 0 #E6EAF0, 0 -8px 18px rgba(15,23,42,.05); z-index: 4; }
+.ni { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding-bottom: 9px; font-size: 9.5px; line-height: 1.35; color: #8A96AB; position: relative; z-index: 1; transition: color .3s; }
+.ni svg { width: 19px; height: 19px; transition: transform .45s cubic-bezier(.34,1.5,.44,1), color .3s; }
+.ni.on { color: var(--blue); font-weight: 600; }
+.ni.on svg { transform: translateY(-21.5px); color: #fff; }
+/* botão ativo: círculo azul que sobe e forma um "calombo" branco na barra */
+.nb { position: absolute; top: -17px; left: 14.5px; width: 46px; height: 46px; transform: translateX(calc(var(--n, 0) * 75px)); transition: transform .5s cubic-bezier(.34,1.35,.44,1); }
+.nb::before { content: ""; position: absolute; inset: -7px; border-radius: 50%; background: #fff; box-shadow: 0 -1px 0 #E6EAF0; clip-path: inset(0 0 46% 0); }
+.nb::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--blue); box-shadow: 0 5px 0 rgba(43,89,255,.22); }
+.hit { animation: hit .32s ease; }
+@keyframes hit { 40% { transform: scale(.9); filter: brightness(.9); } }
+.ni.hit { animation: none; }
+.tap { position: absolute; left: 0; top: 0; width: 38px; height: 38px; margin: -19px; border-radius: 50%; background: rgba(15,23,42,.3); border: 2px solid #fff; box-shadow: 0 4px 12px rgba(15,23,42,.3); opacity: 0; z-index: 9; pointer-events: none; transition: transform .5s var(--ease), opacity .3s; }
+.tap::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--blue); opacity: 0; }
+.tap.press { background: rgba(43,89,255,.45); }
+.tap.press::after { animation: ripple .5s ease-out; }
+@keyframes ripple { from { opacity: .9; transform: scale(.6); } to { opacity: 0; transform: scale(2.6); } }
+.tap .dot { position: absolute; inset: 0; border-radius: 50%; transition: transform .16s; }
+.tap.press { scale: .78; }
+
+.lk-on { display: none; }
+.app.paused .lk-on { display: block; } .app.paused .lk-off { display: none; }
+.app .lockrow img { transition: filter .5s, opacity .5s; transition-delay: calc(var(--k, 0) * 70ms); }
+.app.paused .lockrow:not(.free) img { filter: grayscale(1); opacity: .5; }
+.app .big { transition: background .5s; }
+.app.paused .big.lockcard { background: var(--orange); }
+
+/* textos que passam por cima do celular */
+.copy { position: absolute; top: 50%; width: min(54vw, 720px); transform: translateY(-50%); z-index: 6; color: #fff; mix-blend-mode: difference; pointer-events: none; }
+.copy.left { left: max(24px, 5.5vw); } .copy.right { right: max(24px, 5.5vw); }
+.copy.center { left: 50%; top: 13vh; transform: translateX(-50%); text-align: center; width: min(92vw, 900px); }
+.copy h1, .copy h2 { font-size: clamp(2.6rem, 7.4vw, 7.2rem); line-height: .96; letter-spacing: -.04em; font-weight: 700; }
+.copy .ln { display: block; overflow: hidden; padding-bottom: .1em; margin-bottom: -.1em; }
+.copy .ln > span { display: inline-block; transform: translateY(112%) rotate(5deg); transform-origin: 0 100%; transition: transform .85s var(--ease); }
+.copy .ln:nth-child(2) > span { transition-delay: .07s; } .copy .ln:nth-child(3) > span { transition-delay: .14s; }
+.copy.on .ln > span { transform: none; }
+.copy.past .ln > span { transform: translateY(-112%) rotate(-5deg); }
+.copy p { font-size: clamp(1rem, 1.35vw, 1.2rem); font-weight: 300; max-width: 22em; margin-top: 26px; opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .7s var(--ease); }
+.copy.center p { margin-inline: auto; }
+.copy.center h2 { font-size: clamp(2.2rem, 5.4vw, 5.2rem); }
+.copy.on p { opacity: .92; transform: none; transition-delay: .25s; }
+.cta-row { position: absolute; left: max(24px, 5.5vw); bottom: 9vh; z-index: 7; display: flex; gap: 12px; flex-wrap: wrap; transition: opacity .4s, transform .6s var(--ease); }
+.cta-row.off { opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+.rail { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); display: grid; gap: 10px; z-index: 8; }
+.rail i { width: 6px; height: 6px; border-radius: 99px; background: rgba(255,255,255,.3); transition: height .4s var(--ease), background .3s; }
+.rail i.on { height: 28px; background: var(--accent); }
+.hint { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); color: #8A96AB; font-size: .85rem; z-index: 7; transition: opacity .4s; display: flex; align-items: center; gap: 8px; }
+.hint::before { content: ""; width: 18px; height: 28px; border-radius: 10px; border: 2px solid #8A96AB; background: radial-gradient(circle, #8A96AB 2px, transparent 3px) 50% 6px / 100% 10px no-repeat; animation: wheel 1.6s ease-in-out infinite; }
+@keyframes wheel { 50% { background-position: 50% 12px; } }
+.hint.off { opacity: 0; }
+
+@media (max-width: 900px) {
+  .copy, .copy.left, .copy.right, .copy.center { left: 20px; right: 20px; width: auto; top: 84px; transform: none; text-align: left; }
+  .copy h1, .copy h2 { font-size: clamp(2.3rem, 11.5vw, 3.6rem); }
+  .copy p { margin-top: 14px; font-size: .98rem; max-width: 19em; }
+  .cta-row { left: 20px; right: 20px; bottom: 18px; } .cta-row .btn { flex: 1; padding: 13px 12px; font-size: .92rem; }
+  .bgword span { font-size: 44vw; } .rail, .hint { display: none; }
+  .disc { width: 44vh; height: 44vh; margin: -22vh; }
+}

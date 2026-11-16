@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardian: apresentação do projeto A3</title>
+<meta name="description" content="Apresentação do projeto Guardian em 12 slides.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="nav.css">
+<link rel="stylesheet" href="deck.css">
+<script>try{if(sessionStorage.getItem("gt")){sessionStorage.removeItem("gt");document.documentElement.classList.add("arriving")}}catch(e){}</script>
+</head>
+<body class="lp deck vivid">
+<svg id="appSprite" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 20h14"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.700 5.600 6.100.8-4.500 4.300 1.100 6.100L12 16.900 6.600 19.800l1.100-6.100L3.200 9.400l6.100-.8z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.500A2.500 2.500 0 0 1 6.500 3H20v15H6.500A2.500 2.500 0 0 0 4 20.500z"/><path d="M4 20.500A2.500 2.500 0 0 0 6.500 23H20v-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.500A8 8 0 1 1 9.500 4a6.500 6.500 0 0 0 10.500 10.500z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 20v-7M12 20V5M18 20v-10"/></symbol>
+  <symbol id="i-chartf" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="11" width="3.600" height="8.500" rx="1.200"/><rect x="10.200" y="5" width="3.600" height="14.500" rx="1.200"/><rect x="15.400" y="13.500" width="3.600" height="6" rx="1.200"/></symbol>
+  <symbol id="i-lockf" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" d="M8.500 10.500V8a3.500 3.500 0 0 1 7 0v2.500"/><rect x="5.500" y="10" width="13" height="10.500" rx="2.400" fill="currentColor"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.200 3 11h2.500v9h5v-6h3v6h5v-9H21z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.500"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="o-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="o-bar" viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></symbol>
+  <symbol id="o-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="o-lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.500v15a1 1 0 0 0 1.500.900l13-7.500a1 1 0 0 0 0-1.800l-13-7.500A1 1 0 0 0 7 4.500z"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 20h14"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.700 5.600 6.100.8-4.500 4.300 1.100 6.100L12 16.900 6.600 19.800l1.100-6.100L3.200 9.400l6.100-.8z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.500A2.500 2.500 0 0 1 6.500 3H20v15H6.500A2.500 2.500 0 0 0 4 20.500z"/><path d="M4 20.500A2.500 2.500 0 0 0 6.500 23H20v-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 20v-7M12 20V5M18 20v-10"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.500"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20a6.500 6.500 0 0 1 13 0"/><circle cx="17.500" cy="9" r="2.500"/><path d="M17 14.500a5 5 0 0 1 4.500 5"/></symbol>
+  <symbol id="i-child" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.500" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.500 4.200 12.600a4.800 4.800 0 0 1 6.800-6.800l1 1 1-1a4.800 4.800 0 0 1 6.800 6.800z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/><path d="M4 20 20 4"/></symbol>
+  <symbol id="i-funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.500 5h17l-6.500 8v6l-4-2v-4z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.500a4.500 4.500 0 0 1-.6-8.960A6 6 0 0 1 18 10.500a4 4 0 0 1-.5 8z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.500v15a1 1 0 0 0 1.500.86l12.500-7.500a1 1 0 0 0 0-1.720L8.500 3.640A1 1 0 0 0 7 4.500z"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.500 4a3 3 0 0 0-3 3 3.500 3.500 0 0 0-2 6 3.500 3.500 0 0 0 3 5.500 2.500 2.500 0 0 0 4.500-1.500V6.500A2.500 2.500 0 0 0 9.500 4zM14.500 4a3 3 0 0 1 3 3 3.500 3.500 0 0 1 2 6 3.500 3.500 0 0 1-3 5.500 2.500 2.500 0 0 1-4.500-1.500"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.500 5l-3 14"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2.500"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.500 4.500 4.500L19 7.500"/></symbol>
+</svg>
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-512.png" alt="">Guardian</a>
+    <nav aria-label="Apresentação">
+      <a href="apresentacao.html">Apresentação</a>
+      <a href="slides.html" class="active">Slides do projeto</a>
+      <a href="pitch.html">Pitch deck</a>
+      <a href="index.html">Conheça o app</a>
+    </nav>
+    <a class="btn btn-blue btn-small" href="download.html">Baixar</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+<main>
+<section class="sl c-blue"><div class="wrap">
+<div class="two"><div>
+  <p class="eyebrow pillb" data-a>Apresentação de Projeto A3</p>
+  <h1 data-a>Guardian</h1>
+  <p class="sub tc" data-a style="margin-top:14px;font-weight:600">Monitoramento parental</p>
+  <p class="sub" data-a style="margin-top:22px">Mais equilíbrio no tempo de jogo. Mais diálogo em família.</p>
+  <p class="meta-line" data-a>Exploração Digital e Fundamentos Tecnológicos • 2026</p>
+  <div class="names" data-a><span>Alexandre Lott de Alcântara Bizarria</span><span>Luiz Philipe Alves dos Santos</span><span>Christian Lorran da Silva Batista</span><span>Rafael Felipe de Paula</span><span>Lucas Pires Franco</span><span>Victor Gabriel Dutra de Abreu</span></div></div><div class="rph " data-a="pop"><div class="phone s25"><div class="screen app"><div class="status"><span>16:10</span><span>Guardian</span></div><div class="view on">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Olá, Duda</div>
+        <div class="v-sub">Hoje, segunda-feira</div>
+        <div class="big blue"><small>Tempo de tela hoje</small><strong>1 h 17 min</strong><small>de 2 h 30 combinadas</small></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="--w:75%"></i></div></div><span class="pill">15 min</span></div>
+          <div class="row"><img src="assets/apps/com.mojang.minecraftpe.png" alt=""><div class="t"><b>Minecraft</b><span>20 min de 2 h</span><div class="bar"><i style="--w:17%"></i></div></div><span class="pill">1 h 40</span></div>
+          <div class="row"><img src="assets/apps/com.supercell.brawlstars.png" alt=""><div class="t"><b>Brawl Stars</b><span>12 min de 45 min</span><div class="bar"><i style="--w:27%"></i></div></div><span class="pill">33 min</span></div>
+          <div class="row"><img src="assets/apps/com.kiloo.subwaysurf.png" alt=""><div class="t"><b>Subway Surfers</b><span>0 min de 30 min</span><div class="bar"><i style="--w:2%"></i></div></div><span class="pill">30 min</span></div>
+        </div>
+      </div><div class="bottom-nav"><span class="nav-item active" data-nav="0"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-home"/></svg></span><span class="nav-label">Início</span></span><span class="nav-item" data-nav="1"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-bar"/></svg></span><span class="nav-label">Relatório</span></span><span class="nav-item" data-nav="2"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-star"/></svg></span><span class="nav-label">Créditos</span></span><span class="nav-item" data-nav="3"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-lock"/></svg></span><span class="nav-label">Responsável</span></span></div></div></div><p class="rph-cap">Tela inicial da criança no Guardian</p></div></div>
+</div></section>
+<section class="sl c-sky"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>O problema: tempo de jogo sem equilíbrio.</h2>
+<div class="two"><div>
+  <p class="sub" data-a style="margin-bottom:26px">Pesquisa com adolescentes de escolas públicas brasileiras.</p>
+  <div class="rings">
+    <div class="ring-box c-sky" data-a><div class="ringv" style="--v:.8585"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><circle class="v" cx="60" cy="60" r="54"/></svg><b data-count="85.85" data-dec="2" data-suf="%">0%</b></div><p>relataram jogar videogame</p></div>
+    <div class="ring-box c-lime" data-a><div class="ringv" style="--v:.2817"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><circle class="v" cx="60" cy="60" r="54"/></svg><b data-count="28.17" data-dec="2" data-suf="%">0%</b></div><p>preencheram critérios de uso problemático</p></div>
+  </div>
+  <div class="band c-lime" data-a><b>Objetivo</b>Dar às famílias dados claros e limites ajustáveis por aplicativo.</div>
+</div>
+<div class="dc" data-a="right"><h3>Desafios para a família</h3><ul class="bul"><li data-a>Cada plataforma tem regras próprias.</li><li data-a>Nem sempre é fácil medir o uso.</li><li data-a>Excesso pode afetar a rotina e o diálogo.</li></ul></div></div>
+<p class="note" data-a>Fonte dos percentuais: Jornal da USP (2022). Resultados da amostra estudada, não de toda a população.</p>
+</div></section>
+<section class="sl c-blue"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Para quem estamos criando?</h2>
+<div class="dgrid g3"><div class="dc c-sky" data-a><span class="badge"><svg><use href="#i-users"/></svg></span><h3>Pais e responsáveis</h3><p>Definem limites, acompanham relatórios e fazem ajustes conforme a rotina familiar.</p></div><div class="dc c-lime" data-a><span class="badge"><svg><use href="#i-child"/></svg></span><h3>Crianças e adolescentes</h3><p>Veem o tempo disponível e recebem avisos claros quando o limite é alcançado.</p></div><div class="dc c-orange" data-a><span class="badge"><svg><use href="#i-heart"/></svg></span><h3>A família</h3><p>Ganha uma referência compartilhada para combinar horários e conversar sobre hábitos.</p></div></div>
+<div class="band" data-a>Princípio do projeto: acompanhamento transparente, sem ler conversas ou rastrear localização.</div>
+</div></section>
+<section class="sl c-orange"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Como o Guardian resolve o problema.</h2>
+<div class="two"><ol class="vsteps">
+  <li data-a="left"><span class="n">1</span><div><h3>Configurar</h3><p>O responsável escolhe os aplicativos e define limites diários.</p></div></li>
+  <li data-a="left"><span class="n">2</span><div><h3>Acompanhar</h3><p>O sistema registra o uso e apresenta informações do dia e da semana.</p></div></li>
+  <li data-a="left" class="c-lime"><span class="n">3</span><div><h3>Intervir</h3><p>Ao alcançar o limite, o app sinaliza a pausa ou aplica a restrição disponível.</p></div></li>
+</ol><div class="rph " data-a="pop"><div class="phone s25"><div class="screen app nonav"><div class="status"><span>16:10</span><span>Guardian</span></div><div class="view on center"><div class="lockmark"><svg><use href="#i-clock"/></svg></div><div class="v-title">O tempo de Roblox acabou</div><div class="v-sub">Você jogou 1 h hoje. Renova em</div><div class="timer">06:54:12</div><div class="pcard" style="margin-top:14px;text-align:left"><div class="row"><span class="ico g"><svg><use href="#i-book"/></svg></span><div class="t"><b>Que tal ler um pouco?</b><span>Ou desenhar, ou brincar lá fora</span></div></div></div><div class="pcard" style="text-align:left;background:var(--orange-soft);box-shadow:none"><div class="row"><span class="ico o"><svg><use href="#i-star"/></svg></span><div class="t"><b>Arrume o quarto e ganhe mais 30 min!</b><span>Missão da mamãe</span></div></div></div><span class="pbtn">Ver minhas missões</span></div></div></div><p class="rph-cap">Tela de pausa quando o limite acaba</p></div></div>
+</div></section>
+<section class="sl c-sky"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Funcionalidades do MVP.</h2>
+<div class="dgrid g2 feats"><div class="dc " data-a><span class="num">01</span><h3>Painel do responsável</h3><p>Visão dos aparelhos vinculados, uso diário e ajustes de regras.</p><button class="clipbtn" type="button" data-clip="painel" data-title="Painel do responsável"><span class="cb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.500v13a1 1 0 0 0 1.500.900l11-6.500a1 1 0 0 0 0-1.800l-11-6.500A1 1 0 0 0 8 5.500z"/></svg></span>Ver em ação</button><div class="viz v-panel" aria-hidden="true"><i style="--w:86%"></i><i style="--w:58%"></i><i style="--w:34%"></i></div></div><div class="dc " data-a><span class="num">02</span><h3>Limite por aplicativo</h3><p>Configuração de duração máxima de uso para jogos e apps.</p><button class="clipbtn" type="button" data-clip="limite" data-title="Limite por aplicativo"><span class="cb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.500v13a1 1 0 0 0 1.500.900l11-6.500a1 1 0 0 0 0-1.800l-11-6.500A1 1 0 0 0 8 5.500z"/></svg></span>Ver em ação</button><div class="viz v-limit" aria-hidden="true"><span class="track"><span class="fill"></span><span class="knob"></span></span></div></div><div class="dc " data-a><span class="num">03</span><h3>Relatório semanal</h3><p>Informações objetivas e gráficos dos últimos 7 dias.</p><button class="clipbtn" type="button" data-clip="relatorio" data-title="Relatório semanal"><span class="cb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.500v13a1 1 0 0 0 1.500.900l11-6.500a1 1 0 0 0 0-1.800l-11-6.500A1 1 0 0 0 8 5.500z"/></svg></span>Ver em ação</button><div class="viz v-week" aria-hidden="true"><i style="--h:42%"></i><i style="--h:78%"></i><i style="--h:56%"></i><i style="--h:100%"></i><i style="--h:62%"></i><i style="--h:74%"></i><i style="--h:30%"></i></div></div><div class="dc c-lime" data-a><span class="num">04</span><h3>Vínculo entre aparelhos</h3><p>Pareamento por QR Code ou código de 8 caracteres no Flutter.</p><div class="viz v-pair" aria-hidden="true"><span class="qrm"></span><span class="code"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i></span></div></div></div>
+<p class="note tc c-lime" data-a style="font-size:1rem">Status: protótipo web com simulações. App Flutter com funções implementadas e testes físicos ainda necessários.</p>
+</div></section>
+<section class="sl c-blue"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Tecnologias e arquitetura da solução.</h2>
+<p class="eyebrow pillb" data-a style="margin-bottom:22px">Desenvolvimento com código</p>
+<div class="flow">
+  <div class="dc" data-a><small>Aplicativo</small><strong>Flutter + Dart</strong><p>Android e Windows</p></div><span class="arrow" data-a></span>
+  <div class="dc c-orange" data-a><small>Dados e vínculo</small><strong>Firebase</strong><p>Firestore e regras de acesso</p></div><span class="arrow o" data-a></span>
+  <div class="dc c-lime" data-a><small>Monitoramento</small><strong>Android / PC</strong><p>Recursos específicos do sistema</p></div>
+</div>
+<div class="band c-lime" data-a><b>Plano de demonstração</b>Protótipo web HTML + CSS + JavaScript (PWA) com dados de exemplo.</div>
+<p class="note" data-a>Fonte: README e documentação técnica do Guardian.</p>
+</div></section>
+<section class="sl c-lime"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Inteligência artificial: uso consciente.</h2>
+<div class="dgrid g2">
+  <div class="dc c-sky" data-a><span class="num">IA no desenvolvimento</span><h3>Apoio ao trabalho da equipe</h3><ul class="bul"><li data-a>Pesquisa e estruturação da proposta</li><li data-a>Prototipação e auxílio na programação</li><li data-a>Documentação, revisão e testes</li></ul></div>
+  <div class="dc c-lime" data-a><span class="num">Possibilidade futura</span><h3>IA como apoio às famílias</h3><ul class="bul"><li data-a>Síntese dos hábitos de tempo de tela</li><li data-a>Sugestões de atividades offline</li><li data-a>Recomendações sempre revisáveis</li></ul></div>
+</div>
+<div class="band" data-a style="text-align:center;font-weight:600">IA auxilia a equipe e os responsáveis. As decisões continuam sendo humanas.</div>
+</div></section>
+<section class="sl c-sky"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Ética, privacidade e proteção infantil.</h2>
+<div class="dgrid g2"><div class="dc " data-a><span class="num">01</span><h3>Coleta mínima</h3><p>Tempo de uso, aplicativos monitorados e limites definidos.</p></div><div class="dc " data-a><span class="num">02</span><h3>Transparência</h3><p>A criança deve entender quais dados são acompanhados.</p></div><div class="dc " data-a><span class="num">03</span><h3>Responsável e finalidade</h3><p>Participação do responsável e avaliação da base legal aplicável.</p></div><div class="dc " data-a><span class="num">04</span><h3>Segurança e acesso</h3><p>Restrição de acesso, regras no banco e validação da proteção.</p></div></div>
+<div class="band c-lime" data-a style="text-align:center"><b>Não monitorar:</b>conversas, geolocalização, pagamentos ou dados de saúde.</div>
+<p class="note" data-a>Referências legais: LGPD (Lei 13.709/2018, art. 14) e ECA Digital (Lei 15.211/2025).</p>
+</div></section>
+<section class="sl c-lime"><div class="wrap">
+<div class="two"><div>
+  <p class="eyebrow pillb" data-a>Momento central</p>
+<h2 data-a>Demonstração prática.</h2>
+  <p class="sub tc" data-a style="margin:-14px 0 20px">Roteiro para a banca</p>
+  <ol class="vsteps plain">
+    <li data-a="left"><span class="n">1</span><p class="sub">Abrir o aplicativo e mostrar o painel</p></li>
+    <li data-a="left"><span class="n">2</span><p class="sub">Escolher um jogo e ajustar seu limite</p></li>
+    <li data-a="left"><span class="n">3</span><p class="sub">Mostrar o acompanhamento de uso</p></li>
+    <li data-a="left"><span class="n">4</span><p class="sub">Demonstrar o aviso ou bloqueio disponível</p></li>
+    <li data-a="left"><span class="n">5</span><p class="sub">Exibir o relatório dos últimos 7 dias</p></li>
+  </ol>
+<div class="hero-cta" data-a><a class="btn btn-blue glowbtn" href="index.html#cine">Abrir a demonstração</a><a class="btn btn-ghost" href="apresentacao.html">Ver o vídeo</a></div>
+  
+  <p class="note" data-a>Usar apenas a versão testada pela equipe e manter um vídeo de reserva.</p>
+</div><div class="rph " data-live="1" data-a="pop"><div class="phone s25"><div class="screen app"><div class="status"><span>16:10</span><span>Guardian</span></div><div class="view on">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Olá, Duda</div>
+        <div class="v-sub">Hoje, segunda-feira</div>
+        <div class="big blue"><small>Tempo de tela hoje</small><strong>1 h 17 min</strong><small>de 2 h 30 combinadas</small></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="--w:75%"></i></div></div><span class="pill">15 min</span></div>
+          <div class="row"><img src="assets/apps/com.mojang.minecraftpe.png" alt=""><div class="t"><b>Minecraft</b><span>20 min de 2 h</span><div class="bar"><i style="--w:17%"></i></div></div><span class="pill">1 h 40</span></div>
+          <div class="row"><img src="assets/apps/com.supercell.brawlstars.png" alt=""><div class="t"><b>Brawl Stars</b><span>12 min de 45 min</span><div class="bar"><i style="--w:27%"></i></div></div><span class="pill">33 min</span></div>
+          <div class="row"><img src="assets/apps/com.kiloo.subwaysurf.png" alt=""><div class="t"><b>Subway Surfers</b><span>0 min de 30 min</span><div class="bar"><i style="--w:2%"></i></div></div><span class="pill">30 min</span></div>
+        </div>
+      </div><div class="view">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Relatório</div><div class="v-sub">Últimos 7 dias</div>
+        <div class="tabs" style="grid-template-columns:repeat(3,1fr)"><span>Hoje</span><span class="sel">7 dias</span><span>30 dias</span></div>
+        <div class="big blue"><small>Total na semana</small><strong>14 h 20 min</strong><small>média de 2 h 03 por dia</small></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Jogo mais jogado</b><span>Roblox, 5 h 10 min</span><div class="bar"><i style="--w:82%"></i></div></div></div>
+          <div class="row"><img src="assets/apps/com.google.android.youtube.png" alt=""><div class="t"><b>App mais usado</b><span>YouTube, 3 h 40 min</span><div class="bar"><i style="--w:58%"></i></div></div></div>
+          <div class="row"><span class="ico o"><svg><use href="#i-chart"/></svg></span><div class="t"><b>Dia mais intenso</b><span>Sábado, 3 h 05 min</span><div class="bar"><i class="full" style="--w:70%"></i></div></div></div>
+        </div>
+      </div><div class="view">
+        <div class="v-head"><img src="assets/logo-512.png" alt="">Guardian<span class="who"><i>D</i>Duda</span></div>
+        <div class="v-title">Créditos</div><div class="v-sub">Missões que viram tempo extra</div>
+        <div class="big orange"><small>Seus créditos</small><strong>30 min</strong><small>Pode usar até as 21:00</small><span class="pbtn white">Usar crédito</span></div>
+        <div class="pcard">
+          <div class="row"><span class="ico g"><svg><use href="#i-star"/></svg></span><div class="t"><b>Arrumar o quarto</b><span>+30 min de diversão</span></div><span class="pill green">Aprovada</span></div>
+          <div class="row"><span class="ico o"><svg><use href="#i-book"/></svg></span><div class="t"><b>Ler 20 páginas</b><span>+15 min de diversão</span></div><span class="pill orange">Esperando</span></div>
+          <div class="row"><span class="ico"><svg><use href="#i-star"/></svg></span><div class="t"><b>Lavar a louça</b><span>+15 min de diversão</span></div><span class="pill">Fiz!</span></div>
+        </div>
+      </div><div class="view">
+        <div class="v-title">Painel do responsável</div><div class="v-sub">Limites, rotinas e créditos</div>
+        <div class="tabs"><span data-tab="res">Resumo</span><span class="sel" data-tab="apps">Apps</span><span data-tab="rot">Rotinas</span><span data-tab="cred">Créditos</span></div>
+        <div class="pcard">
+          <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="--w:75%"></i></div></div><span class="pill">1 h</span></div>
+          <div class="row"><img src="assets/apps/com.epicgames.fortnite.png" alt=""><div class="t"><b>Fortnite</b><span>10 min de 45 min</span><div class="bar"><i style="--w:22%"></i></div></div><span class="pill">45 min</span></div>
+          <div class="row"><img src="assets/apps/com.supercell.clashroyale.png" alt=""><div class="t"><b>Clash Royale</b><span>30 min de 30 min</span><div class="bar"><i class="full" style="--w:100%"></i></div></div><span class="pill orange">No limite</span></div>
+          <div class="row"><img src="assets/apps/com.google.android.youtube.png" alt=""><div class="t"><b>YouTube</b><span>25 min de 1 h</span><div class="bar"><i style="--w:42%"></i></div></div><span class="pill">1 h</span></div>
+          <div class="row"><img src="assets/apps/com.zhiliaoapp.musically.png" alt=""><div class="t"><b>TikTok</b><span>18 min de 30 min</span><div class="bar"><i style="--w:60%"></i></div></div><span class="pill">30 min</span></div>
+          <div class="row"><img src="assets/apps/com.instagram.android.png" alt="" style="filter:grayscale(1);opacity:.55"><div class="t"><b>Instagram</b><span>Bloqueado o dia todo</span></div><span class="pill red">Bloqueado</span></div>
+        </div>
+      </div><div class="bottom-nav"><span class="nav-item active" data-nav="0"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-home"/></svg></span><span class="nav-label">Início</span></span><span class="nav-item" data-nav="1"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-bar"/></svg></span><span class="nav-label">Relatório</span></span><span class="nav-item" data-nav="2"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-star"/></svg></span><span class="nav-label">Créditos</span></span><span class="nav-item" data-nav="3"><span class="npill"><svg class="nic" aria-hidden="true"><use href="#o-lock"/></svg></span><span class="nav-label">Responsável</span></span></div></div></div><p class="rph-cap">Toque no menu do celular para trocar de tela</p></div></div>
+</div></section>
+<section class="sl c-sky"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Plano de trabalho e evolução do projeto.</h2>
+<p class="sub" data-a style="margin:-14px 0 26px">Cronograma baseado nos marcos documentados no repositório.</p>
+<div class="gantt c-sky"><span></span><span class="h" data-a>Set</span><span class="h" data-a>Out</span><span class="h" data-a>Nov</span>
+<span data-a>Pesquisa e delimitação do problema</span><span class="cell" data-a><i style="--k:0;"></i></span><span class="cell" data-a></span><span class="cell" data-a></span><span data-a>Protótipo interativo e proposta</span><span class="cell" data-a><i style="--k:0;"></i></span><span class="cell" data-a><i style="--k:1;"></i></span><span class="cell" data-a></span><span data-a>Auditoria, PWA e documentação</span><span class="cell" data-a></span><span class="cell" data-a><i style="--k:1;"></i></span><span class="cell" data-a></span><span data-a>Aplicativo Flutter e Firebase</span><span class="cell" data-a></span><span class="cell" data-a></span><span class="cell" data-a><i style="--k:2;"></i></span><span data-a>Testes reais e melhorias</span><span class="cell" data-a></span><span class="cell" data-a></span><span class="cell" data-a><i style="--k:2;--w:58%;--c:#B5E61D"></i></span></div>
+<div class="legend" data-a><span class="c-sky">marco documentado</span><span class="c-lime">validação pendente</span></div>
+</div></section>
+<section class="sl c-orange"><div class="wrap">
+<p class="eyebrow" data-a>Projeto A3 · Guardian</p>
+<h2 data-a>Impacto esperado e próximos passos.</h2>
+<div class="dgrid g2">
+  <div class="dc c-lime" data-a><span class="num">Valor para as famílias</span><ul class="bul"><li data-a>Visibilidade do tempo dedicado a jogos</li><li data-a>Limites ajustados à rotina de cada casa</li><li data-a>Mais espaço para acordos e diálogo</li></ul></div>
+  <div class="dc c-sky" data-a><span class="num">O que precisa evoluir</span><ul class="bul"><li data-a>Validar QR Code e bloqueio em aparelhos reais</li><li data-a>Testar a comunicação entre dispositivos</li><li data-a>Aprimorar acessibilidade e segurança</li></ul></div>
+</div>
+<p class="sub" data-a style="margin-top:26px;max-width:none;text-align:center">O Guardian é apoio à educação digital, não substitui o acompanhamento dos responsáveis.</p>
+</div></section>
+<section class="sl c-blue"><div class="wrap">
+<div class="two"><div>
+  <p class="eyebrow pillb" data-a>Projeto A3 · 2026</p>
+  <h2 data-a style="font-size:clamp(2.2rem,5.4vw,4.8rem);max-width:11em">Tecnologia para cuidar do tempo. Diálogo para cuidar das relações.</h2>
+  <div class="hero-cta" data-a style="margin-bottom:18px"><a class="btn btn-blue glowbtn" href="download.html">Baixar o app</a><a class="btn btn-ghost" href="index.html#cine">Ver o app em ação</a></div>
+  <p class="sub tc c-lime" data-a style="font-weight:700">Obrigado! Perguntas?</p>
+  
+</div><div style="display:grid"><div class="qrbox" data-a="pop"><img src="assets/qr-repo.svg" alt="QR code do repositório no GitHub"></div><p data-a>Conheça o código do projeto</p></div></div>
+</div></section>
+</main>
+<script src="motion.js"></script>
+<script src="main.js"></script>
+<script src="deck.js"></script>
+</body>
+</html>
