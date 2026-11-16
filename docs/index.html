@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardian · controle de tempo de tela</title>
+<meta name="description" content="Guardian: o responsável define limites, rotinas e créditos de tempo para os apps do celular do filho. Projeto acadêmico A3.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+:root{
+  --blue:#2b59ff; --blue-soft:#e8edff; --orange:#ff7a1a; --orange-soft:#ffebdc;
+  --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f7f8fa; --card:#ffffff;
+  --btn-text:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --blue:#7b9bff; --blue-soft:#18233f; --orange:#ff9a4d; --orange-soft:#3a2415;
+    --ink:#f1f5f9; --muted:#94a3b8; --line:#26324a; --bg:#0b1220; --card:#121a2c; --btn-text:#0b1220; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-inline:20px}
+.wrap{max-width:880px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;padding-block:20px}
+header img{width:44px;height:44px}
+header strong{font-size:1.15rem;letter-spacing:.2px}
+.hero{padding-block:28px 12px}
+h1{font-size:clamp(2rem,5.5vw,3.1rem);line-height:1.1;margin:0 0 14px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--blue)}
+.lead{font-size:1.1rem;color:var(--muted);max-width:60ch;margin:0 0 24px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{display:inline-block;background:var(--blue);color:var(--btn-text);text-decoration:none;
+  font-weight:700;padding:14px 22px;border-radius:14px}
+.btn:hover{filter:brightness(1.08)}
+.btn:focus-visible,a:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.small{font-size:.9rem;color:var(--muted)}
+section{padding-block:34px 6px}
+h2{font-size:1.45rem;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 20px}
+.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:0;color:var(--muted);font-size:.97rem}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:999px;
+  background:var(--blue-soft);color:var(--blue);margin-bottom:8px}
+.tag.o{background:var(--orange-soft);color:var(--orange)}
+ol.steps{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+ol.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 18px 14px 58px;position:relative}
+ol.steps li::before{content:counter(s);position:absolute;left:16px;top:12px;width:30px;height:30px;border-radius:50%;
+  background:var(--blue);color:var(--btn-text);font-weight:700;display:grid;place-items:center}
+.note{background:var(--orange-soft);border-radius:16px;padding:14px 18px;color:var(--ink);font-size:.95rem}
+footer{padding-block:36px 40px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.svg" alt="" width="44" height="44">
+    <strong>Guardian</strong>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Tempo de tela <em>combinado</em>, não imposto.</h1>
+      <p class="lead">O responsável define limites, rotinas e créditos de tempo para os apps do celular do filho.
+        O filho vê quanto ainda pode usar e ganha tempo extra cumprindo missões combinadas em família.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/AlexandreLott/Guardiao/releases/latest/download/guardiao.apk">Baixar o app para Android</a>
+        <span class="small">Sempre a versão mais recente · arquivo .apk de cerca de 70 MB</span>
+      </div>
+    </div>
+
+    <section aria-labelledby="como">
+      <h2 id="como">Como funciona</h2>
+      <div class="grid">
+        <div class="card"><span class="tag">Responsável</span>
+          <h3>Painel no seu celular</h3>
+          <p>Entre com e-mail e senha, vincule o aparelho do filho por um código e acompanhe o uso de cada app.</p></div>
+        <div class="card"><span class="tag o">Filho</span>
+          <h3>App no celular dele</h3>
+          <p>Mostra o tempo restante de cada app e avisa quando o limite chega. Um PIN protege o painel do responsável.</p></div>
+      </div>
+      <p class="small">É o mesmo aplicativo: na primeira abertura você escolhe se aquele aparelho é do responsável ou do filho.</p>
+    </section>
+
+    <section aria-labelledby="recursos">
+      <h2 id="recursos">O que o Guardian faz</h2>
+      <div class="grid">
+        <div class="card"><h3>Limites por app</h3><p>Tempo diário para cada aplicativo, ou bloqueio total quando fizer sentido.</p></div>
+        <div class="card"><h3>Rotinas</h3><p>Horários como hora de dormir ou de estudar, com dias da semana e bloqueio geral do aparelho.</p></div>
+        <div class="card"><h3>Créditos benéficos</h3><p>O filho cumpre uma missão, pede o crédito e o responsável aprova ou recusa.</p></div>
+        <div class="card"><h3>Relatório</h3><p>Resumo do uso do dia e da semana, por app, direto no painel do responsável.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="instalar">
+      <h2 id="instalar">Como instalar</h2>
+      <ol class="steps">
+        <li>Toque em <strong>Baixar o app para Android</strong> no celular que vai usar o Guardian.</li>
+        <li>Abra o arquivo baixado. Se o Android pedir, permita instalar apps de fontes desconhecidas para o navegador usado.</li>
+        <li>Abra o Guardian e escolha <strong>Sou o responsável</strong> ou <strong>Sou o filho</strong>. No celular do filho, aceite as permissões que o app pede.</li>
+        <li>No responsável, toque em <strong>Vincular o aparelho do seu filho</strong> e leia o código mostrado no celular dele.</li>
+      </ol>
+      <p class="small">Depois da primeira instalação, as atualizações aparecem dentro do próprio app.</p>
+    </section>
+
+    <section>
+      <div class="note"><strong>Projeto acadêmico.</strong> O Guardian é o Projeto A3 de um grupo de estudantes e está em fase de testes.
+        O app é distribuído fora da Play Store e usa o Firebase (Google) para guardar os dados da família.
+        Partes do código e da documentação foram feitas com ajuda de IA, e esse uso está registrado no repositório.</div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="https://github.com/AlexandreLott/Guardiao">Código-fonte no GitHub</a> ·
+    <a href="https://github.com/AlexandreLott/Guardiao/releases">Todas as versões</a>
+  </footer>
+</div>
+</body>
+</html>
