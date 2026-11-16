@@ -11,6 +11,7 @@ import 'update/update_controller.dart';
 import 'update/update_installer.dart';
 import 'update/update_source.dart';
 import 'watch/background_tasks.dart';
+import 'watch/headless_sync.dart';
 import 'watch/health_source.dart';
 
 /// Função fixa do aparelho (`parent` ou `child`), usada nos APKs de teste
@@ -48,4 +49,36 @@ Future<void> main() async {
       pinStore: const PrefsPinStore(),
     ),
   );
+}
+
+// Guardado para o coletor de lixo não encerrar a sincronização.
+// ignore: unused_element
+HeadlessSync? _headless;
+
+/// Roda dentro do serviço de bloqueio do Android, num motor do Flutter sem
+/// telas: mantém as regras do aparelho do filho em dia com a nuvem mesmo com
+/// o app fechado. Só age se este aparelho é o do filho e já está vinculado.
+@pragma('vm:entry-point')
+Future<void> guardianHeadlessSync() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    final setup = await createBackend();
+    if (setup.isDemo) return;
+    final backend = setup.backend;
+    // Dá tempo de o Firebase restaurar o login salvo no aparelho.
+    await backend.authStateChanges().first.timeout(
+      const Duration(seconds: 15),
+      onTimeout: () => null,
+    );
+    if (backend.currentUid == null) return;
+    if (await SharedPrefsRoleStore().read() != DeviceRole.child) return;
+    _headless = HeadlessSync(
+      backend: backend,
+      monitor: UsageMonitor.detect(),
+      platform: InstalledAppsSource.detect().platform,
+    )..start();
+  } catch (_) {
+    // Sem a sincronização sem tela, tudo segue como antes: as regras chegam
+    // quando o app é aberto.
+  }
 }

@@ -11,6 +11,11 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.Settings
+import io.flutter.FlutterInjector
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.MethodChannel
 import java.util.Calendar
 
 /**
@@ -23,6 +28,9 @@ class MonitorService : Service() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var overlay: BlockOverlay
     private var running = false
+
+    /** Motor do Flutter sem telas que mantém as regras em dia com a nuvem. */
+    private var syncEngine: FlutterEngine? = null
     private var ticks = 0
 
     private val tick = object : Runnable {
@@ -70,6 +78,7 @@ class MonitorService : Service() {
             running = true
             main.post(tick)
         }
+        startSyncEngine()
         return START_STICKY
     }
 
@@ -271,6 +280,62 @@ class MonitorService : Service() {
         }
     }
 
+    /**
+     * Liga a sincronização sem tela. Antes, as mudanças do responsável só
+     * chegavam ao bloqueio com a tela do app aberta; com o app fechado, ligar
+     * o bloqueio geral não tinha efeito. Qualquer falha aqui é ignorada: o
+     * bloqueio segue com as últimas regras guardadas.
+     */
+    private fun startSyncEngine() {
+        if (syncEngine != null) return
+        try {
+            val loader = FlutterInjector.instance().flutterLoader()
+            loader.startInitialization(applicationContext)
+            loader.ensureInitializationComplete(applicationContext, null)
+            val engine = FlutterEngine(applicationContext)
+            MethodChannel(engine.dartExecutor.binaryMessenger, SYNC_CHANNEL)
+                .setMethodCallHandler { call, result ->
+                    when (call.method) {
+                        "permissions" -> result.success(
+                            mapOf(
+                                "usageAccess" to UsageReader.hasUsageAccess(this),
+                                "overlay" to Settings.canDrawOverlays(this),
+                                "notifications" to true,
+                            ),
+                        )
+                        "start" -> {
+                            val json = call.argument<String>("apps")
+                            try {
+                                MonitorConfig.parse(json ?: "") // recusa JSON quebrado
+                                MonitorConfig.save(this, json!!, enabled = true)
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error("BAD_ARGS", e.message, null)
+                            }
+                        }
+                        "usageToday" -> try {
+                            if (!UsageReader.hasUsageAccess(this)) {
+                                result.success(emptyMap<String, Int>())
+                            } else {
+                                val usage = UsageReader.today(this)
+                                result.success(usage.millisByPackage.mapValues { (it.value / 60_000L).toInt() })
+                            }
+                        } catch (e: Exception) {
+                            result.error("USAGE_FAILED", e.message, null)
+                        }
+                        "adminActive" -> result.success(HealthSnapshot.isAdminActive(this))
+                        else -> result.notImplemented()
+                    }
+                }
+            engine.dartExecutor.executeDartEntrypoint(
+                DartExecutor.DartEntrypoint(loader.findAppBundlePath(), "guardianHeadlessSync"),
+            )
+            syncEngine = engine
+        } catch (_: Throwable) {
+            syncEngine = null
+        }
+    }
+
     /** Se a criança tirar o app da lista de recentes, o serviço volta sozinho. */
     override fun onTaskRemoved(rootIntent: Intent?) {
         if (MonitorConfig.isEnabled(this)) {
@@ -286,6 +351,11 @@ class MonitorService : Service() {
         running = false
         main.removeCallbacks(tick)
         overlay.hide()
+        try {
+            syncEngine?.destroy()
+        } catch (_: Throwable) {
+        }
+        syncEngine = null
         super.onDestroy()
     }
 
@@ -294,6 +364,7 @@ class MonitorService : Service() {
         private const val NOTIFICATION_ID = 7101
         private const val INTERVAL_MS = 3_000L
         private const val HEALTH_EVERY_TICKS = 10
+        private const val SYNC_CHANNEL = "br.edu.guardiaogamer/monitor"
         private const val GUARDIAN_PREFIX = "br.edu.guardiaogamer.guardiao"
 
         /** Apps comuns sugeridos quando estão instalados e sem regra. */
