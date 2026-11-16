@@ -18,7 +18,8 @@ void main() {
         home: Column(
           children: [
             AppAvatar(InstalledApp(id: 'a', name: 'Roblox', icon: _png)),
-            const AppAvatar(InstalledApp(id: 'b', name: 'Minecraft')),
+            const AppAvatar(InstalledApp(id: 'b', name: 'Meu App')),
+            const AppAvatar(InstalledApp(id: 'd', name: 'Minecraft')),
             const AppAvatar(
               InstalledApp(id: 'c', name: 'Quebrado', icon: '%%%'),
             ),
@@ -26,7 +27,11 @@ void main() {
         ),
       ),
     );
-    expect(find.byKey(const Key('appIcon')), findsOneWidget);
+    expect(
+      find.byKey(const Key('appIcon')),
+      findsNWidgets(2),
+      reason: 'Minecraft usa o ícone embutido',
+    );
     expect(find.text('M'), findsOneWidget);
     expect(
       find.text('Q'),

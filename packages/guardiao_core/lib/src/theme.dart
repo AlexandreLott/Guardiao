@@ -109,7 +109,8 @@ ThemeData guardiaoTheme([Brightness brightness = Brightness.light]) {
           height: 1.4,
         ),
         labelLarge: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      );
+      )
+      .apply(fontFamily: guardianFont);
 
   final radius14 = BorderRadius.circular(14);
   OutlineInputBorder border(Color color, [double width = 1]) =>

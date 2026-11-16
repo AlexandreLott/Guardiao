@@ -59,7 +59,19 @@ class AppAvatar extends StatelessWidget {
     );
     return ExcludeSemantics(
       child: bytes == null
-          ? fallback
+          ? (_iconKey(app) != null
+                ? ClipRRect(
+                    borderRadius: radius,
+                    child: Image.asset(
+                      'packages/guardiao_core/assets/app_icons/${_iconKey(app)}.png',
+                      key: const Key('appIcon'),
+                      width: size,
+                      height: size,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => fallback,
+                    ),
+                  )
+                : fallback)
           : ClipRRect(
               borderRadius: radius,
               child: Image.memory(
@@ -75,6 +87,55 @@ class AppAvatar extends StatelessWidget {
             ),
     );
   }
+}
+
+/// Apps populares com ícone embutido (usado quando o aparelho não enviou o
+/// ícone, como no modo demonstração ou no Windows).
+const knownAppIcons = {
+  'com.dts.freefireth',
+  'com.duolingo',
+  'com.epicgames.fortnite',
+  'com.google.android.youtube',
+  'com.innersloth.spacemafia',
+  'com.instagram.android',
+  'com.kiloo.subwaysurf',
+  'com.kitkagames.fallbuddies',
+  'com.kwai.video',
+  'com.mojang.minecraftpe',
+  'com.netflix.mediaclient',
+  'com.roblox.client',
+  'com.spotify.music',
+  'com.supercell.brawlstars',
+  'com.supercell.clashroyale',
+  'com.whatsapp',
+  'com.zhiliaoapp.musically',
+};
+
+const _iconByName = {
+  'free fire': 'com.dts.freefireth',
+  'duolingo': 'com.duolingo',
+  'fortnite': 'com.epicgames.fortnite',
+  'youtube': 'com.google.android.youtube',
+  'among us': 'com.innersloth.spacemafia',
+  'instagram': 'com.instagram.android',
+  'subway surfers': 'com.kiloo.subwaysurf',
+  'stumble guys': 'com.kitkagames.fallbuddies',
+  'kwai': 'com.kwai.video',
+  'minecraft': 'com.mojang.minecraftpe',
+  'netflix': 'com.netflix.mediaclient',
+  'roblox': 'com.roblox.client',
+  'spotify': 'com.spotify.music',
+  'brawl stars': 'com.supercell.brawlstars',
+  'clash royale': 'com.supercell.clashroyale',
+  'whatsapp': 'com.whatsapp',
+  'tiktok': 'com.zhiliaoapp.musically',
+};
+
+/// Nome do ícone embutido para o app (pelo pacote ou pelo nome), se houver.
+String? _iconKey(InstalledApp app) {
+  final pkg = app.packageName ?? app.id;
+  if (knownAppIcons.contains(pkg)) return pkg;
+  return _iconByName[app.name.trim().toLowerCase()];
 }
 
 /// Mostra "1 h 30 min", "45 min", "sem limite".
