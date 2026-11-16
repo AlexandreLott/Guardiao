@@ -207,7 +207,7 @@ class _ReportViewState extends State<ReportView> {
                 leading: topCat == null
                     ? null
                     : GIconBox(
-                        Icons.sports_esports_outlined,
+                        _catIcon(topCat.key),
                         color: _catColors[topCat.key]!,
                         background: _catColors[topCat.key]!.withValues(
                           alpha: 0.18,
@@ -260,6 +260,15 @@ class _ReportViewState extends State<ReportView> {
     );
   }
 }
+
+/// Ícone de cada categoria de app.
+IconData _catIcon(AppCategory c) => switch (c) {
+  AppCategory.games => Icons.sports_esports_outlined,
+  AppCategory.videos => Icons.play_circle_outline,
+  AppCategory.social => Icons.forum_outlined,
+  AppCategory.study => Icons.menu_book_outlined,
+  AppCategory.other => Icons.apps_outlined,
+};
 
 class _Highlight extends StatelessWidget {
   const _Highlight({
@@ -633,34 +642,53 @@ class _DayDetail extends StatelessWidget {
           if (sorted.isEmpty)
             Text('Sem uso nesse dia.', style: text.bodyMedium)
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final e in sorted)
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
-                    decoration: BoxDecoration(
-                      color: GColors.bg,
-                      borderRadius: BorderRadius.circular(99),
-                      border: Border.all(color: GColors.line),
+            for (var i = 0; i < sorted.length; i++) ...[
+              if (i > 0) const Divider(height: 1, color: Color(0xFFF0F3F7)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    AppAvatar(appOf(sorted[i].appId), size: 38),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  appOf(sorted[i].appId).name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.titleSmall,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                formatDur(sorted[i].minutes),
+                                style: text.bodySmall?.copyWith(
+                                  color: GColors.ink,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 7),
+                          GProgress(
+                            sorted.first.minutes == 0
+                                ? 0
+                                : sorted[i].minutes / sorted.first.minutes,
+                            color: GColors.blue,
+                            height: 5,
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppAvatar(appOf(e.appId), size: 26),
-                        const SizedBox(width: 6),
-                        Text(
-                          appOf(e.appId).name,
-                          style: text.titleSmall?.copyWith(fontSize: 13),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(formatDur(e.minutes), style: text.bodySmall),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
         ],
       ),
     );

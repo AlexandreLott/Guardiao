@@ -34,6 +34,9 @@ class SummaryTab extends StatelessWidget {
         .where((r) => r.dailyLimitMinutes != null && !r.blocked)
         .length;
     final blocked = data.rules.values.where((r) => r.blocked).length;
+    final combined = data.rules.values
+        .where((r) => r.dailyLimitMinutes != null && !r.blocked)
+        .fold(0, (a, r) => a + r.dailyLimitMinutes!);
     final activeRoutines = data.config.routines.where((r) => r.enabled).length;
     final device = data.device;
     return ListView(
@@ -44,15 +47,52 @@ class SummaryTab extends StatelessWidget {
             device.hasNoSignal(data.now) ||
             AlertsPanel.offNow(device.health).isNotEmpty)
           const SizedBox(height: 12),
+        // Mesmo começo da tela inicial da criança: cartão azul com o tempo
+        // de tela de hoje e, embaixo, três números.
+        GHero(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tempo de tela hoje',
+                style: text.titleSmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+              ),
+              const SizedBox(height: 4),
+              KeyedSubtree(
+                key: const Key('statUsed'),
+                child: Text(
+                  formatDur(used),
+                  style: text.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontSize: 36,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                combined > 0
+                    ? 'de até ${formatDur(combined)} combinados para hoje'
+                    : 'sem limite combinado para hoje',
+                style: text.titleSmall?.copyWith(
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         GCard(
           padding: const EdgeInsets.symmetric(vertical: 14),
           child: Row(
             children: [
-              _Stat(formatDur(used), 'usado hoje', key: const Key('statUsed')),
-              const _VDivider(),
               _Stat('$withLimit', 'com limite', key: const Key('statLimited')),
               const _VDivider(),
               _Stat('$blocked', 'bloqueados', key: const Key('statBlocked')),
+              const _VDivider(),
+              _Stat('$activeRoutines', 'rotinas ativas'),
             ],
           ),
         ),

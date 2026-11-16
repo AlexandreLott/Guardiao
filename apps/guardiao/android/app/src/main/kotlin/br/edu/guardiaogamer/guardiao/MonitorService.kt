@@ -82,7 +82,7 @@ class MonitorService : Service() {
         val usage = UsageReader.today(this)
         val foreground = usage.foreground
         val rule = plan.apps.firstOrNull { it.pkg == foreground }
-        if (foreground == null || foreground == packageName || rule == null || isEssential(foreground)) {
+        if (foreground == null || isGuardian(foreground) || rule == null || isEssential(foreground)) {
             // Depois do bloqueio o celular vai para a tela inicial, e o que
             // fica na frente é o launcher. A tela de bloqueio continua ali até
             // a criança tocar em um botão; antes ela sumia em três segundos.
@@ -149,7 +149,7 @@ class MonitorService : Service() {
     private fun suggestionsFor(plan: MonitorPlan, blockedPkg: String, verdict: PolicyMath.Verdict): List<Suggestion> {
         val out = ArrayList<Suggestion>()
         plan.apps
-            .filter { it.pkg != blockedPkg && it.pkg != packageName && (it.allowed || it.category == "study") }
+            .filter { it.pkg != blockedPkg && !isGuardian(it.pkg) && (it.allowed || it.category == "study") }
             .filter { it.blocked.not() }
             .take(3)
             .forEach { out.add(Suggestion(it.pkg, it.name, if (it.category == "study") "Estudo e música" else "Sempre liberado")) }
@@ -200,6 +200,14 @@ class MonitorService : Service() {
         lastSentHome = pkg
         goHome()
     }
+
+    /**
+     * O Guardian oficial e as variantes de teste (Mãe e Filho) nunca são
+     * bloqueados: sem isso o bloqueio geral trancava o app do responsável
+     * quando os dois estão no mesmo celular.
+     */
+    private fun isGuardian(pkg: String): Boolean =
+        pkg == packageName || pkg.startsWith(GUARDIAN_PREFIX)
 
     /** Telefone e emergência nunca são cobertos. */
     private fun isEssential(pkg: String): Boolean =
@@ -286,6 +294,7 @@ class MonitorService : Service() {
         private const val NOTIFICATION_ID = 7101
         private const val INTERVAL_MS = 3_000L
         private const val HEALTH_EVERY_TICKS = 10
+        private const val GUARDIAN_PREFIX = "br.edu.guardiaogamer.guardiao"
 
         /** Apps comuns sugeridos quando estão instalados e sem regra. */
         private val COMMON_APPS = listOf(
