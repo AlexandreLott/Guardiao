@@ -52,6 +52,8 @@ class DeviceScreen extends StatefulWidget {
     required this.device,
     this.onChangeRole,
     this.embedded = false,
+    this.tabIndex,
+    this.onTabChanged,
   });
 
   final GuardianBackend backend;
@@ -60,6 +62,12 @@ class DeviceScreen extends StatefulWidget {
 
   /// Dentro da aba Responsável: sem o topo próprio (a tela de fora já tem).
   final bool embedded;
+
+  /// Aba mostrada, quando quem escolhe é a barra de baixo da tela de fora
+  /// (0 Resumo, 1 Apps, 2 Rotinas, 3 Créditos). Sem isso o painel mostra as
+  /// próprias abas no topo.
+  final int? tabIndex;
+  final ValueChanged<int>? onTabChanged;
 
   @override
   State<DeviceScreen> createState() => _DeviceScreenState();
@@ -75,7 +83,18 @@ class _DeviceScreenState extends State<DeviceScreen> {
   List<UsageEntry> _usage = const [];
   List<TamperAlert> _alerts = const [];
   Object? _error;
-  int _tab = 0;
+  int _ownTab = 0;
+
+  int get _tab => widget.tabIndex ?? _ownTab;
+
+  void _goTab(int i) {
+    final outside = widget.onTabChanged;
+    if (outside != null) {
+      outside(i);
+    } else {
+      setState(() => _ownTab = i);
+    }
+  }
 
   GuardianBackend get _backend => widget.backend;
   String get _id => widget.device.id;
@@ -215,7 +234,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
       SummaryTab(
         data: data,
         onLockAll: (v) => _save(_config.copyWith(lockAll: v)),
-        onGoTab: (i) => setState(() => _tab = i),
+        onGoTab: _goTab,
         onMarkSeen: () => _backend.markAlertsSeen(_id),
         onRemove: _remove,
         onAccount: _openAccount,
@@ -253,21 +272,22 @@ class _DeviceScreenState extends State<DeviceScreen> {
               'Painel do responsável',
               subtitle: 'Limites, rotinas e créditos',
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GSegmented(
-                labels: const ['Resumo', 'Apps', 'Rotinas', 'Créditos'],
-                icons: const [
-                  Icons.groups_outlined,
-                  Icons.smartphone,
-                  Icons.schedule,
-                  Icons.star_border_rounded,
-                ],
-                badges: {3: pending},
-                index: _tab,
-                onChanged: (i) => setState(() => _tab = i),
+            if (widget.tabIndex == null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GSegmented(
+                  labels: const ['Resumo', 'Apps', 'Rotinas', 'Créditos'],
+                  icons: const [
+                    Icons.groups_outlined,
+                    Icons.smartphone,
+                    Icons.schedule,
+                    Icons.star_border_rounded,
+                  ],
+                  badges: {3: pending},
+                  index: _tab,
+                  onChanged: _goTab,
+                ),
               ),
-            ),
             Expanded(
               child: GSwitch(
                 child: KeyedSubtree(

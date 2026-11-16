@@ -66,9 +66,16 @@ void main() {
     expect(find.byKey(const Key('seg_1')), findsOneWidget);
     expect(find.text('Limites, rotinas e créditos'), findsOneWidget);
 
-    // Sair da aba e voltar pede o PIN de novo.
-    await tester.tap(find.byKey(const Key('nav_home')));
+    // Com o PIN aceito, as abas do painel vão para a barra de baixo e o
+    // item Responsável (na ponta esquerda) sai do painel e tranca de novo.
+    expect(find.byKey(const Key('nav_home')), findsNothing);
+    await tester.tap(find.byKey(const Key('seg_2')));
     await tester.pumpAndSettle();
+    expect(find.text('Nenhuma rotina ainda'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('nav_guardian')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('nav_home')), findsOneWidget);
+    expect(find.byKey(const Key('seg_1')), findsNothing);
     await tester.tap(find.byKey(const Key('nav_guardian')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('enterPin')), findsOneWidget);

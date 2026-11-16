@@ -45,6 +45,9 @@ class _ChildViewScreenState extends State<ChildViewScreen> {
   int _tab = 0;
   bool _unlocked = false;
 
+  /// Aba do painel (0 Resumo, 1 Apps, 2 Rotinas, 3 Créditos).
+  int _panelTab = 0;
+
   String get _id => widget.device.id;
 
   @override
@@ -114,6 +117,9 @@ class _ChildViewScreenState extends State<ChildViewScreen> {
       },
       now: now,
     );
+    final pending = _claims
+        .where((c) => c.status == ClaimStatus.pending)
+        .length;
     final tabs = <Widget>[
       ChildHomeTab(data: data),
       ChildReportTab(data: data),
@@ -124,11 +130,16 @@ class _ChildViewScreenState extends State<ChildViewScreen> {
               device: _device,
               onChangeRole: widget.onChangeRole,
               embedded: true,
+              tabIndex: _panelTab,
+              onTabChanged: (i) => setState(() => _panelTab = i),
             )
           : _PinGate(
               store: widget.pinStore,
               isDemo: widget.isDemo,
-              onUnlocked: () => setState(() => _unlocked = true),
+              onUnlocked: () => setState(() {
+                _unlocked = true;
+                _panelTab = 0;
+              }),
             ),
     ];
     return Scaffold(
@@ -163,14 +174,69 @@ class _ChildViewScreenState extends State<ChildViewScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: GNavBar(
-        items: _items,
-        index: _tab,
-        onChanged: (i) => setState(() {
-          // Sair da aba Responsável tranca o painel de novo.
-          if (_tab == 3 && i != 3) _unlocked = false;
-          _tab = i;
-        }),
+      // Reconhecido o PIN, a barra desliza para a direita e dá lugar à do
+      // painel: "Responsável" vem para a ponta esquerda (toque para sair e
+      // trancar) e as abas do painel ficam ao lado.
+      bottomNavigationBar: ClipRect(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 620),
+          switchInCurve: gCurve,
+          switchOutCurve: gCurve.flipped,
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.bottomCenter,
+            children: [...previous, ?current],
+          ),
+          transitionBuilder: (child, animation) {
+            final panel = child.key == const ValueKey('panelNav');
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: Offset(panel ? -1 : 1, 0),
+                end: Offset.zero,
+              ).animate(animation),
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: _unlocked
+              ? GNavBar(
+                  key: const ValueKey('panelNav'),
+                  items: [
+                    const GNavItem(
+                      'Responsável',
+                      Icons.lock_open_rounded,
+                      Key('nav_guardian'),
+                    ),
+                    const GNavItem(
+                      'Resumo',
+                      Icons.groups_outlined,
+                      Key('seg_0'),
+                    ),
+                    const GNavItem('Apps', Icons.smartphone, Key('seg_1')),
+                    const GNavItem('Rotinas', Icons.schedule, Key('seg_2')),
+                    GNavItem(
+                      'Créditos',
+                      Icons.star_border_rounded,
+                      const Key('seg_3'),
+                      pending,
+                    ),
+                  ],
+                  index: _panelTab + 1,
+                  onChanged: (i) => setState(() {
+                    if (i == 0) {
+                      // Sair do painel tranca de novo e volta ao Início.
+                      _unlocked = false;
+                      _tab = 0;
+                    } else {
+                      _panelTab = i - 1;
+                    }
+                  }),
+                )
+              : GNavBar(
+                  key: const ValueKey('childNav'),
+                  items: _items,
+                  index: _tab,
+                  onChanged: (i) => setState(() => _tab = i),
+                ),
+        ),
       ),
     );
   }

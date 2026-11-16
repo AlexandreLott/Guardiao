@@ -787,10 +787,13 @@ class GSegmented extends StatelessWidget {
 
 /// Item da barra de baixo.
 class GNavItem {
-  const GNavItem(this.label, this.icon, [this.key]);
+  const GNavItem(this.label, this.icon, [this.key, this.badge = 0]);
   final String label;
   final IconData icon;
   final Key? key;
+
+  /// Número pequeno sobre o ícone (0 esconde).
+  final int badge;
 }
 
 /// Barra de baixo com o "calombo líquido" do protótipo: uma bolha branca na
@@ -825,7 +828,11 @@ class _GNavBarState extends State<GNavBar> with SingleTickerProviderStateMixin {
   Duration _last = Duration.zero;
   double _pending = 0;
 
-  double get _target => _width / widget.items.length * (widget.index + 0.5);
+  /// Margem lateral da barra: os itens não encostam nas bordas da tela.
+  static const _side = 10.0;
+
+  double get _target =>
+      _side + (_width - 2 * _side) / widget.items.length * (widget.index + 0.5);
 
   void _onTick(Duration elapsed) {
     _pending += (elapsed - _last).inMicroseconds / 1e6;
@@ -881,8 +888,8 @@ class _GNavBarState extends State<GNavBar> with SingleTickerProviderStateMixin {
                 ),
               ),
               Positioned(
-                left: 0,
-                right: 0,
+                left: _side,
+                right: _side,
                 top: _bulge,
                 height: _barHeight,
                 child: Row(
@@ -921,56 +928,94 @@ class _GNavBarState extends State<GNavBar> with SingleTickerProviderStateMixin {
               children: [
                 Transform.translate(
                   offset: Offset(0, -14 * t),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color.lerp(
-                        const Color(0x002B59FF),
-                        GColors.blue,
-                        k,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: Color.lerp(
                             const Color(0x002B59FF),
-                            const Color(0x802B59FF),
+                            GColors.blue,
                             k,
-                          )!,
-                          blurRadius: 12,
-                          spreadRadius: -6,
-                          offset: const Offset(0, 6),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color.lerp(
+                                const Color(0x002B59FF),
+                                const Color(0x802B59FF),
+                                k,
+                              )!,
+                              blurRadius: 12,
+                              spreadRadius: -6,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Icon(
-                      item.icon,
-                      size: 22,
-                      color: Color.lerp(
-                        const Color(0xFF7B8798),
-                        Colors.white,
-                        k,
+                        child: Icon(
+                          item.icon,
+                          size: 22,
+                          color: Color.lerp(
+                            const Color(0xFF7B8798),
+                            Colors.white,
+                            k,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (item.badge > 0)
+                        Positioned(
+                          right: -4,
+                          top: -2,
+                          child: Container(
+                            constraints: const BoxConstraints(minWidth: 17),
+                            height: 17,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: GColors.orange,
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              '${item.badge}',
+                              style: const TextStyle(
+                                fontFamily: guardianFont,
+                                fontSize: 9.5,
+                                height: 1,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Transform.translate(
                   offset: Offset(0, -10 * t),
                   child: ExcludeSemantics(
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: guardianFont,
-                        fontSize: 11.5,
-                        height: 1.2,
-                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                        color: Color.lerp(
-                          const Color(0xBF7B8798),
-                          GColors.blue,
-                          k,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontFamily: guardianFont,
+                          fontSize: widget.items.length > 4 ? 10.5 : 11.5,
+                          height: 1.2,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: Color.lerp(
+                            const Color(0xBF7B8798),
+                            GColors.blue,
+                            k,
+                          ),
                         ),
                       ),
                     ),

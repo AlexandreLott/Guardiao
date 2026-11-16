@@ -142,48 +142,50 @@ class SummaryTab extends StatelessWidget {
           ),
         ),
         const GSectionLabel('Atalhos'),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _Shortcut(
-                key: const Key('shortcutApps'),
-                icon: Icons.smartphone,
-                color: GColors.blue,
-                background: GColors.blueSoft,
-                title: 'Limites dos apps',
-                detail: '$withLimit com limite · $blocked bloqueados',
-                onTap: () => onGoTab(1),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _Shortcut(
+                  key: const Key('shortcutApps'),
+                  icon: Icons.smartphone,
+                  color: GColors.blue,
+                  background: GColors.blueSoft,
+                  title: 'Limites',
+                  detail: '$withLimit com limite\n$blocked bloqueados',
+                  onTap: () => onGoTab(1),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _Shortcut(
-                key: const Key('shortcutRoutines'),
-                icon: Icons.schedule,
-                color: GColors.green,
-                background: GColors.greenSoft,
-                title: 'Rotinas',
-                detail:
-                    '$activeRoutines ${activeRoutines == 1 ? 'ativa' : 'ativas'}',
-                onTap: () => onGoTab(2),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Shortcut(
+                  key: const Key('shortcutRoutines'),
+                  icon: Icons.schedule,
+                  color: GColors.green,
+                  background: GColors.greenSoft,
+                  title: 'Rotinas',
+                  detail:
+                      '$activeRoutines ${activeRoutines == 1 ? 'ativa' : 'ativas'}',
+                  onTap: () => onGoTab(2),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _Shortcut(
-                key: const Key('shortcutCredits'),
-                icon: Icons.star_border_rounded,
-                color: GColors.orange,
-                background: GColors.orangeSoft,
-                title: 'Créditos',
-                detail: data.pendingClaims == 0
-                    ? 'nada para aprovar'
-                    : '${data.pendingClaims} para aprovar',
-                onTap: () => onGoTab(3),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Shortcut(
+                  key: const Key('shortcutCredits'),
+                  icon: Icons.star_border_rounded,
+                  color: GColors.orange,
+                  background: GColors.orangeSoft,
+                  title: 'Créditos',
+                  detail: data.pendingClaims == 0
+                      ? 'nada para\naprovar'
+                      : '${data.pendingClaims} para\naprovar',
+                  onTap: () => onGoTab(3),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const GSectionLabel('Dispositivo'),
         GCard(
@@ -364,9 +366,23 @@ class _Shortcut extends StatelessWidget {
         children: [
           GIconBox(icon, color: color, background: background, size: 36),
           const SizedBox(height: 14),
-          Text(title, style: text.titleSmall),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.titleSmall,
+          ),
           const SizedBox(height: 2),
-          Text(detail, style: text.bodySmall?.copyWith(fontSize: 11.5)),
+          // Sempre duas linhas de altura, para os três cartões baterem.
+          SizedBox(
+            height: 34,
+            child: Text(
+              detail,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: text.bodySmall?.copyWith(fontSize: 11.5, height: 1.4),
+            ),
+          ),
         ],
       ),
     );
