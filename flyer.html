@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardian: flyer 9x16</title>
+<meta name="description" content="Flyer vertical do Guardian, no formato 9 por 16.">
+<link rel="icon" href="assets/favicon.png">
+<style>
+  @font-face { font-family: "Lexend"; src: url("assets/Lexend.ttf") format("truetype"); font-weight: 100 900; }
+  :root { --blue: #2B59FF; --blue-deep: #1E3FCC; --orange: #FF7A1A; --lime: #B5E61D; --ink: #0F172A; --muted: #64748B; --bg: #F7F8FA; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: "Lexend", system-ui, sans-serif; background: var(--ink); color: #fff; display: flex; flex-direction: column; align-items: center; }
+
+  /* a arte: 1080 x 1920, sempre nesse tamanho; a página só a reduz para caber */
+  .fit { flex: none; }
+  .sheet { width: 1080px; height: 1920px; position: relative; overflow: hidden; background: var(--blue); transform-origin: 0 0; }
+  .c { position: absolute; border-radius: 50%; }
+  .c1 { width: 900px; height: 900px; background: var(--blue-deep); right: -330px; top: 520px; }
+  .c2 { width: 640px; height: 640px; background: var(--orange); left: 380px; top: 800px; }
+  .c3 { width: 150px; height: 150px; background: var(--lime); left: 250px; top: 1290px; }
+  .c4 { width: 380px; height: 380px; background: rgba(255,255,255,.1); left: -150px; top: -120px; }
+
+  .top { position: absolute; left: 80px; top: 84px; display: flex; align-items: center; gap: 22px; font-weight: 700; font-size: 56px; letter-spacing: -.01em; }
+  .top img { width: 100px; height: 100px; background: #fff; border-radius: 28px; padding: 12px; }
+  h1 { position: absolute; left: 80px; right: 60px; top: 236px; margin: 0; font-size: 106px; line-height: 1; white-space: nowrap; letter-spacing: -.04em; font-weight: 700; }
+  .sub { position: absolute; left: 80px; top: 480px; width: 800px; margin: 0; font-size: 38px; line-height: 1.35; font-weight: 300; color: #E3E9FF; }
+
+  .phone { position: absolute; left: 452px; top: 690px; width: 500px; height: 1020px; border-radius: 70px; background: var(--ink); padding: 16px; transform: rotate(-5deg); box-shadow: -26px 44px 0 rgba(15,23,42,.22); }
+  .screen { width: 100%; height: 100%; border-radius: 56px; background: var(--bg); color: var(--ink); padding: 54px 26px 0; position: relative; }
+  .screen::before { content: ""; position: absolute; top: 20px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #1e293b; }
+  .hello { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .day { font-size: 19px; color: var(--muted); margin: 2px 0 18px; }
+  .hero { background: var(--blue); color: #fff; border-radius: 30px; padding: 24px 26px; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; width: 190px; height: 190px; border-radius: 50%; background: rgba(255,255,255,.14); right: -44px; top: -60px; }
+  .hero small { display: block; font-size: 19px; opacity: .9; }
+  .hero b { display: block; font-size: 50px; line-height: 1.15; }
+  .list { background: #fff; border-radius: 26px; margin-top: 16px; padding: 6px 20px; box-shadow: 0 3px 0 #E6EAF0; }
+  .row { display: flex; align-items: center; gap: 16px; padding: 15px 0; border-bottom: 2px solid #F0F3F7; }
+  .row:last-child { border: 0; }
+  .row img { width: 58px; height: 58px; border-radius: 16px; flex: none; }
+  .row .t { flex: 1; min-width: 0; }
+  .row .t b { display: block; font-size: 22px; font-weight: 600; }
+  .row .t span { font-size: 17px; color: var(--muted); }
+  .bar { height: 8px; border-radius: 8px; background: #E9EEF7; margin-top: 7px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 8px; background: var(--blue); }
+  .pill { font-size: 17px; font-weight: 600; padding: 6px 13px; border-radius: 99px; background: #E8EDFF; color: var(--blue); white-space: nowrap; }
+  .pill.red { background: #FDE4E4; color: #C62828; }
+
+  .chip { position: absolute; background: #fff; color: var(--ink); border-radius: 26px; padding: 18px 22px; display: flex; align-items: center; gap: 14px; font-size: 25px; width: 372px; box-shadow: 0 8px 0 rgba(15,23,42,.16); }
+  .chip b { display: block; font-weight: 600; }
+  .chip span { color: var(--muted); font-size: 20px; display: block; }
+  .chip i { width: 60px; height: 60px; border-radius: 18px; background: #FFEBDC; color: var(--orange); display: grid; place-items: center; font-style: normal; font-size: 34px; }
+  .chip i.g { background: #DDF5E8; color: #027A48; }
+  .chip i.b { background: #E8EDFF; color: var(--blue); font-size: 26px; }
+  .chip i { flex: none; }
+  .chip.a { left: 56px; top: 800px; }
+  .chip.b { left: 56px; top: 960px; }
+  .chip.c { left: 56px; top: 1120px; }
+
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; height: 420px; background: #fff; color: var(--ink); border-radius: 64px 64px 0 0; padding: 0 70px; display: flex; gap: 46px; align-items: center; }
+  .foot .qr { width: 290px; height: 290px; flex: none; border-radius: 28px; background: #fff; box-shadow: 0 0 0 3px #E2E8F0; padding: 14px; }
+  .foot .qr img { width: 100%; height: 100%; display: block; }
+  .foot h2 { margin: 6px 0 12px; font-size: 58px; line-height: 1.02; letter-spacing: -.03em; }
+  .foot p { margin: 0; font-size: 28px; line-height: 1.35; color: var(--muted); font-weight: 300; }
+  .tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .tags span { font-size: 23px; font-weight: 600; padding: 9px 18px; border-radius: 99px; background: #E8EDFF; color: var(--blue); }
+  .tags span:nth-child(2) { background: #EEF9D2; color: #3F5C00; }
+  .tags span:nth-child(3) { background: #FFEBDC; color: #B34E00; }
+
+  /* a página em volta (não sai na arte) */
+  .bar-top { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 20px; flex-wrap: wrap; }
+  .bar-top strong { font-size: 1.05rem; margin-right: auto; }
+  .bar-top a { color: #fff; text-decoration: none; font-weight: 600; font-size: .92rem; padding: 10px 16px; border-radius: 12px; background: rgba(255,255,255,.1); transition: background .2s; }
+  .bar-top a.main { background: var(--blue); }
+  .bar-top a:hover { background: rgba(255,255,255,.2); } .bar-top a.main:hover { background: var(--blue-deep); }
+  body.arte .bar-top { display: none; }
+  @media print { @page { size: 1080px 1920px; margin: 0; } .bar-top { display: none; } .fit { width: auto !important; height: auto !important; } .sheet { transform: none !important; } }
+</style>
+</head>
+<body>
+<div class="bar-top">
+  <strong>Flyer do Guardian, 9x16</strong>
+  <a class="main" href="flyer.png" download>Baixar em PNG</a>
+  <a href="flyer.pdf" download>Baixar em PDF</a>
+  <a href="index.html">Ir para o site</a>
+</div>
+
+<div class="fit" id="fit">
+  <div class="sheet" id="sheet">
+    <span class="c c1"></span><span class="c c2"></span><span class="c c3"></span><span class="c c4"></span>
+
+    <div class="top"><img src="assets/logo-512.png" alt="">Guardian</div>
+    <h1>Menos briga.<br>Mais combinado.</h1>
+    <p class="sub">Limite para cada jogo, pausa na hora da escola e do sono, e tarefa feita que vira tempo extra.</p>
+
+    <div class="phone"><div class="screen">
+      <div class="hello">Olá, Duda</div>
+      <div class="day">Hoje, segunda-feira</div>
+      <div class="hero"><small>Tempo de tela hoje</small><b>1 h 17 min</b><small>de 2 h 30 combinadas</small></div>
+      <div class="list">
+        <div class="row"><img src="assets/apps/com.roblox.client.png" alt=""><div class="t"><b>Roblox</b><span>45 min de 1 h</span><div class="bar"><i style="width:75%"></i></div></div><span class="pill">15 min</span></div>
+        <div class="row"><img src="assets/apps/com.mojang.minecraftpe.png" alt=""><div class="t"><b>Minecraft</b><span>20 min de 2 h</span><div class="bar"><i style="width:17%"></i></div></div><span class="pill">1 h 40</span></div>
+        <div class="row"><img src="assets/apps/com.supercell.brawlstars.png" alt=""><div class="t"><b>Brawl Stars</b><span>12 min de 45 min</span><div class="bar"><i style="width:27%"></i></div></div><span class="pill">33 min</span></div>
+        <div class="row"><img src="assets/apps/com.dts.freefireth.png" alt=""><div class="t"><b>Free Fire</b><span>Bloqueado</span></div><span class="pill red">Bloqueado</span></div>
+      </div>
+    </div></div>
+
+    <div class="chip a"><i class="g">✓</i><div><b>Hora da escola</b><span>jogos em pausa até 12:30</span></div></div>
+    <div class="chip b"><i>★</i><div><b>+30 min de crédito</b><span>missão: arrumar o quarto</span></div></div>
+    <div class="chip c"><i class="b">▮</i><div><b>Bloqueio geral</b><span>um toque pausa tudo</span></div></div>
+
+    <div class="foot">
+      <div class="qr"><img src="assets/qr.svg" alt="QR code para baixar o Guardian"></div>
+      <div>
+        <h2>Baixe grátis para Android.</h2>
+        <p>Aponte a câmera do celular para o código.</p>
+        <div class="tags"><span>Limite por app</span><span>Rotinas</span><span>Créditos</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // "?arte" mostra só a arte, no tamanho real (é assim que o PNG é gerado).
+  var arte = location.search.indexOf("arte") >= 0;
+  if (arte) document.body.classList.add("arte");
+  function fit() {
+    var sheet = document.getElementById("sheet"), box = document.getElementById("fit");
+    var top = arte ? 0 : document.querySelector(".bar-top").offsetHeight + 16;
+    var s = arte ? 1 : Math.min(1, (innerHeight - top - 16) / 1920, (innerWidth - 24) / 1080);
+    sheet.style.transform = "scale(" + s + ")";
+    box.style.width = (1080 * s) + "px"; box.style.height = (1920 * s) + "px";
+  }
+  addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>
