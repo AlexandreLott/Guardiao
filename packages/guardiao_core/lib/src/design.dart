@@ -793,8 +793,10 @@ class GNavItem {
   final Key? key;
 }
 
-/// Barra de baixo: o item escolhido vira um círculo azul que sobe.
-class GNavBar extends StatelessWidget {
+/// Barra de baixo com o "calombo líquido" do protótipo: uma bolha branca na
+/// borda da barra escorre com mola até o item escolhido, que sobe num círculo
+/// azul.
+class GNavBar extends StatefulWidget {
   const GNavBar({
     super.key,
     required this.items,
@@ -807,96 +809,225 @@ class GNavBar extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   @override
+  State<GNavBar> createState() => _GNavBarState();
+}
+
+class _GNavBarState extends State<GNavBar> with SingleTickerProviderStateMixin {
+  /// Altura do calombo acima da barra.
+  static const _bulge = 12.0;
+  static const _barHeight = 64.0;
+  static const _step = 1 / 60; // a mola anda em passos fixos, como no protótipo
+
+  late final Ticker _ticker = createTicker(_onTick);
+  double _width = 0;
+  double? _x; // centro atual da bolha
+  double _v = 0; // velocidade (estica e inclina a bolha)
+  Duration _last = Duration.zero;
+  double _pending = 0;
+
+  double get _target => _width / widget.items.length * (widget.index + 0.5);
+
+  void _onTick(Duration elapsed) {
+    _pending += (elapsed - _last).inMicroseconds / 1e6;
+    _last = elapsed;
+    var x = _x ?? _target;
+    var steps = 0;
+    while (_pending >= _step && steps < 12) {
+      _pending -= _step;
+      steps++;
+      _v = (_v + (_target - x) * 0.075) * 0.78;
+      x += _v;
+    }
+    if ((_target - x).abs() < 0.3 && _v.abs() < 0.3) {
+      x = _target;
+      _v = 0;
+      _ticker.stop();
+    }
+    setState(() => _x = x);
+  }
+
+  @override
+  void didUpdateWidget(GNavBar old) {
+    super.didUpdateWidget(old);
+    if (old.index != widget.index && !_ticker.isActive && _x != null) {
+      _last = Duration.zero;
+      _pending = 0;
+      _ticker.start();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x140F172A),
-            blurRadius: 18,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 70,
-          child: Row(
+    final inset = MediaQuery.paddingOf(context).bottom;
+    return SizedBox(
+      height: _barHeight + _bulge + inset,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          if (box.maxWidth != _width) {
+            _width = box.maxWidth;
+            if (!_ticker.isActive) _x = _target;
+          }
+          return Stack(
             children: [
-              for (var i = 0; i < items.length; i++)
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    selected: i == index,
-                    label: items[i].label,
-                    child: GestureDetector(
-                      key: items[i].key ?? Key('nav_$i'),
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onChanged(i),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        clipBehavior: Clip.none,
-                        children: [
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 180),
-                            top: i == index ? -16 : 12,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              width: i == index ? 52 : 28,
-                              height: i == index ? 52 : 28,
-                              decoration: BoxDecoration(
-                                color: i == index
-                                    ? GColors.blue
-                                    : Colors.transparent,
-                                shape: BoxShape.circle,
-                                boxShadow: i == index
-                                    ? const [
-                                        BoxShadow(
-                                          color: Color(0x552B59FF),
-                                          blurRadius: 14,
-                                          offset: Offset(0, 6),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Icon(
-                                items[i].icon,
-                                size: 24,
-                                color: i == index
-                                    ? Colors.white
-                                    : const Color(0xFF7B8798),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 10,
-                            child: Text(
-                              items[i].label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: i == index
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: i == index
-                                    ? GColors.blue
-                                    : const Color(0xFF7B8798),
-                              ),
-                            ),
-                          ),
-                        ],
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _BulgePainter(_x ?? _target, _v, _bulge),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: _bulge,
+                height: _barHeight,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < widget.items.length; i++)
+                      Expanded(child: _item(i)),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _item(int i) {
+    final item = widget.items[i];
+    final active = i == widget.index;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: item.label,
+      child: GestureDetector(
+        key: item.key ?? Key('nav_$i'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => widget.onChanged(i),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(end: active ? 1 : 0),
+          duration: const Duration(milliseconds: 650),
+          curve: const Cubic(0.25, 1.35, 0.5, 1),
+          builder: (context, t, _) {
+            final k = t.clamp(0.0, 1.0);
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Transform.translate(
+                  offset: Offset(0, -14 * t),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color.lerp(
+                        const Color(0x002B59FF),
+                        GColors.blue,
+                        k,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color.lerp(
+                            const Color(0x002B59FF),
+                            const Color(0x802B59FF),
+                            k,
+                          )!,
+                          blurRadius: 12,
+                          spreadRadius: -6,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      item.icon,
+                      size: 22,
+                      color: Color.lerp(
+                        const Color(0xFF7B8798),
+                        Colors.white,
+                        k,
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+                Transform.translate(
+                  offset: Offset(0, -10 * t),
+                  child: ExcludeSemantics(
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: guardianFont,
+                        fontSize: 11.5,
+                        height: 1.2,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                        color: Color.lerp(
+                          const Color(0xBF7B8798),
+                          GColors.blue,
+                          k,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
+
+/// Fundo branco da barra com a bolha: alarga com a velocidade, inclina na
+/// direção do movimento e achata um pouco enquanto anda.
+class _BulgePainter extends CustomPainter {
+  _BulgePainter(this.cx, this.stretch, this.bulge);
+
+  final double cx;
+  final double stretch;
+  final double bulge;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = 36 + math.min(18.0, stretch.abs() * 0.7);
+    final lean = (stretch * 0.25).clamp(-10.0, 10.0);
+    final top = 1.5 + math.min(4.0, stretch.abs() * 0.1);
+    final b = bulge;
+    final path = Path()
+      ..moveTo(0, b)
+      ..lineTo(cx - w - 10, b)
+      ..cubicTo(cx - w * 0.45, b, cx - w * 0.55 + lean, top, cx + lean, top)
+      ..cubicTo(cx + w * 0.55 + lean, top, cx + w * 0.45, b, cx + w + 10, b)
+      ..lineTo(size.width, b)
+      ..lineTo(size.width, size.height + 40)
+      ..lineTo(0, size.height + 40)
+      ..close();
+    canvas.drawPath(
+      path.shift(const Offset(0, -3)),
+      Paint()
+        ..color = const Color(0x140F172A)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    canvas.drawPath(path, Paint()..color = Colors.white);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFFE3E8F2),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BulgePainter old) =>
+      old.cx != cx || old.stretch != stretch || old.bulge != bulge;
 }
 
 // ---------------------------------------------------------------------------

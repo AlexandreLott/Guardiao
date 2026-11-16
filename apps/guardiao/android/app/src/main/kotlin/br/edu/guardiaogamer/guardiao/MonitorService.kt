@@ -52,7 +52,7 @@ class MonitorService : Service() {
         super.onCreate()
         overlay = BlockOverlay(
             this,
-            onGoHome = { goHome() },
+            onGoHome = { dismiss(); goHome() },
             onOpenCredits = { openCredits() },
             onOpenApp = { pkg -> openApp(pkg) },
         )
@@ -83,6 +83,12 @@ class MonitorService : Service() {
         val foreground = usage.foreground
         val rule = plan.apps.firstOrNull { it.pkg == foreground }
         if (foreground == null || foreground == packageName || rule == null || isEssential(foreground)) {
+            // Depois do bloqueio o celular vai para a tela inicial, e o que
+            // fica na frente é o launcher. A tela de bloqueio continua ali até
+            // a criança tocar em um botão; antes ela sumia em três segundos.
+            if (overlay.isShowing && (foreground == null || foreground == homePackage() || foreground == "com.android.systemui")) {
+                return
+            }
             overlay.hide()
             lastSentHome = null
             return
@@ -128,13 +134,37 @@ class MonitorService : Service() {
         }
         val secondsLeft = (midnight.timeInMillis - now.timeInMillis) / 1000
         overlay.show(
-            BlockInfo("${rule.pkg}|${result.verdict}|${result.reason}", rule.pkg, title, message, mission, suggestions),
+            BlockInfo(
+                "${rule.pkg}|${result.verdict}|${result.reason}", rule.pkg, title, message, mission, suggestions,
+                plan.credits,
+            ),
             secondsLeft,
         )
         goHomeOnce(rule.pkg)
     }
 
     private var lastSentHome: String? = null
+
+    /** Fecha a tela de bloqueio a pedido da criança. */
+    private fun dismiss() {
+        overlay.hide()
+        lastSentHome = null
+    }
+
+    private var cachedHome: String? = null
+
+    /** Pacote da tela inicial (launcher) deste aparelho. */
+    private fun homePackage(): String? {
+        cachedHome?.let { return it }
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val found = try {
+            packageManager.resolveActivity(intent, 0)?.activityInfo?.packageName
+        } catch (_: Exception) {
+            null
+        }
+        cachedHome = found
+        return found
+    }
 
     /** Manda para a tela inicial só na primeira vez, para a tela de bloqueio poder ser lida. */
     private fun goHomeOnce(pkg: String) {
@@ -150,7 +180,7 @@ class MonitorService : Service() {
 
     private fun openCredits() {
         MonitorConfig.requestTab(this, "credits")
-        overlay.hide()
+        dismiss()
         val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         try {
@@ -162,7 +192,7 @@ class MonitorService : Service() {
     private fun openApp(pkg: String) {
         val launch = packageManager.getLaunchIntentForPackage(pkg) ?: return
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        overlay.hide()
+        dismiss()
         try {
             startActivity(launch)
         } catch (_: Exception) {

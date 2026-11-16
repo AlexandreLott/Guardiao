@@ -29,6 +29,7 @@ class UsageController extends ChangeNotifier {
   Map<String, AppRule> _rules = const {};
   DeviceConfig _config = const DeviceConfig();
   int _bonus = 0;
+  int _credits = 0;
   String? _pushedKey;
   bool _pushedWithAccess = false;
   bool _busy = false;
@@ -61,11 +62,13 @@ class UsageController extends ChangeNotifier {
     Map<String, AppRule> rules, {
     DeviceConfig config = const DeviceConfig(),
     int bonusMinutes = 0,
+    int credits = 0,
   }) {
     _apps = apps;
     _rules = rules;
     _config = config;
     _bonus = bonusMinutes;
+    _credits = credits;
     unawaited(refresh());
   }
 
@@ -93,6 +96,7 @@ class UsageController extends ChangeNotifier {
         bonusDay: dayKey(_clock()),
         bonusMinutes: _bonus,
         message: _config.blockMessage,
+        credits: _credits,
       );
       final wanted = buildMonitored(
         _apps,

@@ -131,3 +131,16 @@ Future<void> pairThroughWizard(
   await tester.tap(find.byKey(const Key('linkedContinue')));
   await tester.pumpAndSettle();
 }
+
+/// No lado do responsável, depois de tocar num aparelho: abre a aba
+/// Responsável e passa pelo PIN (cria 1234 se ainda não existe).
+Future<void> openGuardianPanel(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('nav_guardian')));
+  await tester.pumpAndSettle();
+  for (final d in const ['1', '2', '3', '4']) {
+    await tester.tap(find.byKey(Key('pin_$d')));
+    await tester.pump();
+  }
+  await tester.tap(find.byKey(const Key('pin_ok')));
+  await tester.pumpAndSettle();
+}

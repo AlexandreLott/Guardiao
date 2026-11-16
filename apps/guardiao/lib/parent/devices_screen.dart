@@ -3,7 +3,8 @@ import 'package:guardiao_core/guardiao_core.dart';
 
 import '../qr/qr_scanner.dart';
 import 'add_device_screen.dart';
-import 'device_screen.dart';
+import '../common/pin.dart';
+import 'child_view_screen.dart';
 
 class DevicesScreen extends StatefulWidget {
   const DevicesScreen({
@@ -12,6 +13,7 @@ class DevicesScreen extends StatefulWidget {
     required this.onChangeRole,
     required this.scanner,
     this.isDemo = false,
+    this.pinStore,
   });
 
   final GuardianBackend backend;
@@ -19,11 +21,15 @@ class DevicesScreen extends StatefulWidget {
   final VoidCallback onChangeRole;
   final bool isDemo;
 
+  /// PIN do painel do responsável neste aparelho.
+  final PinStore? pinStore;
+
   @override
   State<DevicesScreen> createState() => _DevicesScreenState();
 }
 
 class _DevicesScreenState extends State<DevicesScreen> {
+  late final PinStore _pin = widget.pinStore ?? MemoryPinStore();
   late final Stream<List<PairedDevice>> _devices = widget.backend
       .watchDevices();
 
@@ -117,9 +123,11 @@ class _DevicesScreenState extends State<DevicesScreen> {
                           device: devices[i],
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => DeviceScreen(
+                              builder: (_) => ChildViewScreen(
                                 backend: widget.backend,
                                 device: devices[i],
+                                pinStore: _pin,
+                                isDemo: widget.isDemo,
                                 onChangeRole: widget.onChangeRole,
                               ),
                             ),

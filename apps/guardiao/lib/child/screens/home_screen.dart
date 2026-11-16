@@ -186,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _rules,
       config: _config,
       bonusMinutes: bonusMinutesOf(_claims, dayKey(DateTime.now())),
+      credits: availableCredit(_claims),
     );
     if (mounted) setState(() {});
   }

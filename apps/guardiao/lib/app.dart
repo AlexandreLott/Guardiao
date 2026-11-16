@@ -106,6 +106,7 @@ class _GuardiaoAppState extends State<GuardiaoApp> {
           backend: widget.backend,
           scanner: widget.scanner,
           isDemo: widget.isDemo,
+          pinStore: widget.pinStore,
           onChangeRole: _changeRole,
         ),
         DeviceRole.child => ChildGate(

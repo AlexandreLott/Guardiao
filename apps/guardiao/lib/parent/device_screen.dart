@@ -51,11 +51,15 @@ class DeviceScreen extends StatefulWidget {
     required this.backend,
     required this.device,
     this.onChangeRole,
+    this.embedded = false,
   });
 
   final GuardianBackend backend;
   final PairedDevice device;
   final VoidCallback? onChangeRole;
+
+  /// Dentro da aba Responsável: sem o topo próprio (a tela de fora já tem).
+  final bool embedded;
 
   @override
   State<DeviceScreen> createState() => _DeviceScreenState();
@@ -228,22 +232,23 @@ class _DeviceScreenState extends State<DeviceScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  key: const Key('panelBack'),
-                  tooltip: 'Voltar',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.chevron_left, size: 28),
-                ),
-                Expanded(
-                  child: GHeader(
-                    userName: childName(_device.name),
-                    online: _device.isOnline(data.now),
+            if (!widget.embedded)
+              Row(
+                children: [
+                  IconButton(
+                    key: const Key('panelBack'),
+                    tooltip: 'Voltar',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.chevron_left, size: 28),
                   ),
-                ),
-              ],
-            ),
+                  Expanded(
+                    child: GHeader(
+                      userName: childName(_device.name),
+                      online: _device.isOnline(data.now),
+                    ),
+                  ),
+                ],
+              ),
             const GTitle(
               'Painel do responsável',
               subtitle: 'Limites, rotinas e créditos',

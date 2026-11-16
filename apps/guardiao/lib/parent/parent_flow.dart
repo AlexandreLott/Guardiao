@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardiao_core/guardiao_core.dart';
 
+import '../common/pin.dart';
 import '../qr/qr_scanner.dart';
 import 'devices_screen.dart';
 import 'login_screen.dart';
@@ -13,12 +14,14 @@ class ParentFlow extends StatelessWidget {
     required this.onChangeRole,
     required this.scanner,
     this.isDemo = false,
+    this.pinStore,
   });
 
   final GuardianBackend backend;
   final QrScanner scanner;
   final VoidCallback onChangeRole;
   final bool isDemo;
+  final PinStore? pinStore;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +45,7 @@ class ParentFlow extends StatelessWidget {
           backend: backend,
           scanner: scanner,
           isDemo: isDemo,
+          pinStore: pinStore,
           onChangeRole: onChangeRole,
         );
       },

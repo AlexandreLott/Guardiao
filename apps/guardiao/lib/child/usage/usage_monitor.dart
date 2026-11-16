@@ -122,6 +122,7 @@ class MonitorExtras {
     this.bonusDay,
     this.bonusMinutes = 0,
     this.message = '',
+    this.credits = 0,
   });
 
   final bool lockAll;
@@ -134,6 +135,9 @@ class MonitorExtras {
   /// Texto da tela de bloqueio escolhido pelo responsável.
   final String message;
 
+  /// Minutos de crédito disponíveis (mostrados na tela de bloqueio).
+  final int credits;
+
   bool get needsEveryApp => lockAll || routines.any((r) => r.enabled);
 
   Map<String, Object?> toJson() => {
@@ -142,6 +146,7 @@ class MonitorExtras {
     'bonusDay': bonusDay,
     'bonusMinutes': bonusMinutes,
     'message': message,
+    'credits': credits,
   };
 }
 

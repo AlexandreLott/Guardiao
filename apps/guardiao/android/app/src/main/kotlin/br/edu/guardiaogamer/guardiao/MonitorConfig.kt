@@ -38,6 +38,8 @@ data class MonitorPlan(
     val bonusMinutes: Int = 0,
     /** Texto da tela de bloqueio escolhido pelo responsável. */
     val message: String = "",
+    /** Minutos de crédito que a criança tem para usar. */
+    val credits: Int = 0,
 )
 
 /**
@@ -80,6 +82,7 @@ object MonitorConfig {
             bonusDay = if (root.isNull("bonusDay")) null else root.optString("bonusDay"),
             bonusMinutes = root.optInt("bonusMinutes", 0),
             message = root.optString("message", ""),
+            credits = root.optInt("credits", 0),
         )
     }
 

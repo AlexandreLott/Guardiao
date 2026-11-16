@@ -313,6 +313,7 @@ void main() {
 
         await tester.tap(find.text('Celular do Pedro'));
         await tester.pumpAndSettle();
+        await openGuardianPanel(tester);
         expect(find.byKey(const Key('alertsPanel')), findsOneWidget);
         expect(find.text(AlertKind.overlayRevoked.title), findsOneWidget);
         expect(find.byKey(const Key('offNowText')), findsOneWidget);
@@ -336,6 +337,7 @@ void main() {
       expect(find.byKey(const Key('deviceWarning')), findsOneWidget);
       await tester.tap(find.text('Celular do Pedro'));
       await tester.pumpAndSettle();
+      await openGuardianPanel(tester);
       expect(find.byKey(const Key('noSignalText')), findsOneWidget);
       expect(find.textContaining('desinstalado'), findsOneWidget);
       await closeApp(tester);

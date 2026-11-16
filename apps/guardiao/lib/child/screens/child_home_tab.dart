@@ -11,18 +11,21 @@ class ChildHomeTab extends StatelessWidget {
   const ChildHomeTab({
     super.key,
     required this.data,
-    required this.usage,
+    this.usage,
     this.syncError,
     this.lastSync,
   });
 
   final ChildData data;
-  final UsageController usage;
+
+  /// Medidor deste aparelho; `null` quando é o responsável olhando de fora.
+  final UsageController? usage;
   final String? syncError;
   final DateTime? lastSync;
 
   @override
   Widget build(BuildContext context) {
+    final usage = this.usage;
     final text = Theme.of(context).textTheme;
     final name = childName(data.device.name);
     final watched = [
@@ -128,15 +131,15 @@ class ChildHomeTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (!usage.supported)
+        if (usage != null && !usage.supported)
           const Notice(
             'Este aparelho ainda não mede o tempo de uso. Os limites aparecem, '
             'mas o tempo restante não diminui.',
             icon: Icons.hourglass_empty,
           )
-        else if (usage.missing.isNotEmpty)
+        else if (usage != null && usage.missing.isNotEmpty)
           _PermissionsCard(missing: usage.missing, onRequest: usage.request),
-        if (usage.supported && usage.adminActive == false) ...[
+        if (usage != null && usage.supported && usage.adminActive == false) ...[
           const SizedBox(height: 12),
           _AdminCard(onActivate: usage.requestAdmin),
         ],
@@ -144,7 +147,7 @@ class ChildHomeTab extends StatelessWidget {
           const SizedBox(height: 12),
           Notice(syncError!, isError: true),
         ],
-        if (usage.reportError != null) ...[
+        if (usage != null && usage.reportError != null) ...[
           const SizedBox(height: 12),
           Notice(usage.reportError!, isError: true),
         ],

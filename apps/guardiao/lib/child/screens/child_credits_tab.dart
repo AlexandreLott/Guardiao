@@ -9,13 +9,16 @@ class ChildCreditsTab extends StatefulWidget {
   const ChildCreditsTab({
     super.key,
     required this.data,
-    required this.onClaim,
-    required this.onUse,
+    this.onClaim,
+    this.onUse,
   });
 
   final ChildData data;
-  final Future<void> Function(String title, int minutes) onClaim;
-  final Future<void> Function(List<Claim> available) onUse;
+
+  /// `null` no aparelho do responsável: ele só acompanha, quem pede e usa
+  /// crédito é a criança.
+  final Future<void> Function(String title, int minutes)? onClaim;
+  final Future<void> Function(List<Claim> available)? onUse;
 
   @override
   State<ChildCreditsTab> createState() => _ChildCreditsTabState();
@@ -113,8 +116,8 @@ class _ChildCreditsTabState extends State<ChildCreditsTab> {
                     alpha: 0.6,
                   ),
                 ),
-                onPressed: credit > 0 && !_busy
-                    ? () => _run(() => widget.onUse(available))
+                onPressed: credit > 0 && !_busy && widget.onUse != null
+                    ? () => _run(() => widget.onUse!(available))
                     : null,
                 icon: const Icon(Icons.star_border_rounded),
                 label: const Text('Usar crédito'),
@@ -144,10 +147,10 @@ class _ChildCreditsTabState extends State<ChildCreditsTab> {
                   _MissionRow(
                     mission: data.config.missions[i],
                     claim: _claimOf(data.config.missions[i]),
-                    canAsk: data.config.allowRequests,
+                    canAsk: data.config.allowRequests && widget.onClaim != null,
                     busy: _busy,
                     onDone: () => _run(
-                      () => widget.onClaim(
+                      () => widget.onClaim!(
                         data.config.missions[i].title,
                         data.config.missions[i].minutes,
                       ),

@@ -93,6 +93,7 @@ void main() {
       await openDemo(tester);
       await tester.tap(find.text('Celular do Pedro (exemplo)'));
       await tester.pumpAndSettle();
+      await openGuardianPanel(tester);
       if (tab > 0) {
         await tester.tap(find.byKey(Key('seg_$tab')));
         await tester.pumpAndSettle();
@@ -300,6 +301,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Celular do Pedro'));
       await tester.pumpAndSettle();
+      await openGuardianPanel(tester);
       await tester.tap(find.byKey(const Key('seg_3')));
       await tester.pumpAndSettle();
       expect(find.text('1 para aprovar'), findsOneWidget);
