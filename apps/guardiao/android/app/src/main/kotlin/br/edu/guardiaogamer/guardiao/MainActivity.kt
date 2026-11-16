@@ -135,6 +135,7 @@ class MainActivity : FlutterActivity() {
                     }
                     "stop" -> {
                         MonitorConfig.setEnabled(this, false)
+                        WatchdogJob.cancel(this)
                         MonitorService.stop(this)
                         result.success(null)
                     }
@@ -203,6 +204,7 @@ class MainActivity : FlutterActivity() {
             return
         }
         MonitorConfig.save(this, json, enabled = true)
+        WatchdogJob.schedule(this)
         if (UsageReader.hasUsageAccess(this)) {
             try {
                 MonitorService.start(this)

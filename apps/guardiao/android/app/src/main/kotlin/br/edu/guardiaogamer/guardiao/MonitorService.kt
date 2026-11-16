@@ -235,6 +235,17 @@ class MonitorService : Service() {
         }
     }
 
+    /** Se a criança tirar o app da lista de recentes, o serviço volta sozinho. */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (MonitorConfig.isEnabled(this)) {
+            try {
+                start(this)
+            } catch (_: Exception) {
+            }
+        }
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         running = false
         main.removeCallbacks(tick)
