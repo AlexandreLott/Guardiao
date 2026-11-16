@@ -13,10 +13,20 @@ import 'update/update_source.dart';
 import 'watch/background_tasks.dart';
 import 'watch/health_source.dart';
 
+/// Função fixa do aparelho (`parent` ou `child`), usada nos APKs de teste
+/// "Guardian Mãe" e "Guardian Filho", que convivem no mesmo celular.
+const _fixedRole = String.fromEnvironment('ROLE');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final setup = await createBackend();
   final roleStore = SharedPrefsRoleStore();
+  final fixed = switch (_fixedRole) {
+    'parent' => DeviceRole.parent,
+    'child' => DeviceRole.child,
+    _ => null,
+  };
+  if (fixed != null) await roleStore.write(fixed);
   final updates = UpdateController(
     source: GithubUpdateSource(),
     installer: UpdateInstaller.detect(),
@@ -28,10 +38,10 @@ Future<void> main() async {
       source: InstalledAppsSource.detect(),
       monitor: UsageMonitor.detect(),
       scanner: QrScanner.detect(),
-      initialRole: await roleStore.read(),
+      initialRole: fixed ?? await roleStore.read(),
       isDemo: setup.isDemo,
       showWelcome: true,
-      updates: updates,
+      updates: fixed == null ? updates : null,
       background: BackgroundTasks.detect(),
       healthSource: HealthSource.detect(),
       healthStore: const PrefsHealthStore(),

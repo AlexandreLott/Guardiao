@@ -30,6 +30,11 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Variantes de teste (Mãe e Filho no mesmo celular): outro pacote e
+        // outro nome, vindos do ambiente da compilação.
+        val idSuffix = System.getenv("APP_ID_SUFFIX") ?: ""
+        if (idSuffix.isNotEmpty()) applicationIdSuffix = idSuffix
+        manifestPlaceholders["appLabel"] = System.getenv("APP_LABEL") ?: "Guardian"
     }
 
     // Chave de assinatura fixa: o Android só aceita atualizar um app por cima

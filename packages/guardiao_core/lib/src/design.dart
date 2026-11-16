@@ -1,9 +1,192 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'theme.dart';
+
+// ---------------------------------------------------------------------------
+// Movimento
+// ---------------------------------------------------------------------------
+
+/// Curva e duração padrão do movimento do app (as mesmas do protótipo).
+const gCurve = Cubic(0.22, 0.8, 0.24, 1);
+const gMotion = Duration(milliseconds: 420);
+
+/// Entrada suave: o conteúdo sobe um pouco e aparece. Vários [GEnter] criados
+/// no mesmo quadro entram em sequência, um depois do outro.
+class GEnter extends StatefulWidget {
+  const GEnter({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<GEnter> createState() => _GEnterState();
+}
+
+class _GEnterState extends State<GEnter> with SingleTickerProviderStateMixin {
+  static int _inFrame = 0;
+  static bool _resetScheduled = false;
+
+  late final AnimationController _c;
+  late final Animation<double> _a;
+
+  @override
+  void initState() {
+    super.initState();
+    final order = _inFrame++;
+    if (!_resetScheduled) {
+      _resetScheduled = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _inFrame = 0;
+        _resetScheduled = false;
+      });
+    }
+    final delay = (order > 8 ? 8 : order) * 45;
+    final total = gMotion.inMilliseconds + delay;
+    // `preserve`: o movimento continua mesmo com "remover animações" ligado
+    // no aparelho; ele é curto e faz parte do desenho do app.
+    _c = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: total),
+      animationBehavior: AnimationBehavior.preserve,
+    );
+    _a = CurvedAnimation(
+      parent: _c,
+      curve: Interval(delay / total, 1, curve: gCurve),
+    );
+    _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: _a,
+    child: AnimatedBuilder(
+      animation: _a,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, 16 * (1 - _a.value)),
+        child: child,
+      ),
+      child: widget.child,
+    ),
+  );
+}
+
+/// Resposta ao toque: o conteúdo encolhe um pouco enquanto o dedo está nele.
+class GPress extends StatefulWidget {
+  const GPress({super.key, required this.child, this.enabled = true});
+
+  final Widget child;
+  final bool enabled;
+
+  @override
+  State<GPress> createState() => _GPressState();
+}
+
+class _GPressState extends State<GPress> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 110),
+    reverseDuration: const Duration(milliseconds: 260),
+    animationBehavior: AnimationBehavior.preserve,
+  );
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) return widget.child;
+    return Listener(
+      onPointerDown: (_) => _c.forward(),
+      onPointerUp: (_) => _c.reverse(),
+      onPointerCancel: (_) => _c.reverse(),
+      child: ScaleTransition(
+        scale: Tween<double>(
+          begin: 1,
+          end: 0.975,
+        ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut)),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Troca de conteúdo (abas e sub-abas): o antigo some e o novo sobe.
+/// O [child] precisa de uma `key` diferente a cada conteúdo.
+class GSwitch extends StatelessWidget {
+  const GSwitch({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 380),
+    reverseDuration: const Duration(milliseconds: 160),
+    switchInCurve: gCurve,
+    switchOutCurve: Curves.easeIn,
+    layoutBuilder: (current, previous) =>
+        Stack(fit: StackFit.expand, children: [...previous, ?current]),
+    transitionBuilder: (child, animation) => FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    ),
+    child: child,
+  );
+}
+
+/// Troca de tela: a nova sobe e aparece; a de baixo recua um pouco.
+class GPageTransitionsBuilder extends PageTransitionsBuilder {
+  const GPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final enter = CurvedAnimation(
+      parent: animation,
+      curve: gCurve,
+      reverseCurve: Curves.easeIn,
+    );
+    final under = CurvedAnimation(parent: secondaryAnimation, curve: gCurve);
+    return FadeTransition(
+      opacity: Tween<double>(begin: 1, end: 0.6).animate(under),
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 1, end: 0.97).animate(under),
+        child: FadeTransition(
+          opacity: enter,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.07),
+              end: Offset.zero,
+            ).animate(enter),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Logo
@@ -133,6 +316,12 @@ class GCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(20);
+    return GEnter(
+      child: GPress(enabled: onTap != null, child: _card(radius)),
+    );
+  }
+
+  Widget _card(BorderRadius radius) {
     return Container(
       decoration: BoxDecoration(
         color: color ?? Colors.white,
@@ -288,11 +477,16 @@ class GProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(99),
-    child: LinearProgressIndicator(
-      value: value.clamp(0.0, 1.0),
-      minHeight: height,
-      color: color,
-      backgroundColor: GColors.track,
+    child: TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: value.clamp(0.0, 1.0)),
+      duration: const Duration(milliseconds: 800),
+      curve: gCurve,
+      builder: (context, v, _) => LinearProgressIndicator(
+        value: v,
+        minHeight: height,
+        color: color,
+        backgroundColor: GColors.track,
+      ),
     ),
   );
 }

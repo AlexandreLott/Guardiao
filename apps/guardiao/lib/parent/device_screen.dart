@@ -264,9 +264,14 @@ class _DeviceScreenState extends State<DeviceScreen> {
               ),
             ),
             Expanded(
-              child: loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : tabs[_tab],
+              child: GSwitch(
+                child: KeyedSubtree(
+                  key: ValueKey(loading ? -1 : _tab),
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : tabs[_tab],
+                ),
+              ),
             ),
           ],
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'design.dart' show GPageTransitionsBuilder;
+
 /// Nome exibido nas telas.
 const guardianName = 'Guardian';
 
@@ -120,6 +122,12 @@ ThemeData guardiaoTheme([Brightness brightness = Brightness.light]) {
       );
 
   return base.copyWith(
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {
+        for (final p in TargetPlatform.values)
+          p: const GPageTransitionsBuilder(),
+      },
+    ),
     textTheme: text,
     primaryTextTheme: text,
     appBarTheme: AppBarTheme(

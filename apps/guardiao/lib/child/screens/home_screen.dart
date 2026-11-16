@@ -280,7 +280,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: Column(
           children: [
             GHeader(userName: name, online: online),
-            Expanded(child: tabs[_tab]),
+            Expanded(
+              child: GSwitch(
+                child: KeyedSubtree(key: ValueKey(_tab), child: tabs[_tab]),
+              ),
+            ),
           ],
         ),
       ),
